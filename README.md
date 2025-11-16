@@ -1,2 +1,318 @@
-# MAHIKS
-Health Rag with multi-agent architecture.
+# MAHIKS-TR: Multi-Agent Health Insurance Knowledge System for Turkish Healthcare
+
+A sophisticated multi-agent system that integrates advanced Retrieval-Augmented Generation (RAG) techniques with dynamic medical knowledge graphs to automatically extract, organize, and reason over Turkish health insurance sources.
+
+## 🎯 Project Overview
+
+MAHIKS-TR addresses the complex challenge of intelligent health insurance knowledge management in the Turkish healthcare system. The system uses:
+
+- **Hybrid RAG Architecture**: Combines vector search (ChromaDB) with knowledge graph reasoning (Neo4j)
+- **Multi-Agent System**: Specialized agents for ingestion, extraction, knowledge graph building, vectorization, retrieval, and generation
+- **Turkish Language Support**: Full support for Turkish medical and insurance terminology
+- **Multi-Database Architecture**: MySQL for documents, ChromaDB for embeddings, Neo4j for knowledge graphs
+
+## 🏗️ Architecture
+
+### Offline Processing Pipeline
+1. **Ingestion Agent**: Discovers and monitors source documents
+2. **Extraction Agent**: Extracts and chunks text from PDFs, HTML, and TXT files
+3. **Knowledge Graph Agent**: Builds triplets (Subject-Predicate-Object) using NLP
+4. **Vectorization Agent**: Creates embeddings and stores in ChromaDB
+
+### Online Query Pipeline
+1. **Query Orchestrator**: Coordinates the entire workflow
+2. **Retrieval Agent**: Performs hybrid search (vector + graph)
+3. **Generation Agent**: Uses LLM to generate answers with citations
+
+## 📁 Project Structure
+
+```
+MAHIKS/
+├── backend/
+│   ├── agents/
+│   │   ├── ingestion_agent.py
+│   │   ├── extraction_agent.py
+│   │   ├── kg_agent.py
+│   │   ├── vectorization_agent.py
+│   │   ├── retrieval_agent.py
+│   │   ├── generation_agent.py
+│   │   └── orchestrator_agent.py
+│   ├── database/
+│   │   ├── mysql_handler.py
+│   │   ├── chroma_handler.py
+│   │   └── neo4j_handler.py
+│   ├── models/
+│   │   └── schemas.py
+│   ├── main.py
+│   └── config.py
+├── scripts/
+│   └── update_knowledge_base.py
+├── data/
+│   └── raw_documents/
+├── docker-compose.yml
+├── Dockerfile
+├── requirements.txt
+└── .env
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.11+
+- Docker and Docker Compose (recommended)
+- MySQL 8.0+
+- Neo4j 5.13+
+- OpenAI API key
+
+### Installation
+
+#### Option 1: Using Docker (Recommended)
+
+1. **Clone and setup**:
+```bash
+cd MAHIKS
+cp .env.example .env
+```
+
+2. **Edit `.env` file** with your credentials:
+```bash
+MYSQL_PASSWORD=your_secure_password
+NEO4J_PASSWORD=your_neo4j_password
+OPENAI_API_KEY=your_openai_api_key
+```
+
+3. **Start services**:
+```bash
+docker-compose up -d
+```
+
+4. **Add documents** to `data/raw_documents/`
+
+5. **Run knowledge base update**:
+```bash
+docker-compose exec backend python scripts/update_knowledge_base.py
+```
+
+6. **Access the API**:
+- API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+- Neo4j Browser: http://localhost:7474
+
+#### Option 2: Local Installation
+
+1. **Install dependencies**:
+```bash
+pip install -r requirements.txt
+python -m spacy download tr_core_news_lg
+```
+
+2. **Setup databases**:
+```bash
+# Start MySQL
+mysql -u root -p
+CREATE DATABASE mahiks_db;
+
+# Start Neo4j
+# Download from neo4j.com and start
+```
+
+3. **Configure environment**:
+```bash
+cp .env.example .env
+# Edit .env with your settings
+```
+
+4. **Run the application**:
+```bash
+# Update knowledge base first
+python scripts/update_knowledge_base.py
+
+# Start the API server
+uvicorn backend.main:app --reload
+```
+
+## 📚 Usage
+
+### Adding Documents
+
+Place your Turkish health insurance documents in `data/raw_documents/`:
+- Supported formats: PDF, HTML, TXT, MD
+- Examples: SUT documents, SGK regulations, insurance policies
+
+### Updating Knowledge Base
+
+```bash
+# Process all documents
+python scripts/update_knowledge_base.py
+
+# Reset and rebuild everything
+python scripts/update_knowledge_base.py --reset
+
+# Use custom data directory
+python scripts/update_knowledge_base.py --data-dir /path/to/documents
+```
+
+### Making Queries
+
+#### Using the API
+
+```bash
+curl -X POST "http://localhost:8000/api/ask" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "SGK hangi ilaçları karşılar?",
+    "include_citations": true,
+    "top_k": 5
+  }'
+```
+
+#### Using Python
+
+```python
+import requests
+
+response = requests.post(
+    "http://localhost:8000/api/ask",
+    json={
+        "question": "Diyabet tedavisi için SGK kapsamı nedir?",
+        "include_citations": True
+    }
+)
+
+result = response.json()
+print(result['answer'])
+print(result['citations'])
+```
+
+### API Endpoints
+
+- `GET /` - Root endpoint
+- `GET /health` - Health check
+- `GET /status` - System status and statistics
+- `POST /api/ask` - Ask a question
+- `POST /api/batch-ask` - Batch query processing
+- `POST /api/upload` - Upload a document
+- `GET /api/documents` - List all documents
+- `GET /api/graph/stats` - Knowledge graph statistics
+- `GET /api/graph/entity/{name}` - Get entity information
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MYSQL_HOST` | MySQL server host | `localhost` |
+| `MYSQL_PASSWORD` | MySQL password | - |
+| `NEO4J_URI` | Neo4j connection URI | `bolt://localhost:7687` |
+| `NEO4J_PASSWORD` | Neo4j password | - |
+| `OPENAI_API_KEY` | OpenAI API key | - |
+| `OPENAI_MODEL` | OpenAI model to use | `gpt-4` |
+| `CHUNK_SIZE` | Words per chunk | `500` |
+| `CHUNK_OVERLAP` | Overlapping words | `50` |
+| `VECTOR_TOP_K` | Results to retrieve | `5` |
+
+## 🧪 Testing
+
+```bash
+# Run tests
+pytest
+
+# Run specific test
+pytest tests/test_retrieval.py
+
+# With coverage
+pytest --cov=backend tests/
+```
+
+## 📊 Monitoring
+
+### Database Statistics
+
+```bash
+# Check system status
+curl http://localhost:8000/status
+
+# View knowledge graph stats
+curl http://localhost:8000/api/graph/stats
+```
+
+### Logs
+
+```bash
+# View backend logs
+docker-compose logs -f backend
+
+# View all service logs
+docker-compose logs -f
+```
+
+## 🛠️ Development
+
+### Project Components
+
+1. **Database Handlers**: Abstract database operations
+2. **Agents**: Specialized components for specific tasks
+3. **API**: FastAPI-based REST API
+4. **Scripts**: Maintenance and update utilities
+
+### Adding a New Agent
+
+1. Create agent file in `backend/agents/`
+2. Implement agent class with required methods
+3. Register agent in orchestrator or main.py
+4. Update documentation
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Database connection errors**:
+```bash
+# Check if services are running
+docker-compose ps
+
+# Restart services
+docker-compose restart
+```
+
+**Memory issues with large documents**:
+- Increase Docker memory limit
+- Reduce `CHUNK_SIZE` in .env
+- Process documents in smaller batches
+
+**spaCy model not found**:
+```bash
+python -m spacy download tr_core_news_lg
+```
+
+## 📖 Documentation
+
+- [Project Definition](bitirme_rag/project_def.txt)
+- [Architecture Details](bitirme_rag/multi_agent_architecture.md)
+- [Database Schema](bitirme_rag/mysql_schema_and_workflow.md)
+- [API Documentation](http://localhost:8000/docs) (when running)
+
+## 🤝 Contributing
+
+This is an academic project for FENS. Contributions are welcome!
+
+## 📄 License
+
+This project is developed as part of an academic assignment.
+
+## 🙏 Acknowledgments
+
+- Turkish healthcare data from SGK
+- spaCy for Turkish NLP
+- OpenAI for GPT models
+- Neo4j, ChromaDB, and MySQL communities
+
+## 📧 Contact
+
+For questions and support, please refer to the project documentation or create an issue.
+
+---
+
+**Built with ❤️ for Turkish Healthcare**
