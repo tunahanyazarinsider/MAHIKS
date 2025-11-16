@@ -1,0 +1,307 @@
+"""
+Generation Agent for MAHIKS-TR using Ollama
+Responsible for generating answers using local LLM with retrieved context
+"""
+from typing import Dict, List, Optional
+import requests
+import json
+
+
+class GenerationAgentOllama:
+    """Agent for answer generation using Ollama (local LLM)"""
+
+    def __init__(self,
+                 base_url: str = "http://localhost:11434",
+                 model: str = "llama2"):
+        """
+        Initialize the Generation agent with Ollama
+
+        Args:
+            base_url: Ollama API base URL
+            model: Model to use (llama2, mistral, etc.)
+        """
+        self.base_url = base_url.rstrip('/')
+        self.model = model
+
+        # Test connection
+        try:
+            response = requests.get(f"{self.base_url}/api/tags")
+            if response.status_code == 200:
+                available_models = [m['name'] for m in response.json().get('models', [])]
+                if self.model not in available_models:
+                    print(f"� Warning: Model '{self.model}' not found in Ollama.")
+                    print(f"  Available models: {', '.join(available_models)}")
+                    if available_models:
+                        print(f"  Consider pulling the model: ollama pull {self.model}")
+                print(f" Generation agent initialized (Ollama, model={model})")
+            else:
+                print(f"� Warning: Could not connect to Ollama at {self.base_url}")
+        except Exception as e:
+            print(f"� Warning: Ollama connection test failed: {e}")
+            print(f"  Make sure Ollama is running: ollama serve")
+
+    def format_vector_context(self, chunks: List[Dict], max_chunks: int = 5) -> str:
+        """
+        Format vector search results into context string
+
+        Args:
+            chunks: List of chunk dictionaries
+            max_chunks: Maximum number of chunks to include
+
+        Returns:
+            Formatted context string
+        """
+        if not chunks:
+            return "0lgili belge par�as1 bulunamad1."
+
+        context_parts = []
+
+        for i, chunk in enumerate(chunks[:max_chunks], 1):
+            source = chunk.get('source_name', 'Bilinmeyen Kaynak')
+            text = chunk['chunk_text']
+            similarity = chunk.get('similarity', 0)
+
+            context_parts.append(
+                f"**Kaynak {i}** ({source}, Benzerlik: {similarity:.2%}):\n{text}\n"
+            )
+
+        return "\n".join(context_parts)
+
+    def format_graph_context(self, facts: List[Dict], max_facts: int = 10) -> str:
+        """
+        Format knowledge graph results into context string
+
+        Args:
+            facts: List of graph fact dictionaries
+            max_facts: Maximum number of facts to include
+
+        Returns:
+            Formatted facts string
+        """
+        if not facts:
+            return "0li_kili bilgi bulunamad1."
+
+        fact_parts = []
+
+        for fact in facts[:max_facts]:
+            if fact.get('type') == 'path':
+                # Format path
+                path_info = f"" {fact['from']} ile {fact['to']} aras1nda balant1 bulundu"
+                fact_parts.append(path_info)
+            else:
+                # Format relationship
+                source = fact.get('source_entity', '')
+                target = fact.get('target_entity', '')
+                rel = fact.get('relationship', '')
+
+                fact_parts.append(f"" {source} � [{rel}] � {target}")
+
+        return "\n".join(fact_parts)
+
+    def build_prompt(self, query: str, context: Dict) -> str:
+        """
+        Build the complete prompt for the LLM
+
+        Args:
+            query: User's question
+            context: Retrieved context (vector + graph)
+
+        Returns:
+            Complete prompt string
+        """
+        vector_context = self.format_vector_context(context.get('vector_context', []))
+        graph_context = self.format_graph_context(context.get('graph_facts', []))
+
+        prompt = f"""Sen Türk sağlık sigortası konusunda uzman bir asistans1n. Görevin kullan1c1lar1n sorularını doğru, anlaşılır ve yardımsever bir şekilde yanıtlamaktır.
+
+Aşağıdaki bilgileri kullanarak kullanıcının sorusunu yanıtla:
+
+## İlgili Belge Parçaları:
+{vector_context}
+
+## Bilgi Grafiğinden Bilgiler:
+{graph_context}
+
+## Kullan1c1 Sorusu:
+{query}
+
+## Yanıt Kuralları:
+1. Sadece verilen bilgilere dayanarak yanıt ver
+2. Eğer bilgi yetersizse veya soruya yanıt bulunamazsa, bunu açıkça belirt
+3. Türkçe, anlaşılır ve profesyonel bir dil kullan
+4. Önrmeli detayları eksik b1rakma
+5. Gerekirse madde madde açıkla
+6. Kaynaklara atıfta bulun
+
+Lütfen yanıtını ver:"""
+
+        return prompt
+
+    def generate_answer(self, query: str, context: Dict,
+                       temperature: float = 0.3,
+                       max_tokens: int = 1000) -> str:
+        """
+        Generate answer using Ollama LLM
+
+        Args:
+            query: User's question
+            context: Retrieved context
+            temperature: Model temperature (0-1)
+            max_tokens: Maximum response length
+
+        Returns:
+            Generated answer
+        """
+        print(f"    Generating answer with Ollama ({self.model})...")
+
+        # Build the prompt
+        prompt = self.build_prompt(query, context)
+
+        try:
+            # Call Ollama API
+            response = requests.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": temperature,
+                        "num_predict": max_tokens,
+                    }
+                },
+                timeout=120  # 2 minutes timeout for generation
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                answer = result.get('response', '')
+                print(f"       Answer generated ({len(answer)} chars)")
+                return answer
+            else:
+                error_msg = f"Ollama API error: {response.status_code}"
+                print(f"       {error_msg}")
+                return f"Üzgünüm, yanıt oluştururken bir hata oluştu: {error_msg}"
+
+        except requests.exceptions.Timeout:
+            print(f"       Request timeout")
+            return "Üzgünüm, yanıt oluşturma süresi çok uzun sürdü. Lütfen tekrar deneyin."
+        except Exception as e:
+            print(f"       Error generating answer: {e}")
+            return f"Üzgünüm, yanıt oluştururken bir hata oluştu: {str(e)}"
+
+    def generate_with_citations(self, query: str, context: Dict) -> Dict:
+        """
+        Generate answer with source citations
+
+        Args:
+            query: User's question
+            context: Retrieved context
+
+        Returns:
+            Dictionary with answer and citations
+        """
+        answer = self.generate_answer(query, context)
+
+        # Extract top sources for citations
+        citations = []
+        for chunk in context.get('vector_context', [])[:3]:
+            citations.append({
+                'source': chunk.get('source_name', 'Bilinmeyen'),
+                'type': chunk.get('document_type', 'PDF'),
+                'similarity': chunk.get('similarity', 0)
+            })
+
+        return {
+            'answer': answer,
+            'citations': citations,
+            'graph_facts_used': len(context.get('graph_facts', []))
+        }
+
+    def generate_summary(self, text: str, max_length: int = 200) -> str:
+        """
+        Generate a summary of a text
+
+        Args:
+            text: Text to summarize
+            max_length: Maximum summary length in words
+
+        Returns:
+            Summary
+        """
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": f"Aşağıdaki metni {max_length} kelime ile özetle:\n\n{text}",
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,
+                    }
+                },
+                timeout=60
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                return result.get('response', text[:500] + "...")
+            else:
+                print(f"Error generating summary: API returned {response.status_code}")
+                return text[:500] + "..."  # Fallback to truncation
+
+        except Exception as e:
+            print(f"Error generating summary: {e}")
+            return text[:500] + "..."  # Fallback to truncation
+
+    def chat_completion(self, messages: List[Dict],
+                       temperature: float = 0.3,
+                       max_tokens: int = 1000) -> str:
+        """
+        Chat completion interface compatible with OpenAI-style messages
+
+        Args:
+            messages: List of message dicts with 'role' and 'content'
+            temperature: Model temperature
+            max_tokens: Maximum response length
+
+        Returns:
+            Generated response
+        """
+        # Convert messages to a single prompt
+        prompt_parts = []
+        for msg in messages:
+            role = msg.get('role', 'user')
+            content = msg.get('content', '')
+            if role == 'system':
+                prompt_parts.append(f"System: {content}")
+            elif role == 'user':
+                prompt_parts.append(f"User: {content}")
+            elif role == 'assistant':
+                prompt_parts.append(f"Assistant: {content}")
+
+        prompt = "\n\n".join(prompt_parts) + "\n\nAssistant:"
+
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": temperature,
+                        "num_predict": max_tokens,
+                    }
+                },
+                timeout=120
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                return result.get('response', '')
+            else:
+                raise Exception(f"API returned status {response.status_code}")
+
+        except Exception as e:
+            raise Exception(f"Chat completion failed: {str(e)}")

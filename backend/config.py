@@ -27,9 +27,9 @@ class Config:
     CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
     CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "medical_chunks")
 
-    # OpenAI Configuration
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4")
+    # Ollama Configuration (Local LLM)
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2")
 
     # Application Settings
     APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
@@ -51,7 +51,6 @@ class Config:
     def validate(cls):
         """Validate required configuration"""
         required = [
-            ("OPENAI_API_KEY", cls.OPENAI_API_KEY),
             ("MYSQL_PASSWORD", cls.MYSQL_PASSWORD),
             ("NEO4J_PASSWORD", cls.NEO4J_PASSWORD)
         ]

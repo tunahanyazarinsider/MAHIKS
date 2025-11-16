@@ -83,5 +83,10 @@ docs/_build/
 .dmypy.json
 dmypy.json
 
-# Project specific
+# Tunahan specific ignores - Melih, Faruk eklemelerinizi buraya yapabilirsiniz.
+# tunahan
 bitirme_rag/
+docs/
+# melih
+
+# faruk

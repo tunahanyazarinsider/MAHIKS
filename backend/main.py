@@ -22,6 +22,7 @@ from database.neo4j_handler import Neo4jHandler
 # Agents
 from agents.retrieval_agent import RetrievalAgent
 from agents.generation_agent import GenerationAgent
+from agents.generation_agent_ollama import GenerationAgentOllama
 from agents.orchestrator_agent import QueryOrchestratorAgent
 
 # Global variables for handlers
@@ -88,9 +89,10 @@ async def lifespan(app: FastAPI):
             mysql_handler
         )
 
-        generation_agent = GenerationAgent(
-            api_key=Config.OPENAI_API_KEY,
-            model=Config.OPENAI_MODEL
+        # Use Ollama for local LLM generation
+        generation_agent = GenerationAgentOllama(
+            base_url=Config.OLLAMA_BASE_URL,
+            model=Config.OLLAMA_MODEL
         )
 
         orchestrator = QueryOrchestratorAgent(

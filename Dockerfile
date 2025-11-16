@@ -24,6 +24,7 @@ RUN python -m spacy download tr_core_news_lg
 # Copy application code
 COPY backend/ ./backend/
 COPY scripts/ ./scripts/
+# It copies the .env.example file to .env and the values inside the .env.example will be used as default environment variables.
 COPY .env.example .env
 
 # Create data directories

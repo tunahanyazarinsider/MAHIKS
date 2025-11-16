@@ -10,6 +10,7 @@ MAHIKS-TR addresses the complex challenge of intelligent health insurance knowle
 - **Multi-Agent System**: Specialized agents for ingestion, extraction, knowledge graph building, vectorization, retrieval, and generation
 - **Turkish Language Support**: Full support for Turkish medical and insurance terminology
 - **Multi-Database Architecture**: MySQL for documents, ChromaDB for embeddings, Neo4j for knowledge graphs
+- **100% Local & Private**: Uses Ollama for LLM, SentenceTransformers for embeddings - no external API calls!
 
 ## 🏗️ Architecture
 
@@ -59,15 +60,31 @@ MAHIKS/
 
 ### Prerequisites
 
-- Python 3.11+
 - Docker and Docker Compose (recommended)
-- MySQL 8.0+
-- Neo4j 5.13+
-- OpenAI API key
+- Or, for local setup:
+  - Python 3.11+
+  - MySQL 8.0+
+  - Neo4j 5.13+
+  - Ollama (for local LLM)
 
 ### Installation
 
 #### Option 1: Using Docker (Recommended)
+
+**🚀 Quick Start (Automated):**
+
+```bash
+./quick_start.sh
+```
+
+This interactive script will:
+- Start all Docker services
+- Pull an Ollama model (your choice)
+- Check for documents
+- Process them into the RAG system
+- Verify everything works
+
+**Manual Setup:**
 
 1. **Clone and setup**:
 ```bash
@@ -79,7 +96,7 @@ cp .env.example .env
 ```bash
 MYSQL_PASSWORD=your_secure_password
 NEO4J_PASSWORD=your_neo4j_password
-OPENAI_API_KEY=your_openai_api_key
+OLLAMA_MODEL=llama2  # or mistral, llama3
 ```
 
 3. **Start services**:
@@ -87,17 +104,34 @@ OPENAI_API_KEY=your_openai_api_key
 docker-compose up -d
 ```
 
-4. **Add documents** to `data/raw_documents/`
-
-5. **Run knowledge base update**:
+4. **Pull Ollama model**:
 ```bash
-docker-compose exec backend python scripts/update_knowledge_base.py
+docker exec -it mahiks-ollama ollama pull llama2
 ```
 
-6. **Access the API**:
+5. **Add documents** to `data/raw_documents/`
+   - Supported: PDF, HTML, TXT files
+   - Just placing files here is NOT enough!
+
+6. **Process documents into RAG** (CRITICAL STEP):
+```bash
+docker exec -it mahiks-backend python scripts/update_knowledge_base.py
+```
+
+This script:
+- Extracts text from your documents
+- Generates embeddings (local, no API)
+- Builds knowledge graph
+- Stores everything in databases
+
+7. **Access the system**:
 - API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 - Neo4j Browser: http://localhost:7474
+
+**📖 Detailed Guides:**
+- See `RAG_SETUP_GUIDE.md` for complete RAG setup instructions
+- See `OLLAMA_SETUP.md` for Ollama configuration and models
 
 #### Option 2: Local Installation
 
@@ -207,10 +241,10 @@ print(result['citations'])
 | `MYSQL_PASSWORD` | MySQL password | - |
 | `NEO4J_URI` | Neo4j connection URI | `bolt://localhost:7687` |
 | `NEO4J_PASSWORD` | Neo4j password | - |
-| `OPENAI_API_KEY` | OpenAI API key | - |
-| `OPENAI_MODEL` | OpenAI model to use | `gpt-4` |
-| `CHUNK_SIZE` | Words per chunk | `500` |
-| `CHUNK_OVERLAP` | Overlapping words | `50` |
+| `OLLAMA_BASE_URL` | Ollama API endpoint | `http://localhost:11434` |
+| `OLLAMA_MODEL` | Ollama model name | `llama2` |
+| `CHUNK_SIZE` | Characters per chunk | `500` |
+| `CHUNK_OVERLAP` | Overlapping characters | `50` |
 | `VECTOR_TOP_K` | Results to retrieve | `5` |
 
 ## 🧪 Testing
@@ -306,7 +340,8 @@ This project is developed as part of an academic assignment.
 
 - Turkish healthcare data from SGK
 - spaCy for Turkish NLP
-- OpenAI for GPT models
+- Ollama for local LLM inference
+- SentenceTransformers for multilingual embeddings
 - Neo4j, ChromaDB, and MySQL communities
 
 ## 📧 Contact

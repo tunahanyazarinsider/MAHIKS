@@ -42,6 +42,31 @@ services:
       timeout: 5s
       retries: 5
 
+  # Ollama Local LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mahiks-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - mahiks-network
+    # For GPU support (NVIDIA), uncomment the following:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   # Backend API
   backend:
     build:
@@ -59,7 +84,8 @@ services:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-mahiks_neo4j_password}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama2}
       - CHROMA_PERSIST_DIR=/app/chroma_data
     volumes:
       - ./backend:/app/backend
@@ -69,6 +95,8 @@ services:
       mysql:
         condition: service_healthy
       neo4j:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     networks:
       - mahiks-network
@@ -82,6 +110,8 @@ volumes:
   neo4j_logs:
     driver: local
   chroma_data:
+    driver: local
+  ollama_data:
     driver: local
 
 networks:
