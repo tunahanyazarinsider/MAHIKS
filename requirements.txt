@@ -43,8 +43,3 @@ httpx==0.26.0
 # Type hints
 pydantic==2.5.3
 pydantic-settings==2.1.0
-
-# Optional: LangChain (if you want to use it)
-langchain
-langchain-ollama
-langchain-community

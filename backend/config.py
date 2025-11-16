@@ -29,7 +29,7 @@ class Config:
 
     # Ollama Configuration (Local LLM)
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama2")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
 
     # Application Settings
     APP_HOST = os.getenv("APP_HOST", "0.0.0.0")

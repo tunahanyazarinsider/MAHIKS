@@ -18,8 +18,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download spaCy Turkish model
-RUN python -m spacy download tr_core_news_lg
+# Download spaCy Turkish model (optional, will auto-download on first use if missing)
+# Using || true to make this non-fatal - the KG agent will download it when needed
+RUN python -m spacy download tr_core_news_lg || echo "Warning: spaCy model download failed, will download on first use"
 
 # Copy application code
 COPY backend/ ./backend/

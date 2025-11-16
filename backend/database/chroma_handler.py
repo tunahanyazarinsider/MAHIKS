@@ -37,9 +37,21 @@ class ChromaDBHandler:
 
         # Use multilingual model for Turkish support
         print("Loading embedding model (paraphrase-multilingual-mpnet-base-v2)...")
-        self.embedding_model = SentenceTransformer(
-            'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
-        )
+        try:
+            # Try to load model with SSL verification
+            self.embedding_model = SentenceTransformer(
+                'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
+            )
+        except Exception as e:
+            print(f"⚠ Warning: Failed to download model with SSL verification: {e}")
+            print("  Attempting to load without SSL verification...")
+            # Disable SSL verification temporarily for model download
+            import ssl
+            import certifi
+            ssl._create_default_https_context = ssl._create_unverified_context
+            self.embedding_model = SentenceTransformer(
+                'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
+            )
         print("✓ ChromaDB initialized successfully")
 
     def add_chunks(self, chunk_ids: List[int], texts: List[str],

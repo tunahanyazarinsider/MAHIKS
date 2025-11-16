@@ -8,22 +8,22 @@ from contextlib import asynccontextmanager
 import uvicorn
 from pathlib import Path
 
-from config import Config
-from models.schemas import (
+from backend.config import Config
+from backend.models.schemas import (
     QueryRequest, QueryResponse, HealthResponse, StatusResponse,
     DocumentUploadResponse, BatchQueryRequest, BatchQueryResponse
 )
 
 # Database handlers
-from database.mysql_handler import MySQLHandler
-from database.chroma_handler import ChromaDBHandler
-from database.neo4j_handler import Neo4jHandler
+from backend.database.mysql_handler import MySQLHandler
+from backend.database.chroma_handler import ChromaDBHandler
+from backend.database.neo4j_handler import Neo4jHandler
 
 # Agents
-from agents.retrieval_agent import RetrievalAgent
-from agents.generation_agent import GenerationAgent
-from agents.generation_agent_ollama import GenerationAgentOllama
-from agents.orchestrator_agent import QueryOrchestratorAgent
+from backend.agents.retrieval_agent import RetrievalAgent
+from backend.agents.generation_agent import GenerationAgent
+from backend.agents.generation_agent_ollama import GenerationAgentOllama
+from backend.agents.orchestrator_agent import QueryOrchestratorAgent
 
 # Global variables for handlers
 mysql_handler = None

@@ -12,7 +12,7 @@ class GenerationAgentOllama:
 
     def __init__(self,
                  base_url: str = "http://localhost:11434",
-                 model: str = "llama2"):
+                 model: str = "llama3.2:1b"):
         """
         Initialize the Generation agent with Ollama
 
@@ -29,15 +29,15 @@ class GenerationAgentOllama:
             if response.status_code == 200:
                 available_models = [m['name'] for m in response.json().get('models', [])]
                 if self.model not in available_models:
-                    print(f"� Warning: Model '{self.model}' not found in Ollama.")
+                    print(f"⚠ Warning: Model '{self.model}' not found in Ollama.")
                     print(f"  Available models: {', '.join(available_models)}")
                     if available_models:
                         print(f"  Consider pulling the model: ollama pull {self.model}")
-                print(f" Generation agent initialized (Ollama, model={model})")
+                print(f"✓ Generation agent initialized (Ollama, model={model})")
             else:
-                print(f"� Warning: Could not connect to Ollama at {self.base_url}")
+                print(f"⚠ Warning: Could not connect to Ollama at {self.base_url}")
         except Exception as e:
-            print(f"� Warning: Ollama connection test failed: {e}")
+            print(f"⚠ Warning: Ollama connection test failed: {e}")
             print(f"  Make sure Ollama is running: ollama serve")
 
     def format_vector_context(self, chunks: List[Dict], max_chunks: int = 5) -> str:
@@ -52,7 +52,7 @@ class GenerationAgentOllama:
             Formatted context string
         """
         if not chunks:
-            return "0lgili belge par�as1 bulunamad1."
+            return "İlgili belge parçası bulunamadı."
 
         context_parts = []
 
@@ -79,14 +79,14 @@ class GenerationAgentOllama:
             Formatted facts string
         """
         if not facts:
-            return "0li_kili bilgi bulunamad1."
+            return "İlişkili bilgi bulunamadı."
 
         fact_parts = []
 
         for fact in facts[:max_facts]:
             if fact.get('type') == 'path':
                 # Format path
-                path_info = f"" {fact['from']} ile {fact['to']} aras1nda balant1 bulundu"
+                path_info = f"• {fact['from']} ile {fact['to']} arasında bağlantı bulundu"
                 fact_parts.append(path_info)
             else:
                 # Format relationship
@@ -94,7 +94,7 @@ class GenerationAgentOllama:
                 target = fact.get('target_entity', '')
                 rel = fact.get('relationship', '')
 
-                fact_parts.append(f"" {source} � [{rel}] � {target}")
+                fact_parts.append(f"• {source} → [{rel}] → {target}")
 
         return "\n".join(fact_parts)
 
@@ -112,24 +112,24 @@ class GenerationAgentOllama:
         vector_context = self.format_vector_context(context.get('vector_context', []))
         graph_context = self.format_graph_context(context.get('graph_facts', []))
 
-        prompt = f"""Sen Türk sağlık sigortası konusunda uzman bir asistans1n. Görevin kullan1c1lar1n sorularını doğru, anlaşılır ve yardımsever bir şekilde yanıtlamaktır.
+        prompt = f"""Sen Türk sağlık sigortası konusunda uzman bir asistansın. Görevin kullanıcıların sorularını doğru, anlaşılır ve yardımsever bir şekilde yanıtlamaktır.
 
 Aşağıdaki bilgileri kullanarak kullanıcının sorusunu yanıtla:
 
 ## İlgili Belge Parçaları:
 {vector_context}
 
-## Bilgi Grafiğinden Bilgiler:
+## Bilgi Grafiğinden İlişkiler:
 {graph_context}
 
-## Kullan1c1 Sorusu:
+## Kullanıcı Sorusu:
 {query}
 
 ## Yanıt Kuralları:
 1. Sadece verilen bilgilere dayanarak yanıt ver
 2. Eğer bilgi yetersizse veya soruya yanıt bulunamazsa, bunu açıkça belirt
 3. Türkçe, anlaşılır ve profesyonel bir dil kullan
-4. Önrmeli detayları eksik b1rakma
+4. Önemli detayları eksik bırakma
 5. Gerekirse madde madde açıkla
 6. Kaynaklara atıfta bulun
 
@@ -176,18 +176,18 @@ Lütfen yanıtını ver:"""
             if response.status_code == 200:
                 result = response.json()
                 answer = result.get('response', '')
-                print(f"       Answer generated ({len(answer)} chars)")
+                print(f"      ✓ Answer generated ({len(answer)} chars)")
                 return answer
             else:
                 error_msg = f"Ollama API error: {response.status_code}"
-                print(f"       {error_msg}")
+                print(f"      ✗ {error_msg}")
                 return f"Üzgünüm, yanıt oluştururken bir hata oluştu: {error_msg}"
 
         except requests.exceptions.Timeout:
-            print(f"       Request timeout")
+            print(f"      ✗ Request timeout")
             return "Üzgünüm, yanıt oluşturma süresi çok uzun sürdü. Lütfen tekrar deneyin."
         except Exception as e:
-            print(f"       Error generating answer: {e}")
+            print(f"      ✗ Error generating answer: {e}")
             return f"Üzgünüm, yanıt oluştururken bir hata oluştu: {str(e)}"
 
     def generate_with_citations(self, query: str, context: Dict) -> Dict:
