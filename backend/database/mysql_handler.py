@@ -41,6 +41,20 @@ class MySQLHandler:
     def create_tables(self):
         """Create necessary database tables if they don't exist"""
         try:
+            # Create users table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    display_name VARCHAR(255),
+                    role VARCHAR(50) NOT NULL,
+                    status VARCHAR(50) NOT NULL,
+                    password VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_email (email)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+
             # Create documents table
             self.cursor.execute("""
                 CREATE TABLE IF NOT EXISTS documents (

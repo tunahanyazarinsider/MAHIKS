@@ -1,9 +1,22 @@
 """
 Pydantic schemas for API request/response validation
 """
+import uuid
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
+from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import func
+from sqlalchemy.dialects.mysql import BIGINT
 
+class UserResponse(BaseModel):
+    """User response model"""
+    email: str
+    display_name: str
+    role: str
+    status: str
+
+    class Config:
+        orm_mode = True
 
 class QueryRequest(BaseModel):
     """Request model for query endpoint"""

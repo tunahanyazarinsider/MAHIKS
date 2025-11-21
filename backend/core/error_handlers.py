@@ -7,7 +7,7 @@ from .exceptions import (
     ConflictError,
     ValidationError
 )
-from .schemas.api_response import ApiResponse
+from backend.utils.api_response import ApiResponse
 
 
 def register_exception_handlers(app):
