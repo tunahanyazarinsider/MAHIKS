@@ -8,29 +8,41 @@ class UserRepository:
         self.db = db
     
     def get_by_email(self, email: str) -> User:
-        print("Before getting user from db")
         item = self.db.query(User).filter(
             User.email == email
         ).first()
 
         if item is None:
-            print("User not found")
             raise NotFoundError(message = "User not found", code = "USER_NOT_FOUND")
 
-        print("After user found")
         return item
 
     def exists_by_email(self, email: str) -> bool:
-        print("Before checking email in db")
+        """
+        Checks if a user exists by email
+
+        args:
+            email: str -> email to check
+
+        returns:
+            bool -> True if user exists, False otherwise
+        """
         return self.db.query(User).filter(User.email == email).first() is not None
 
     def create_user(self, user: User) -> User:
-        print("Before creating user in db")
+        """
+        Creates a new user in the database
+
+        args:
+            user: User -> user to create
+
+        returns:
+            User -> created user
+        """
         try:
             self.db.add(user)
             self.db.commit()
             self.db.refresh(user)
-            print("After creating user in db")
             return user
 
         except IntegrityError:

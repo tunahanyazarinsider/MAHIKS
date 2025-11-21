@@ -15,13 +15,31 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 
 @user_router.post("/login", response_model=ApiResponse[UserResponse])
 def login(request: LoginRequest, user_service: UserService = Depends(get_user_service)) -> ApiResponse[UserResponse]:
-    print("in controller")
+    """
+    Login endpoint
+
+    args:
+        request: LoginRequest -> taken from frontend
+        user_service: UserService -> dependency injection
+
+    returns:
+        ApiResponse[UserResponse]
+    """
     user = user_service.login(request)
     print("After login")
     return ApiResponse(status=200, message="Login successful", data=user)
 
 @user_router.post("/register", response_model=ApiResponse[UserResponse])
 def register(request: RegisterRequest, user_service: UserService = Depends(get_user_service)) -> ApiResponse[UserResponse]:
-    print("In Controller")
+    """
+    Register endpoint
+
+    args:
+        request: RegisterRequest -> taken from frontend
+        user_service: UserService -> dependency injection
+
+    returns:
+        ApiResponse[UserResponse]
+    """
     user = user_service.register(request)
     return ApiResponse(status=201, message="User registered successfully", data=user)

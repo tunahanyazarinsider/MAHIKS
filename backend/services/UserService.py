@@ -22,15 +22,24 @@ class UserService:
         return user
 
     def register(self, request: RegisterRequest) -> User:
-        print("In service")
+        """
+        Service function for user registration
+
+        Checks if user exists by email
+        Creates user and stores it in database
+
+        args:
+            request: RegisterRequest -> taken from frontend
+
+        returns:
+            User
+        """
         if (self.user_repository.exists_by_email(request.email)):
             raise ValidationError("User with same email already exists", code="USER_ALREADY_EXISTS")
-        print("After email check")
         user = User(
             display_name=request.name,
             email=request.email,
             password=hash_password(request.password)
         )
-        print("After user creation")
 
         return self.user_repository.create_user(user)

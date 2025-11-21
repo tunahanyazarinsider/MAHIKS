@@ -11,6 +11,13 @@ from backend.utils.api_response import ApiResponse
 
 
 def register_exception_handlers(app):
+    """
+    Registers exception handlers for the application
+    Different exception handlers are registered for different types of exceptions
+
+    args:
+        app: FastAPI -> application to register exception handlers for
+    """
 
     @app.exception_handler(NotFoundError)
     async def not_found_handler(request: Request, exc: NotFoundError) -> JSONResponse:
