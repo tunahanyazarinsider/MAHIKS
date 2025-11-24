@@ -8,6 +8,8 @@ from pathlib import Path
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
+# with the above, now this script will be callable like:
+# python3 -m backend.scripts.update_knowledge_base
 
 from database.mysql_handler import MySQLHandler
 from database.chroma_handler import ChromaDBHandler

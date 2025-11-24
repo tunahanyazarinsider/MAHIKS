@@ -26,7 +26,8 @@ class ChromaDBHandler:
         self.client = chromadb.Client(Settings(
             persist_directory=persist_directory,
             anonymized_telemetry=False,
-            allow_reset=True
+            allow_reset=True,
+            is_persistent=True
         ))
 
         # Get or create collection
