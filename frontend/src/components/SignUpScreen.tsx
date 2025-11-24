@@ -34,7 +34,9 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
     if (formData.fullName && formData.email && formData.password) {
       try {
         const response = await register(formData.fullName, formData.email, formData.password);
-        onSignUp(response.data.email, response.data.display_name);
+        // Save token to localStorage
+        localStorage.setItem('token', response.data.access_token);
+        onSignUp(response.data.user.email, response.data.user.display_name);
       } catch (error) {
         console.log(error);
       }
