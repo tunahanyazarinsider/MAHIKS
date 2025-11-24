@@ -27,8 +27,6 @@ export function LoginScreen({ onLogin, onSwitchToSignUp }: LoginScreenProps) {
 
     try {
       const response = await login(email, password);
-      console.log(response);
-      // Call onLogin on success
       onLogin(response.email, response.display_name);
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || err.message || 'An error occurred during login';

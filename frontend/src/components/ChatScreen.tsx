@@ -8,6 +8,8 @@ import { ChatHistory, Conversation } from './ChatHistory';
 import { RenameDialog } from './RenameDialog';
 import { Send, LogOut, HeartPulse, Menu, X } from 'lucide-react';
 import { Separator } from './ui/separator';
+import { chatRequest } from '../api/ChatApi';
+import { QueryRequest } from '../models/QueryRequest';
 
 interface ChatScreenProps {
   userEmail: string;
@@ -16,42 +18,17 @@ interface ChatScreenProps {
   onOpenProfile: () => void;
 }
 
-const mockAgentResponses = {
-  claims: [
-    "I can help you with your claim. To file a new claim, you'll need your policy number, date of service, and provider information. Would you like to start the process?",
-    "Your claim #CLM-2024-1156 is currently being processed. It typically takes 5-7 business days for review. You can track its status in your dashboard.",
-    "For faster claim processing, make sure all your medical bills are itemized and include procedure codes. Would you like me to guide you through the submission process?"
-  ],
-  billing: [
-    "Your current balance is $245.67. This includes your monthly premium of $180 and a copay from your last visit. Would you like to set up a payment plan?",
-    "I can help you understand your bill. Your explanation of benefits (EOB) shows that insurance covered $850 of your recent $1,100 procedure. The remaining $250 is your responsibility based on your deductible.",
-    "You can update your payment method in the billing section. We accept credit cards, debit cards, and ACH transfers. Would you like me to guide you through this?"
-  ],
-  coverage: [
-    "Your current plan is a Gold PPO with a $1,500 deductible. You have comprehensive coverage including preventive care at 100%, specialist visits at 80% after deductible, and prescription drug coverage.",
-    "Based on your query, yes, mental health services are covered under your plan at 80% after you meet your deductible. You have access to our network of over 500 mental health providers.",
-    "Your plan includes dental and vision coverage. Dental covers two cleanings per year at 100%, and vision includes one annual eye exam and $150 toward frames or contacts."
-  ],
-  support: [
-    "I'm here to help with general questions. You can ask me about finding doctors, understanding your benefits, or navigating our member portal.",
-    "To find an in-network provider, use our provider directory on the website or I can help you search. What type of specialist are you looking for?",
-    "Our customer service line is available 24/7 at 1-800-HEALTH-1. For urgent medical advice, please call the nurse hotline at 1-800-NURSE-24."
-  ]
-};
+async function getResponseForQuery(query: string): Promise<string> {
 
-function getResponseForQuery(query: string): string {
-  const lowerQuery = query.toLowerCase();
-  
-  if (lowerQuery.includes('claim') || lowerQuery.includes('file') || lowerQuery.includes('submit')) {
-    return mockAgentResponses.claims[Math.floor(Math.random() * mockAgentResponses.claims.length)];
+  const request = new QueryRequest(query);
+
+  try {
+    const response = await chatRequest(request);
+    return response.answer;
+  } catch (error) {
+    console.error(error);
+    return "I'm sorry, I couldn't understand your question.";
   }
-  if (lowerQuery.includes('bill') || lowerQuery.includes('pay') || lowerQuery.includes('cost') || lowerQuery.includes('price')) {
-    return mockAgentResponses.billing[Math.floor(Math.random() * mockAgentResponses.billing.length)];
-  }
-  if (lowerQuery.includes('coverage') || lowerQuery.includes('cover') || lowerQuery.includes('plan') || lowerQuery.includes('benefit')) {
-    return mockAgentResponses.coverage[Math.floor(Math.random() * mockAgentResponses.coverage.length)];
-  }
-  return mockAgentResponses.support[Math.floor(Math.random() * mockAgentResponses.support.length)];
 }
 
 const initialMessage: Message = {
@@ -88,11 +65,11 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     }
   }, [messages]);
 
-  const updateMessages = (newMessages: Message[]) => {
+  const addMessage = (message: Message) => {
     setConversations(prev =>
       prev.map(conv =>
         conv.id === currentConversationId
-          ? { ...conv, messages: newMessages }
+          ? { ...conv, messages: [...conv.messages, message] }
           : conv
       )
     );
@@ -108,22 +85,25 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
       timestamp: new Date()
     };
 
-    updateMessages([...messages, userMessage]);
+    addMessage(userMessage);
+
     setInput('');
     setIsTyping(true);
 
-    const response = getResponseForQuery(input);
+    try {
+      const response = await getResponseForQuery(input);
 
-    setTimeout(() => {
       const agentMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: response,
         sender: 'agent',
         timestamp: new Date()
       };
-      updateMessages([...messages, userMessage, agentMessage]);
+
+      addMessage(agentMessage);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -184,9 +164,9 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     const userMessages = conv.messages.filter(m => m.sender === 'user');
     const lastUserMessage = userMessages[userMessages.length - 1];
     const firstUserMessage = userMessages[0];
-    
+
     const defaultTitle = firstUserMessage?.content.slice(0, 50) + (firstUserMessage?.content.length > 50 ? '...' : '') || 'New Conversation';
-    
+
     return {
       id: conv.id,
       title: conv.customTitle || defaultTitle,
@@ -196,7 +176,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     };
   });
 
-  const renamingConversation = renamingConversationId 
+  const renamingConversation = renamingConversationId
     ? conversationsList.find(c => c.id === renamingConversationId)
     : null;
 
@@ -244,7 +224,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
                 <p className="text-sm text-gray-500">Multi-Agent Assistance</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={onOpenProfile}>
                 <span className="text-sm text-gray-600">{userName}</span>
@@ -265,7 +245,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
                 {messages.map(message => (
                   <ChatMessage key={message.id} message={message} />
                 ))}
-                
+
                 {isTyping && (
                   <div className="flex gap-3">
                     <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">

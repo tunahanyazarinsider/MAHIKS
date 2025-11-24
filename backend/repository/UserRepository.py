@@ -11,7 +11,6 @@ class UserRepository:
         item = self.db.query(User).filter(
             User.email == email
         ).first()
-
         if item is None:
             raise NotFoundError(message = "User not found", code = "USER_NOT_FOUND")
 

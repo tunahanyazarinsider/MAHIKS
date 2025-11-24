@@ -26,7 +26,6 @@ def login(request: LoginRequest, user_service: UserService = Depends(get_user_se
         ApiResponse[UserResponse]
     """
     user = user_service.login(request)
-    print("After login")
     return ApiResponse(status=200, message="Login successful", data=user)
 
 @user_router.post("/register", response_model=ApiResponse[UserResponse])
