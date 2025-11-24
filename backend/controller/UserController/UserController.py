@@ -5,16 +5,16 @@ from backend.controller.UserController.dto.LoginRequest import LoginRequest
 from backend.controller.UserController.dto.RegisterRequest import RegisterRequest
 from backend.utils.api_response import ApiResponse
 from backend.database.database import get_db
-from backend.models.models import User
 from sqlalchemy.orm import Session
 from fastapi import Depends
+from backend.controller.UserController.dto.LoginResponse import LoginResponse
 
 user_router = APIRouter()
 def get_user_service(db: Session = Depends(get_db)) -> UserService:
     return UserService(db)
 
-@user_router.post("/login", response_model=ApiResponse[UserResponse])
-def login(request: LoginRequest, user_service: UserService = Depends(get_user_service)) -> ApiResponse[UserResponse]:
+@user_router.post("/login", response_model=ApiResponse[LoginResponse])
+def login(request: LoginRequest, user_service: UserService = Depends(get_user_service)) -> ApiResponse[LoginResponse]:
     """
     Login endpoint
 
@@ -23,13 +23,13 @@ def login(request: LoginRequest, user_service: UserService = Depends(get_user_se
         user_service: UserService -> dependency injection
 
     returns:
-        ApiResponse[UserResponse]
+        ApiResponse[LoginResponse]
     """
-    user = user_service.login(request)
-    return ApiResponse(status=200, message="Login successful", data=user)
+    response = user_service.login(request)
+    return ApiResponse(status=200, message="Login successful", data=response)
 
-@user_router.post("/register", response_model=ApiResponse[UserResponse])
-def register(request: RegisterRequest, user_service: UserService = Depends(get_user_service)) -> ApiResponse[UserResponse]:
+@user_router.post("/register", response_model=ApiResponse[LoginResponse])
+def register(request: RegisterRequest, user_service: UserService = Depends(get_user_service)) -> ApiResponse[LoginResponse]:
     """
     Register endpoint
 
@@ -38,7 +38,7 @@ def register(request: RegisterRequest, user_service: UserService = Depends(get_u
         user_service: UserService -> dependency injection
 
     returns:
-        ApiResponse[UserResponse]
+        ApiResponse[LoginResponse]
     """
-    user = user_service.register(request)
-    return ApiResponse(status=201, message="User registered successfully", data=user)
+    response = user_service.register(request)
+    return ApiResponse(status=201, message="User registered successfully", data=response)

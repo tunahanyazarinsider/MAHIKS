@@ -11,6 +11,7 @@ const userApi = axios.create({
 export const login = async (email: string, password: string) => {
     try {
         const response = await userApi.post("/login", { email, password });
+        console.log(response.data);
         return response.data;
     } catch (error) {
         const axiosError = error as AxiosError;
@@ -22,6 +23,7 @@ export const login = async (email: string, password: string) => {
 export const register = async (name: string, email: string, password: string) => {
     try {
         const response = await userApi.post("/register", { name, email, password });
+        console.log(response.data);
         return response.data;
     } catch (error) {
         const axiosError = error as AxiosError;

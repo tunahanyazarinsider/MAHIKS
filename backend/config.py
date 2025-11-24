@@ -46,7 +46,10 @@ class Config:
 
     # Data Directory
     DATA_DIR = os.getenv("DATA_DIR", "./data/raw_documents")
-
+    JWT_SECRET: str = "CHANGE_THIS"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     @classmethod
     def validate(cls):
         """Validate required configuration"""

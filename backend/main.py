@@ -26,7 +26,7 @@ from backend.agents.generation_agent_ollama import GenerationAgentOllama
 from backend.agents.orchestrator_agent import QueryOrchestratorAgent
 
 # Routers
-from backend.controller.UserController import user_router
+from backend.controller.UserController.UserController import user_router
 
 from backend.core.error_handlers import register_exception_handlers
 

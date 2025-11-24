@@ -10,9 +10,9 @@ from sqlalchemy.dialects.mysql import BIGINT
 
 class UserResponse(BaseModel):
     """User response model"""
-    email: str
+    id: int
     display_name: str
-    role: str
+    email: str
     status: str
 
     class Config:
