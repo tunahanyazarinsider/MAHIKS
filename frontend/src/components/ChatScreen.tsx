@@ -240,30 +240,34 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
         {/* Chat Area */}
         <div className="flex-1 overflow-hidden p-6">
           <Card className="h-full flex flex-col max-w-5xl mx-auto">
-            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-              <div className="space-y-4">
-                {messages.map(message => (
-                  <ChatMessage key={message.id} message={message} />
-                ))}
-
-                {isTyping && (
-                  <div className="flex gap-3">
-                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                      <div className="flex gap-1">
-                        <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            <div className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full p-4">
+                <div className="space-y-4">
+                  {messages.map(message => (
+                    <ChatMessage key={message.id} message={message} />
+                  ))}
+                  
+                  {isTyping && (
+                    <div className="flex gap-3">
+                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <div className="flex gap-1">
+                          <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+                  )}
+                  
+                  <div ref={scrollRef} />
+                </div>
+              </ScrollArea>
+            </div>
 
             <Separator />
 
             {/* Input Area */}
-            <div className="p-4">
+            <div className="p-4 flex-shrink-0">
               <div className="flex gap-2">
                 <Input
                   value={input}
