@@ -54,7 +54,6 @@ chroma_data/
 logs/
 
 # Data files (add actual data to .gitignore but keep structure)
-data/raw_documents/*.pdf
 data/raw_documents/*.txt
 data/raw_documents/*.html
 data/raw_documents/*.htm

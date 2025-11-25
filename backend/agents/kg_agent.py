@@ -27,7 +27,16 @@ class KnowledgeGraphAgent:
         except OSError:
             print("⚠ Turkish model not found. Attempting to download...")
             import subprocess
-            subprocess.run(["python", "-m", "spacy", "download", "tr_core_news_lg"])
+            result = subprocess.run(
+                ["python", "-m", "spacy", "download", "tr_core_news_lg"],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode != 0:
+                raise OSError(
+                    f"Failed to download Turkish spaCy model. "
+                    f"Please install manually: python -m spacy download tr_core_news_lg"
+                )
             self.nlp = spacy.load("tr_core_news_lg")
             print("✓ Turkish model downloaded and loaded")
 
