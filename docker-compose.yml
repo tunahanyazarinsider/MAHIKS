@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL Database
   mysql:
@@ -115,6 +113,21 @@ services:
     networks:
       - mahiks-network
     command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mahiks-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - mahiks-network
+    environment:
+      - VITE_API_URL=http://localhost:8000
 
 volumes:
   mysql_data:
