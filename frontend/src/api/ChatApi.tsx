@@ -12,6 +12,7 @@ const chatApi = axios.create({
 export const chatRequest = async (queryRequest: QueryRequest) => {
     try {
         const response = await chatApi.post("/ask", queryRequest);
+        console.log(response.data);
         return response.data;
     } catch (error) {
         const axiosError = error as AxiosError;
