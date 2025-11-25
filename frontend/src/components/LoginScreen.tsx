@@ -4,20 +4,35 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { HeartPulse } from 'lucide-react';
+import { login } from '../api/UserApi';
+
 
 interface LoginScreenProps {
-  onLogin: (email: string) => void;
+  onLogin: (email: string, name: string) => void;
   onSwitchToSignUp: () => void;
 }
 
 export function LoginScreen({ onLogin, onSwitchToSignUp }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
-      onLogin(email);
+    if (!email || !password) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await login(email, password);
+      onLogin(response.email, response.display_name);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || err.message || 'An error occurred during login';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -37,6 +52,11 @@ export function LoginScreen({ onLogin, onSwitchToSignUp }: LoginScreenProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
+                {error}
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -46,6 +66,7 @@ export function LoginScreen({ onLogin, onSwitchToSignUp }: LoginScreenProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -57,13 +78,14 @@ export function LoginScreen({ onLogin, onSwitchToSignUp }: LoginScreenProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Sign In
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}

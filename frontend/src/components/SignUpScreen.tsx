@@ -4,6 +4,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { HeartPulse } from 'lucide-react';
+import { register } from '../api/UserApi';
 
 interface SignUpScreenProps {
   onSignUp: (email: string, name: string) => void;
@@ -21,9 +22,9 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
     confirmPassword: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setErrors({ confirmPassword: 'Passwords do not match' });
@@ -31,7 +32,14 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
     }
 
     if (formData.fullName && formData.email && formData.password) {
-      onSignUp(formData.email, formData.fullName);
+      try {
+        const response = await register(formData.fullName, formData.email, formData.password);
+        // Save token to localStorage
+        localStorage.setItem('token', response.data.access_token);
+        onSignUp(response.data.user.email, response.data.user.display_name);
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 
@@ -109,7 +117,7 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
               Sign Up
             </Button>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}

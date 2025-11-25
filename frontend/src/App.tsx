@@ -16,10 +16,10 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('signin');
   const [user, setUser] = useState<UserData | null>(null);
 
-  const handleLogin = (email: string) => {
+  const handleLogin = (email: string, name: string) => {
     // In a real app, you would fetch the user's name from the backend
     // For now, we'll use a default name or extract from email
-    setUser({ email, name: 'User' });
+    setUser({ email, name });
     setCurrentView('chat');
   };
 

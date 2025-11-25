@@ -43,6 +43,14 @@ httpx==0.26.0
 # Type hints
 pydantic==2.5.3
 pydantic-settings==2.1.0
+pydantic[email]==2.5.3
+
+passlib==1.7.4
+bcrypt==4.0.1
+python-jose[cryptography]==3.3.0
+
+
 
 # redis client
 redis==5.0.1
+

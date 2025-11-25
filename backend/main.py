@@ -29,6 +29,11 @@ from backend.agents.generation_agent import GenerationAgent
 from backend.agents.generation_agent_ollama import GenerationAgentOllama
 from backend.agents.orchestrator_agent import QueryOrchestratorAgent
 
+# Routers
+from backend.controller.UserController.UserController import user_router
+
+from backend.core.error_handlers import register_exception_handlers
+
 # Global variables for handlers
 mysql_handler = None
 chroma_handler = None
@@ -157,6 +162,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include user router
+app.include_router(user_router)
+
+# Register exception handlers
+register_exception_handlers(app)
 
 @app.get("/", response_model=HealthResponse)
 async def root():
