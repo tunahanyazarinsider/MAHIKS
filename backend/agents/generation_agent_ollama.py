@@ -305,3 +305,39 @@ Lütfen yanıtını ver:"""
 
         except Exception as e:
             raise Exception(f"Chat completion failed: {str(e)}")
+
+    def generate_streaming(self, prompt: str):
+        """
+        Generate answer with streaming response
+
+        Args:
+            prompt: Prompt string
+
+        Yields:
+            Chunks of generated text
+        """
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": True,
+                    "options": {
+                        "temperature": 0.3,
+                    }
+                },
+                stream=True,
+                timeout=120
+            )
+
+            if response.status_code == 200:
+                for line in response.iter_lines():
+                    if line:
+                        chunk = line.decode('utf-8')
+                        yield chunk
+            else:
+                yield f"Error: API returned status {response.status_code}"
+
+        except Exception as e:
+            yield f"Error during streaming generation: {str(e)}"

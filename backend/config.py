@@ -47,6 +47,13 @@ class Config:
     # Data Directory
     DATA_DIR = os.getenv("DATA_DIR", "./data/raw_documents")
 
+    # Redis Cache Configuration
+    REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+    REDIS_DB = int(os.getenv('REDIS_DB', '0'))
+    CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'true').lower() == 'true'
+    CACHE_TTL = int(os.getenv('CACHE_TTL', '3600'))  # 1 hour default
+
     @classmethod
     def validate(cls):
         """Validate required configuration"""

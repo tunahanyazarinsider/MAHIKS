@@ -69,12 +69,12 @@ echo "Stopping existing containers..."
 docker-compose down
 
 echo ""
-echo "Starting services (MySQL, Neo4j, Backend)..."
-docker-compose up -d
+echo "Starting services (MySQL, Neo4j, Redis, Backend)..."
+docker-compose --env-file .env -f docker-compose.yml up -d --build
 
 echo ""
 echo "Waiting for services to become healthy..."
-sleep 10
+sleep 15
 
 # Check service status
 echo ""
@@ -111,6 +111,16 @@ else
     echo "   Check logs: docker logs mahiks-backend"
 fi
 
+# Check Redis cache
+echo ""
+echo "Checking Redis cache..."
+if docker logs mahiks-backend 2>&1 | grep -q "Redis cache initialized"; then
+    echo "✅ Redis cache is connected"
+else
+    echo "⚠️  Redis cache might not be initialized"
+    echo "   Check logs: docker logs mahiks-backend"
+fi
+
 echo ""
 echo "========================================================================"
 echo "STARTUP COMPLETE"
@@ -130,10 +140,17 @@ echo ""
 echo "  # System status"
 echo "  curl http://localhost:8000/status | jq"
 echo ""
+echo "  # Cache statistics"
+echo "  curl http://localhost:8000/api/cache/stats | jq"
+echo ""
 echo "  # Test query (if documents are processed)"
 echo "  curl -X POST http://localhost:8000/api/ask \\"
 echo "    -H 'Content-Type: application/json' \\"
 echo "    -d '{\"question\": \"SGK nedir?\", \"include_citations\": true}' | jq"
+echo ""
+echo "  # Test cache (run same query twice to see caching in action)"
+echo "  curl -X POST http://localhost:8000/api/ask \\"
+echo "    -d '{\"question\": \"test\"}' | jq '.metadata.from_cache'"
 echo ""
 echo "📝 Next Steps:"
 echo ""

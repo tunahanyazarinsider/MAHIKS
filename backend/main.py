@@ -18,6 +18,10 @@ from backend.models.schemas import (
 from backend.database.mysql_handler import MySQLHandler
 from backend.database.chroma_handler import ChromaDBHandler
 from backend.database.neo4j_handler import Neo4jHandler
+from backend.database.cache_handler import (
+    init_cache_handler,
+    get_cache_handler
+)
 
 # Agents
 from backend.agents.retrieval_agent import RetrievalAgent
@@ -72,6 +76,21 @@ async def lifespan(app: FastAPI):
             password=Config.NEO4J_PASSWORD
         )
         neo4j_handler.create_indexes()
+
+        # Initialize Redis Cache
+        # if redis setup fails, continue without cache functionality
+        if Config.CACHE_ENABLED:
+            try:
+                init_cache_handler(
+                    host=Config.REDIS_HOST,
+                    port=Config.REDIS_PORT
+                )
+                print(f"✓ Redis cache initialized at {Config.REDIS_HOST}:{Config.REDIS_PORT}")
+            except Exception as e:
+                print(f"⚠️  Redis cache failed to initialize: {e}")
+                print("   Continuing without cache...")
+        else:
+            print("ℹ️  Cache disabled (CACHE_ENABLED=false)")
 
         print("✓ All databases initialized")
 
@@ -155,6 +174,37 @@ async def health_check():
         "status": "healthy",
         "message": "All systems operational"
     }
+
+@app.get("/api/cache/stats")
+async def get_cache_stats():
+    """Get cache statistics."""
+    cache = get_cache_handler()
+    if not cache:
+        raise HTTPException(status_code=503, detail="Cache not available")
+
+    return cache.get_stats()
+
+
+@app.post("/api/cache/clear")
+async def clear_cache(cache_type: str = "all"):
+    """
+    Clear cache.
+
+    Args:
+        cache_type: 'all' (default) or 'queries'
+    """
+    cache = get_cache_handler()
+    if not cache:
+        raise HTTPException(status_code=503, detail="Cache not available")
+
+    if cache_type == "all":
+        cache.invalidate_all()
+    elif cache_type == "queries":
+        cache.invalidate_queries()
+    else:
+        raise HTTPException(status_code=400, detail="Invalid cache_type. Use 'all' or 'queries'")
+
+    return {"message": f"Cache '{cache_type}' cleared successfully"}
 
 
 @app.get("/status", response_model=StatusResponse)
