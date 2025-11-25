@@ -61,6 +61,7 @@ MAHIKS/
 ### Prerequisites
 
 - Docker and Docker Compose (recommended)
+- **Ollama** installed on your Mac (runs on host, not in Docker)
 - Or, for local setup:
   - Python 3.11+
   - MySQL 8.0+
@@ -69,45 +70,67 @@ MAHIKS/
 
 ### Installation
 
-#### Option 1: Using Docker (Recommended)
+#### Option 1: Using Docker with Host Ollama (Recommended for Low Memory)
 
-**🚀 Quick Start (Automated):**
+**Why Host Ollama?** Running Ollama in Docker can consume excessive memory. By running it on your Mac, you save ~3-4 GB RAM and get better performance.
+
+**🚀 Quick Start:**
 
 ```bash
-./quick_start.sh
+# Step 1: Install Ollama on your Mac (if not already installed)
+brew install ollama
+# Or download from: https://ollama.com/download
+
+# Step 2: Start Ollama on your Mac
+ollama serve
+
+# Step 3: Pull a small, fast model (in a new terminal)
+ollama pull llama3.2:1b
+# OR for better quality: ollama pull qwen2.5:0.5b
+
+# Step 4: Use the automated startup script
+./start_demo.sh
 ```
 
-This interactive script will:
-- Start all Docker services
-- Pull an Ollama model (your choice)
-- Check for documents
-- Process them into the RAG system
-- Verify everything works
+The `start_demo.sh` script automatically:
+- Checks if Ollama is running on your Mac
+- Verifies the model is installed
+- Starts Docker services (MySQL, Neo4j, Backend only)
+- Tests connectivity
+- Shows you system status
 
 **Manual Setup:**
 
-1. **Clone and setup**:
+1. **Start Ollama on your Mac:**
+```bash
+# Terminal 1: Start Ollama (keep running)
+ollama serve
+
+# Terminal 2: Pull a model
+ollama pull llama3.2:1b
+```
+
+2. **Setup project:**
 ```bash
 cd MAHIKS
 cp .env.example .env
 ```
 
-2. **Edit `.env` file** with your credentials:
+3. **Edit `.env` file** with your credentials:
 ```bash
 MYSQL_PASSWORD=your_secure_password
 NEO4J_PASSWORD=your_neo4j_password
-OLLAMA_MODEL=llama2  # or mistral, llama3
+OLLAMA_MODEL=llama3.2:1b  # or qwen2.5:0.5b
 ```
 
-3. **Start services**:
+4. **Start Docker services** (Ollama runs on host, not in Docker):
 ```bash
 docker-compose up -d
 ```
 
-4. **Pull Ollama model**:
-```bash
-docker exec -it mahiks-ollama ollama pull llama2
-```
+**Note:** The docker-compose.yml is configured to use `host.docker.internal:11434` to connect to your Mac's Ollama instance.
+
+See [HOST_OLLAMA_SETUP.md](docs/HOST_OLLAMA_SETUP.md) for detailed explanation and troubleshooting.
 
 5. **Add documents** to `data/raw_documents/`
    - Supported: PDF, HTML, TXT files
