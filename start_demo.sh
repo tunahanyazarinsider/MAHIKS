@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # MAHIKS-TR Demo Startup Script
-# This script helps you start the system for your course demo
 
 echo "========================================================================"
 echo "MAHIKS-TR Demo Startup"
