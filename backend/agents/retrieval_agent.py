@@ -29,6 +29,17 @@ class RetrievalAgent:
             print("⚠ Turkish spaCy model not loaded, entity extraction may be limited")
             self.nlp = None
 
+        # Load cross-encoder model for reranking
+        self.cross_encoder = None
+        try:
+            from sentence_transformers import CrossEncoder
+            self.cross_encoder = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+            print("✓ Cross-encoder loaded for reranking")
+        except ImportError:
+            print("⚠ Install sentence-transformers: pip install sentence-transformers")
+        except Exception as e:
+            print(f"⚠ Cross-encoder not loaded: {e}")
+
         print("✓ Retrieval agent initialized")
 
     def extract_query_entities(self, query: str) -> List[str]:
@@ -148,13 +159,14 @@ class RetrievalAgent:
         print(f"      ✓ Found {len(all_facts)} graph facts")
         return all_facts
 
-    def hybrid_retrieve(self, query: str, vector_top_k: int = 5) -> Dict:
+    def hybrid_retrieve(self, query: str, vector_top_k: int = 10, use_reranking: bool = True) -> Dict:
         """
         Perform hybrid retrieval: combine vector search and graph search
 
         Args:
             query: User query
-            vector_top_k: Number of vector results
+            vector_top_k: Number of vector results (default 10 for better reranking)
+            use_reranking: Whether to apply cross-encoder reranking (default True)
 
         Returns:
             Dictionary with both vector and graph results
@@ -164,7 +176,13 @@ class RetrievalAgent:
         # 1. Vector search
         vector_results = self.vector_search(query, top_k=vector_top_k)
 
-        # 2. Graph search
+        # 2. Rerank with cross-encoder
+        if use_reranking and self.cross_encoder and vector_results:
+            print(f"    Reranking {len(vector_results)} results...")
+            vector_results = self.rerank_results(vector_results, query)
+            print(f"    ✓ Reranked to top {len(vector_results)}")
+
+        # 3. Graph search
         graph_results = self.graph_search(query)
 
         result = {
@@ -180,8 +198,7 @@ class RetrievalAgent:
 
     def rerank_results(self, results: List[Dict], query: str) -> List[Dict]:
         """
-        Re-rank results based on additional criteria
-        (Could be enhanced with a re-ranking model)
+        Re-rank results using cross-encoder
 
         Args:
             results: List of retrieved chunks
@@ -190,9 +207,24 @@ class RetrievalAgent:
         Returns:
             Re-ranked results
         """
-        # Simple re-ranking based on similarity score
-        # Can be enhanced with cross-encoder models
-        return sorted(results, key=lambda x: x.get('similarity', 0), reverse=True)
+        if not self.cross_encoder or not results:
+            # Fallback to original similarity sorting
+            return sorted(results, key=lambda x: x.get('similarity', 0), reverse=True)
+        
+        # Extract texts
+        texts = [r.get('chunk_text', '') for r in results]
+        
+        # Score with cross-encoder
+        pairs = [[query, text] for text in texts]
+        scores = self.cross_encoder.predict(pairs)
+        
+        # Add scores and sort
+        for i, result in enumerate(results):
+            result['ce_score'] = float(scores[i])
+        
+        reranked = sorted(results, key=lambda x: x['ce_score'], reverse=True)
+        
+        return reranked[:5]  # Return top 5
 
     def get_context_window(self, chunk_id: int, window_size: int = 1) -> List[Dict]:
         """

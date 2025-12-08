@@ -46,6 +46,7 @@ class Citation(BaseModel):
     source: str
     type: str
     similarity: float
+    ce_score: Optional[float] = None
 
 
 class QueryResponse(BaseModel):

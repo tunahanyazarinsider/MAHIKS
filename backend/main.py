@@ -84,6 +84,7 @@ async def lifespan(app: FastAPI):
 
         # Initialize Redis Cache
         # if redis setup fails, continue without cache functionality
+        '''
         if Config.CACHE_ENABLED:
             try:
                 init_cache_handler(
@@ -96,6 +97,7 @@ async def lifespan(app: FastAPI):
                 print("   Continuing without cache...")
         else:
             print("ℹ️  Cache disabled (CACHE_ENABLED=false)")
+        '''
 
         print("✓ All databases initialized")
 
