@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
 from database.mysql_handler import MySQLHandler
 from database.chroma_handler import ChromaDBHandler
 from database.neo4j_handler import Neo4jHandler
+from database.bm25_handler import BM25Handler
 from agents.ingestion_agent import IngestionAgent
 from agents.extraction_agent import ExtractionAgent
 from agents.kg_agent import KnowledgeGraphAgent
@@ -79,6 +80,12 @@ def main():
         )
         neo4j.create_indexes()
 
+        bm25 = BM25Handler(
+            persist_directory=Config.BM25_PERSIST_DIR,
+            k1=Config.BM25_K1,
+            b=Config.BM25_B
+        )
+
     except Exception as e:
         print(f"✗ Database initialization failed: {e}")
         sys.exit(1)
@@ -91,6 +98,7 @@ def main():
             print("Resetting databases...")
             chroma.reset_collection()
             neo4j.clear_all()
+            bm25.reset_index()
             print("✓ Databases reset")
         else:
             print("Reset cancelled")
@@ -105,7 +113,7 @@ def main():
             chunk_overlap=Config.CHUNK_OVERLAP
         )
         kg_agent = KnowledgeGraphAgent(neo4j)
-        vectorization = VectorizationAgent(chroma, mysql)
+        vectorization = VectorizationAgent(chroma, mysql, bm25)
 
     except Exception as e:
         print(f"✗ Agent initialization failed: {e}")
@@ -203,6 +211,7 @@ def main():
     print(f"MySQL Documents: {mysql.get_document_count()}")
     print(f"MySQL Chunks: {mysql.get_chunk_count()}")
     print(f"ChromaDB Vectors: {chroma.get_count()}")
+    print(f"BM25 Documents: {bm25.get_count()}")
 
     graph_stats = neo4j.get_statistics()
     print(f"Neo4j Nodes: {graph_stats.get('node_count', 0)}")
@@ -210,6 +219,8 @@ def main():
 
     # Cleanup
     print("\n" + "="*70)
+    print("Saving BM25 index...")
+    bm25.save_index()
     mysql.close()
     neo4j.close()
 
