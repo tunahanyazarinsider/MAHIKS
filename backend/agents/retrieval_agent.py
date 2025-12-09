@@ -31,6 +31,17 @@ class RetrievalAgent:
             print("⚠ Turkish spaCy model not loaded, entity extraction may be limited")
             self.nlp = None
 
+        # Load cross-encoder model for reranking
+        self.cross_encoder = None
+        try:
+            from sentence_transformers import CrossEncoder
+            self.cross_encoder = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+            print("✓ Cross-encoder loaded for reranking")
+        except ImportError:
+            print("⚠ Install sentence-transformers: pip install sentence-transformers")
+        except Exception as e:
+            print(f"⚠ Cross-encoder not loaded: {e}")
+
         print("✓ Retrieval agent initialized")
 
     def extract_query_entities(self, query: str) -> List[str]:
@@ -231,14 +242,15 @@ class RetrievalAgent:
         )
 
         return fused_results
-
-    def hybrid_retrieve(self, query: str, vector_top_k: int = 5) -> Dict:
+      
+    def hybrid_retrieve(self, query: str, vector_top_k: int = 10, use_reranking: bool = True) -> Dict:
         """
         Perform triple-hybrid retrieval: combine vector, BM25, and graph search
 
         Args:
             query: User query
-            vector_top_k: Number of vector results
+            vector_top_k: Number of vector results (default 10 for better reranking)
+            use_reranking: Whether to apply cross-encoder reranking (default True)
 
         Returns:
             Dictionary with vector, BM25, graph results, and fused context
@@ -248,17 +260,22 @@ class RetrievalAgent:
         # 1. Vector search
         vector_results = self.vector_search(query, top_k=vector_top_k)
 
-        # 2. BM25 search (if available)
+        # 2.1. BM25 search (if available)
         bm25_results = []
         if self.bm25:
             bm25_results = self.bm25_search(query, top_k=vector_top_k)
 
-        # 3. Fuse vector and BM25 results
+        # 2.2 Fuse vector and BM25 results
         if bm25_results:
             fused_context = self.fuse_results(vector_results, bm25_results)
             print(f"    ✓ Fused {len(vector_results)} vector + {len(bm25_results)} BM25 results")
         else:
             fused_context = vector_results
+        # 3. Rerank with cross-encoder
+        if use_reranking and self.cross_encoder and vector_results:
+            print(f"    Reranking {len(vector_results)} results...")
+            vector_results = self.rerank_results(vector_results, query)
+            print(f"    ✓ Reranked to top {len(vector_results)}")
 
         # 4. Graph search
         graph_results = self.graph_search(query)
@@ -279,8 +296,7 @@ class RetrievalAgent:
 
     def rerank_results(self, results: List[Dict], query: str) -> List[Dict]:
         """
-        Re-rank results based on additional criteria
-        (Could be enhanced with a re-ranking model)
+        Re-rank results using cross-encoder
 
         Args:
             results: List of retrieved chunks
@@ -289,9 +305,24 @@ class RetrievalAgent:
         Returns:
             Re-ranked results
         """
-        # Simple re-ranking based on similarity score
-        # Can be enhanced with cross-encoder models
-        return sorted(results, key=lambda x: x.get('similarity', 0), reverse=True)
+        if not self.cross_encoder or not results:
+            # Fallback to original similarity sorting
+            return sorted(results, key=lambda x: x.get('similarity', 0), reverse=True)
+        
+        # Extract texts
+        texts = [r.get('chunk_text', '') for r in results]
+        
+        # Score with cross-encoder
+        pairs = [[query, text] for text in texts]
+        scores = self.cross_encoder.predict(pairs)
+        
+        # Add scores and sort
+        for i, result in enumerate(results):
+            result['ce_score'] = float(scores[i])
+        
+        reranked = sorted(results, key=lambda x: x['ce_score'], reverse=True)
+        
+        return reranked[:5]  # Return top 5
 
     def get_context_window(self, chunk_id: int, window_size: int = 1) -> List[Dict]:
         """

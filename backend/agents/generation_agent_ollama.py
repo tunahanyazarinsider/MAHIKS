@@ -206,12 +206,20 @@ Lütfen yanıtını ver:"""
         # Extract top sources for citations
         citations = []
         for chunk in context.get('vector_context', [])[:3]:
-            citations.append({
+            citation = {
                 'source': chunk.get('source_name', 'Bilinmeyen'),
                 'text': chunk.get('chunk_text', ''),
                 'type': chunk.get('document_type', 'PDF'),
                 'similarity': chunk.get('similarity', 0)
-            })
+            }
+            
+            # Add ce_score if available
+            if 'ce_score' in chunk:
+                citation['ce_score'] = chunk.get('ce_score')
+            else:
+                citation['ce_score'] = "N/A"
+            
+            citations.append(citation)
 
         return {
             'answer': answer,
