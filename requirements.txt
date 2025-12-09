@@ -54,3 +54,10 @@ python-jose[cryptography]==3.3.0
 # redis client
 redis==5.0.1
 
+# BM25 for lexical search
+rank-bm25==0.2.2
+
+# Turkish stemmer
+TurkishStemmer
+
+

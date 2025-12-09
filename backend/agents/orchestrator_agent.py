@@ -81,9 +81,10 @@ class QueryOrchestratorAgent:
                         {
                             'name': chunk.get('source_name', 'Unknown'),
                             'type': chunk.get('document_type', 'Unknown'),
-                            'relevance': chunk.get('similarity', 0)
+                            'relevance': chunk.get('similarity', 0),
+                            'text': chunk.get('chunk_text', ''),
                         }
-                        for chunk in context.get('vector_context', [])[:3]
+                        for chunk in context.get('vector_context', [])[:10]
                     ],
                     'graph_facts': len(context.get('graph_facts', []))
                 },

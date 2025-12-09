@@ -208,6 +208,7 @@ Lütfen yanıtını ver:"""
         for chunk in context.get('vector_context', [])[:3]:
             citation = {
                 'source': chunk.get('source_name', 'Bilinmeyen'),
+                'text': chunk.get('chunk_text', ''),
                 'type': chunk.get('document_type', 'PDF'),
                 'similarity': chunk.get('similarity', 0)
             }

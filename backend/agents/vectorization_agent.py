@@ -8,16 +8,18 @@ from typing import List, Dict
 class VectorizationAgent:
     """Agent for vectorizing text chunks"""
 
-    def __init__(self, chroma_handler, mysql_handler):
+    def __init__(self, chroma_handler, mysql_handler, bm25_handler=None):
         """
         Initialize the Vectorization agent
 
         Args:
             chroma_handler: Instance of ChromaDBHandler
             mysql_handler: Instance of MySQLHandler
+            bm25_handler: Instance of BM25Handler (optional)
         """
         self.chroma = chroma_handler
         self.mysql = mysql_handler
+        self.bm25 = bm25_handler
         print("✓ Vectorization agent initialized")
 
     def vectorize_chunks(self, chunks: List[Dict], document_id: int) -> int:
@@ -65,6 +67,10 @@ class VectorizationAgent:
         # Now add to ChromaDB with MySQL chunk IDs
         self.chroma.add_chunks(chunk_ids, texts, metadatas)
 
+        # Also add to BM25 index if available
+        if self.bm25:
+            self.bm25.add_chunks(chunk_ids, texts)
+
         print(f"      ✓ Vectorized {len(chunk_ids)} chunks")
         return len(chunk_ids)
 
@@ -108,6 +114,10 @@ class VectorizationAgent:
 
         # Add to ChromaDB
         self.chroma.add_chunks(chunk_ids, texts, metadatas)
+
+        # Also add to BM25 index if available
+        if self.bm25:
+            self.bm25.add_chunks(chunk_ids, texts)
 
         print(f"      ✓ Vectorized {len(chunk_ids)} chunks")
         return len(chunk_ids)
@@ -162,9 +172,11 @@ class VectorizationAgent:
         """
         mysql_chunks = self.mysql.get_chunk_count()
         chroma_vectors = self.chroma.get_count()
+        bm25_docs = self.bm25.get_count() if self.bm25 else 0
 
         return {
             'mysql_chunks': mysql_chunks,
             'chroma_vectors': chroma_vectors,
-            'in_sync': mysql_chunks == chroma_vectors
+            'bm25_documents': bm25_docs,
+            'in_sync': mysql_chunks == chroma_vectors == bm25_docs if self.bm25 else mysql_chunks == chroma_vectors
         }
