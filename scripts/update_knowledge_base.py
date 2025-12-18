@@ -16,7 +16,7 @@ from database.chroma_handler import ChromaDBHandler
 from database.neo4j_handler import Neo4jHandler
 from agents.ingestion_agent import IngestionAgent
 from agents.extraction_agent import ExtractionAgent
-from agents.kg_agent import KnowledgeGraphAgent
+from agents.llm_kg_extractor import LLMKnowledgeGraphExtractor
 from agents.vectorization_agent import VectorizationAgent
 from config import Config
 import argparse
@@ -39,6 +39,9 @@ def main():
         default=Config.DATA_DIR,
         help='Directory containing documents to process'
     )
+
+    # to process a file named "new_docs" in "/data", run:
+    # python3 -m backend.scripts.update_knowledge_base --data-dir /data/raw_documents/pdf_data_1.pdf
 
     args = parser.parse_args()
 
@@ -98,13 +101,16 @@ def main():
 
     # Initialize agents
     print("\nInitializing agents...")
+    print("Knowledge Graph Method: LLM (Gemini)")
     try:
         ingestion = IngestionAgent(data_directory=args.data_dir)
         extraction = ExtractionAgent(
             chunk_size=Config.CHUNK_SIZE,
             chunk_overlap=Config.CHUNK_OVERLAP
         )
-        kg_agent = KnowledgeGraphAgent(neo4j)
+
+        # Initialize LLM KG extractor
+        llm_extractor = LLMKnowledgeGraphExtractor(neo4j)
         vectorization = VectorizationAgent(chroma, mysql)
 
     except Exception as e:
@@ -170,17 +176,18 @@ def main():
             print(f"  [4/4] Vectorizing and storing chunks...")
             num_chunks = vectorization.vectorize_chunks(chunks, doc_id)
 
-            # Extract knowledge graph triplets
+            # Extract knowledge graph triplets using LLM
             print(f"  [4/4] Extracting knowledge graph...")
-            kg_stats = kg_agent.process_document(text)
+            kg_stats = llm_extractor.process_document(text)
+            triplets_count = kg_stats.get('triplets_extracted', 0)
 
             # Update stats
             stats['documents_processed'] += 1
             stats['chunks_created'] += num_chunks
-            stats['triplets_extracted'] += kg_stats['triplets_extracted']
+            stats['triplets_extracted'] += triplets_count
 
             print(f"  ✓ Complete: {num_chunks} chunks, "
-                  f"{kg_stats['triplets_extracted']} triplets\n")
+                  f"{triplets_count} triplets\n")
 
         except Exception as e:
             print(f"  ✗ Error processing document: {e}\n")

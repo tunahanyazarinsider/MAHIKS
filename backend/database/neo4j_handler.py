@@ -331,3 +331,22 @@ class Neo4jHandler:
                 print("⚠ All graph data cleared")
             except Exception as e:
                 print(f"✗ Error clearing graph: {e}")
+
+    def get_all_triplets(self):
+        with self.driver.session() as session:
+            try:
+                result = session.run("""
+                    MATCH (s)-[r]->(o)
+                    RETURN s.name AS subject, type(r) AS predicate, o.name AS object
+                    """)
+                return [
+                    {
+                        "subject": record["subject"],
+                        "predicate": record["predicate"],
+                        "object": record["object"]
+                    }
+                    for record in result
+                ]
+            except Exception as e:
+                print(f"✗ Error retrieving all triplets: {e}")
+                return []
