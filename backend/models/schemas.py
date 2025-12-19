@@ -16,7 +16,7 @@ class UserResponse(BaseModel):
     status: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class QueryRequest(BaseModel):
     """Request model for query endpoint"""

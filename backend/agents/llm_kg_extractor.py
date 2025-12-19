@@ -7,6 +7,7 @@ from typing import List, Dict
 from pydantic import BaseModel, Field
 from google import genai
 import os
+import json
 
 
 class Triplet(BaseModel):
@@ -102,19 +103,47 @@ Sadece triplet listesini döndür, başka açıklama ekleme."""
         try:
             prompt = f"{self.system_prompt}\n\n---\n\nMetinden tripletleri çıkar:\n\n{text}"
 
+            schema = {
+                'type': 'object',
+                'properties': {
+                    'triplets': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'subject': {
+                                    'type': 'string',
+                                    'description': 'The primary entity (noun)'
+                                },
+                                'predicate': {
+                                    'type': 'string',
+                                    'description': 'The relationship or action in UPPER_SNAKE_CASE'
+                                },
+                                'object': {
+                                    'type': 'string',
+                                    'description': 'The target entity or value'
+                                }
+                            },
+                            'required': ['subject', 'predicate', 'object']
+                        }
+                    }
+                },
+                'required': ['triplets']
+            }
+
             # Use Gemini with structured output
             response = self.client.models.generate_content(
                 model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
                 contents=prompt,
                 config={
                     'response_mime_type': 'application/json',
-                    'response_schema': KnowledgeGraph,
+                    'response_schema': schema,
                 }
             )
 
-            # Get parsed response
-            kg = response.parsed
-            return kg.triplets
+            result = json.loads(response.text)
+            triplets = [Triplet(**t) for t in result.get('triplets', [])]
+            return triplets
 
         except Exception as e:
             print(f"      ⚠ Error extracting triplets: {e}")
