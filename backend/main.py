@@ -18,6 +18,7 @@ from backend.models.schemas import (
 from backend.database.mysql_handler import MySQLHandler
 from backend.database.chroma_handler import ChromaDBHandler
 from backend.database.neo4j_handler import Neo4jHandler
+from backend.database.bm25_handler import BM25Handler
 from backend.database.cache_handler import (
     init_cache_handler,
     get_cache_handler
@@ -38,6 +39,7 @@ from backend.core.error_handlers import register_exception_handlers
 mysql_handler = None
 chroma_handler = None
 neo4j_handler = None
+bm25_handler = None
 orchestrator = None
 
 
@@ -82,8 +84,16 @@ async def lifespan(app: FastAPI):
         )
         neo4j_handler.create_indexes()
 
+        # Initialize BM25 Handler
+        bm25_handler = BM25Handler(
+            persist_directory=Config.BM25_PERSIST_DIR,
+            k1=Config.BM25_K1,
+            b=Config.BM25_B
+        )
+
         # Initialize Redis Cache
         # if redis setup fails, continue without cache functionality
+        '''
         if Config.CACHE_ENABLED:
             try:
                 init_cache_handler(
@@ -96,6 +106,7 @@ async def lifespan(app: FastAPI):
                 print("   Continuing without cache...")
         else:
             print("ℹ️  Cache disabled (CACHE_ENABLED=false)")
+        '''
 
         print("✓ All databases initialized")
 
@@ -110,7 +121,8 @@ async def lifespan(app: FastAPI):
         retrieval_agent = RetrievalAgent(
             chroma_handler,
             neo4j_handler,
-            mysql_handler
+            mysql_handler,
+            bm25_handler
         )
 
         # Use Ollama for local LLM generation
@@ -138,6 +150,8 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     print("\nShutting down MAHIKS-TR Backend...")
+    if bm25_handler:
+        bm25_handler.save_index()
     if mysql_handler:
         mysql_handler.close()
     if neo4j_handler:

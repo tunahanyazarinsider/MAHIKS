@@ -47,6 +47,12 @@ class Config:
     # Data Directory
     DATA_DIR = os.getenv("DATA_DIR", "./data/raw_documents")
 
+    # BM25 Configuration (Lexical Search)
+    BM25_PERSIST_DIR = os.getenv("BM25_PERSIST_DIR", "./bm25_data")
+    BM25_K1 = float(os.getenv("BM25_K1", "1.5"))  # Term frequency saturation
+    BM25_B = float(os.getenv("BM25_B", "0.75"))   # Length normalization
+    BM25_WEIGHT = float(os.getenv("BM25_WEIGHT", "0.3"))  # Fusion weight for hybrid search
+
     JWT_SECRET: str = "CHANGE_THIS"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15

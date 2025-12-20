@@ -55,6 +55,12 @@ neo4j-driver==5.16.0
 # redis client
 redis==5.0.1
 
+# BM25 for lexical search
+rank-bm25==0.2.2
+
+# Turkish stemmer
+TurkishStemmer
+
 # dotenv
 python-dotenv==1.0.0
 

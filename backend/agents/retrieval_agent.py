@@ -9,7 +9,7 @@ from typing import List, Dict
 class RetrievalAgent:
     """Agent for hybrid information retrieval"""
 
-    def __init__(self, chroma_handler, neo4j_handler, mysql_handler):
+    def __init__(self, chroma_handler, neo4j_handler, mysql_handler, bm25_handler=None):
         """
         Initialize the Retrieval agent
 
@@ -17,10 +17,12 @@ class RetrievalAgent:
             chroma_handler: Instance of ChromaDBHandler
             neo4j_handler: Instance of Neo4jHandler
             mysql_handler: Instance of MySQLHandler
+            bm25_handler: Instance of BM25Handler (optional)
         """
         self.chroma = chroma_handler
         self.neo4j = neo4j_handler
         self.mysql = mysql_handler
+        self.bm25 = bm25_handler
 
         # Load spaCy for entity extraction from queries
         try:
@@ -28,6 +30,17 @@ class RetrievalAgent:
         except OSError:
             print("⚠ Turkish spaCy model not loaded, entity extraction may be limited")
             self.nlp = None
+
+        # Load cross-encoder model for reranking
+        self.cross_encoder = None
+        try:
+            from sentence_transformers import CrossEncoder
+            self.cross_encoder = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+            print("✓ Cross-encoder loaded for reranking")
+        except ImportError:
+            print("⚠ Install sentence-transformers: pip install sentence-transformers")
+        except Exception as e:
+            print(f"⚠ Cross-encoder not loaded: {e}")
 
         print("✓ Retrieval agent initialized")
 
@@ -148,40 +161,142 @@ class RetrievalAgent:
         print(f"      ✓ Found {len(all_facts)} graph facts")
         return all_facts
 
-    def hybrid_retrieve(self, query: str, vector_top_k: int = 5) -> Dict:
+    def bm25_search(self, query: str, top_k: int = 5) -> List[Dict]:
         """
-        Perform hybrid retrieval: combine vector search and graph search
+        Perform BM25 lexical search
+
+        Args:
+            query: Search query
+            top_k: Number of results to return
+
+        Returns:
+            List of chunks with BM25 scores
+        """
+        if not self.bm25:
+            print("      BM25 not available")
+            return []
+
+        print(f"    BM25 search for: '{query[:50]}...'")
+
+        # Get chunk IDs and scores from BM25
+        results_with_scores = self.bm25.search(query, top_k)
+
+        if not results_with_scores:
+            print("      No BM25 results found")
+            return []
+
+        # Get full chunk data from MySQL
+        chunk_ids = [r[0] for r in results_with_scores]
+        chunks = self.mysql.get_chunks_by_ids(chunk_ids)
+
+        # Add BM25 scores
+        for chunk in chunks:
+            score_info = next(
+                (r for r in results_with_scores if r[0] == chunk['id']),
+                None
+            )
+            if score_info:
+                chunk['bm25_score'] = score_info[1]
+
+        print(f"      ✓ Found {len(chunks)} relevant chunks")
+        return chunks
+
+    def fuse_results(self, vector_results: List[Dict], bm25_results: List[Dict], k: int = 60) -> List[Dict]:
+        """
+        Fuse vector and BM25 results using Reciprocal Rank Fusion (RRF)
+
+        Args:
+            vector_results: Results from vector search
+            bm25_results: Results from BM25 search
+            k: RRF constant (default: 60)
+
+        Returns:
+            Fused and re-ranked results
+        """
+        # Create mapping of chunk_id to chunk data
+        chunk_map = {}
+        
+        # Add vector results with their ranks
+        for rank, chunk in enumerate(vector_results, 1):
+            chunk_id = chunk['id']
+            if chunk_id not in chunk_map:
+                chunk_map[chunk_id] = chunk.copy()
+                chunk_map[chunk_id]['rrf_score'] = 0
+            chunk_map[chunk_id]['rrf_score'] += 1 / (k + rank)
+            chunk_map[chunk_id]['vector_rank'] = rank
+
+        # Add BM25 results with their ranks
+        for rank, chunk in enumerate(bm25_results, 1):
+            chunk_id = chunk['id']
+            if chunk_id not in chunk_map:
+                chunk_map[chunk_id] = chunk.copy()
+                chunk_map[chunk_id]['rrf_score'] = 0
+            chunk_map[chunk_id]['rrf_score'] += 1 / (k + rank)
+            chunk_map[chunk_id]['bm25_rank'] = rank
+
+        # Sort by RRF score
+        fused_results = sorted(
+            chunk_map.values(),
+            key=lambda x: x['rrf_score'],
+            reverse=True
+        )
+
+        return fused_results
+      
+    def hybrid_retrieve(self, query: str, vector_top_k: int = 10, use_reranking: bool = True) -> Dict:
+        """
+        Perform triple-hybrid retrieval: combine vector, BM25, and graph search
 
         Args:
             query: User query
-            vector_top_k: Number of vector results
+            vector_top_k: Number of vector results (default 10 for better reranking)
+            use_reranking: Whether to apply cross-encoder reranking (default True)
 
         Returns:
-            Dictionary with both vector and graph results
+            Dictionary with vector, BM25, graph results, and fused context
         """
         print(f"\n  Hybrid retrieval for: '{query}'")
 
         # 1. Vector search
         vector_results = self.vector_search(query, top_k=vector_top_k)
 
-        # 2. Graph search
+        # 2.1. BM25 search (if available)
+        bm25_results = []
+        if self.bm25:
+            bm25_results = self.bm25_search(query, top_k=vector_top_k)
+
+        # 2.2 Fuse vector and BM25 results
+        if bm25_results:
+            fused_context = self.fuse_results(vector_results, bm25_results)
+            print(f"    ✓ Fused {len(vector_results)} vector + {len(bm25_results)} BM25 results")
+        else:
+            fused_context = vector_results
+        # 3. Rerank with cross-encoder
+        if use_reranking and self.cross_encoder and vector_results:
+            print(f"    Reranking {len(vector_results)} results...")
+            vector_results = self.rerank_results(vector_results, query)
+            print(f"    ✓ Reranked to top {len(vector_results)}")
+
+        # 4. Graph search
         graph_results = self.graph_search(query)
 
         result = {
             'query': query,
             'vector_context': vector_results,
+            'bm25_context': bm25_results,
             'graph_facts': graph_results,
-            'total_sources': len(vector_results) + len(graph_results)
+            'fused_context': fused_context,  # Combined vector + BM25
+            'total_sources': len(vector_results) + len(bm25_results) + len(graph_results)
         }
 
-        print(f"  ✓ Retrieval complete: {len(vector_results)} chunks, {len(graph_results)} facts\n")
+        print(f"  ✓ Retrieval complete: {len(vector_results)} vector, "
+              f"{len(bm25_results)} BM25, {len(graph_results)} graph facts\n")
 
         return result
 
     def rerank_results(self, results: List[Dict], query: str) -> List[Dict]:
         """
-        Re-rank results based on additional criteria
-        (Could be enhanced with a re-ranking model)
+        Re-rank results using cross-encoder
 
         Args:
             results: List of retrieved chunks
@@ -190,9 +305,24 @@ class RetrievalAgent:
         Returns:
             Re-ranked results
         """
-        # Simple re-ranking based on similarity score
-        # Can be enhanced with cross-encoder models
-        return sorted(results, key=lambda x: x.get('similarity', 0), reverse=True)
+        if not self.cross_encoder or not results:
+            # Fallback to original similarity sorting
+            return sorted(results, key=lambda x: x.get('similarity', 0), reverse=True)
+        
+        # Extract texts
+        texts = [r.get('chunk_text', '') for r in results]
+        
+        # Score with cross-encoder
+        pairs = [[query, text] for text in texts]
+        scores = self.cross_encoder.predict(pairs)
+        
+        # Add scores and sort
+        for i, result in enumerate(results):
+            result['ce_score'] = float(scores[i])
+        
+        reranked = sorted(results, key=lambda x: x['ce_score'], reverse=True)
+        
+        return reranked[:5]  # Return top 5
 
     def get_context_window(self, chunk_id: int, window_size: int = 1) -> List[Dict]:
         """

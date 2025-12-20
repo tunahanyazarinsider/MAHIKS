@@ -21,7 +21,7 @@ class QueryOrchestratorAgent:
         """
         self.retrieval_agent = retrieval_agent
         self.generation_agent = generation_agent
-        self.cache = get_cache_handler()
+        #self.cache = get_cache_handler()
         print("✓ Query Orchestrator agent initialized")
 
     def process_query(self, user_query: str, include_citations: bool = True) -> Dict:
@@ -37,6 +37,7 @@ class QueryOrchestratorAgent:
         """
         start_time = time.time()
 
+        '''
         if self.cache:
             cached_response = self.cache.get_query_cache(user_query)
             if cached_response:
@@ -46,6 +47,7 @@ class QueryOrchestratorAgent:
                     (time.time() - start_time) * 1000
                 )
                 return cached_response
+        '''
 
         print(f"\n{'='*70}")
         print(f"Processing Query: {user_query}")
@@ -79,9 +81,10 @@ class QueryOrchestratorAgent:
                         {
                             'name': chunk.get('source_name', 'Unknown'),
                             'type': chunk.get('document_type', 'Unknown'),
-                            'relevance': chunk.get('similarity', 0)
+                            'relevance': chunk.get('similarity', 0),
+                            'text': chunk.get('chunk_text', ''),
                         }
-                        for chunk in context.get('vector_context', [])[:3]
+                        for chunk in context.get('vector_context', [])[:10]
                     ],
                     'graph_facts': len(context.get('graph_facts', []))
                 },
@@ -97,11 +100,12 @@ class QueryOrchestratorAgent:
             print(f"✓ Query processed successfully in {response_time_ms}ms")
             print(f"{'='*70}\n")
 
+            '''
             # STORE IN CACHE for future requests
             if self.cache:
                 self.cache.set_query_cache(user_query, response, ttl=Config.CACHE_TTL)
                 response['metadata']['from_cache'] = False
-
+            '''
             return response
 
         except Exception as e:
