@@ -119,7 +119,7 @@ def main():
 
         vectorization = VectorizationAgent(chroma, mysql, bm25)
         
-        Initialize LLM KG extractor
+        # Initialize LLM KG extractor
         llm_extractor = LLMKnowledgeGraphExtractor(neo4j)
 
 
