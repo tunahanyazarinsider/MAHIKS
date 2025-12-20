@@ -22,8 +22,9 @@ spacy==3.7.2
 sentence-transformers==2.3.1
 transformers==4.37.2
 
-# OpenAI
+# AI APIs
 openai==1.10.0
+google-genai==0.3.0
 
 # Document Processing
 PyPDF2==3.0.1
@@ -50,7 +51,7 @@ bcrypt==4.0.1
 python-jose[cryptography]==3.3.0
 
 
-
+neo4j-driver==5.16.0
 # redis client
 redis==5.0.1
 
@@ -59,5 +60,10 @@ rank-bm25==0.2.2
 
 # Turkish stemmer
 TurkishStemmer
+
+# dotenv
+python-dotenv==1.0.0
+
+
 
 
