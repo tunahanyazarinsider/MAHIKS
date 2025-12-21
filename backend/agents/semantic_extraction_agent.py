@@ -1123,7 +1123,7 @@ if __name__ == "__main__":
     (1) Kimlik doğrulamada kullanılacak olan biyometrik sistem ve uygulamaya geçilecek sağlık
     hizmeti sunucuları, uygulama tarihi ile uygulamaya ilişkin usul ve esaslar Kurum tarafından
     belirlenir.
-    (2) Kişinin sağlık hizmeti sunucusuna müracaatı sırasında ilk biyometrik
+    (2) Kişinin sağlık hizmeti sunucusuna müracaatı sırasında ilk biyometrik kimlik doğrulaması yapılır.
     """
     
     # Create chunker
