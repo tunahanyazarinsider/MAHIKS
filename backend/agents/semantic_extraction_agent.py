@@ -162,7 +162,7 @@ class SUTChunker:
     - Configurable preservation and merging
     
     Usage:
-        chunker = SUTChunkerV2(max_words=350, preserve_all=True)
+        chunker = SUTChunker(max_words=350, preserve_all=True)
         chunks = chunker.chunk_document(text)
         
         for chunk in chunks:
