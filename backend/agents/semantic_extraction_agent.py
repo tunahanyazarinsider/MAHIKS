@@ -1169,5 +1169,19 @@ if __name__ == "__main__":
         print(chunk.text)
         print()
 
+    with open("output.txt", "w", encoding="utf-8") as f:
+        for i, chunk in enumerate(chunks):
+            f.write(f"\n--- Chunk {i + 1} ---\n")
+            f.write(f"Section: {chunk.metadata.section_number}\n")
+            f.write(f"Title: {chunk.metadata.section_title[:50]}...\n")
+            f.write(f"Level: {chunk.metadata.level}\n")
+            f.write(f"Type: {chunk.metadata.chunk_type}\n")
+            f.write(f"Words: {chunk.word_count}\n")
+            f.write(f"Parents: {chunk.metadata.parent_chain}\n")
+            f.write(f"\nText preview:\n")
+            f.write(chunk.text + "\n\n\n")
+        
+        
+
 
 
