@@ -17,11 +17,7 @@ Hierarchy Levels:
 """
 
 import re
-<<<<<<< HEAD
-from typing import List, Dict, Optional, Tuple
-=======
 from typing import List, Dict, Optional
->>>>>>> 3d8a7c6 (small changes for SUTChunker)
 from dataclasses import dataclass, field
 
 
@@ -1127,12 +1123,8 @@ if __name__ == "__main__":
     (1) Kimlik doğrulamada kullanılacak olan biyometrik sistem ve uygulamaya geçilecek sağlık
     hizmeti sunucuları, uygulama tarihi ile uygulamaya ilişkin usul ve esaslar Kurum tarafından
     belirlenir.
-<<<<<<< HEAD
-    (2) Kişinin sağlık hizmeti sunucusuna müracaatı sırasında ilk biyometrik kimlik doğrulaması yapılır.
-=======
     (2) Kişinin sağlık hizmeti sunucusuna müracaatı sırasında ilk biyometrik verinin Kurum veri
     tabanına kayıt işlemi, sağlık hizmeti sunucusu tarafından yapılacaktır.
->>>>>>> 3d8a7c6 (small changes for SUTChunker)
     """
     
     # Create chunker
@@ -1189,3 +1181,8 @@ if __name__ == "__main__":
             f.write(f"Parents: {chunk.metadata.parent_chain}\n")
             f.write(f"\nText preview:\n")
             f.write(chunk.text + "\n\n\n")
+        
+        
+
+
+
