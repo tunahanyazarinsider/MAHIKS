@@ -1,0 +1,613 @@
+
+--- Chunk 1 ---
+Section: 1.1
+Title: Amaç...
+Level: 2
+Type: merged_section
+Words: 146
+Parents: []
+
+Text preview:
+[SECTION: 1.1 - Amaç]
+
+1.1 - Amaç
+    (1) Tebliğin amacı (bundan sonra SUT olarak ifade edilecektir); sağlık yardımları Sosyal
+    Güvenlik Kurumunca (bundan sonra Kurum olarak ifade edilecektir) karşılanan ve kapsam
+    maddesinde tanımlanan kişilerin, (Ek ibare:RG-18/2/2017-29983)(80) sağlıklı kalmalarını,
+    hastalanmaları halinde sağlıklarını kazanmalarını, iş kazası ile meslek hastalığı, hastalık ve analık
+    sonucu tıbben gerekli görülen sağlık hizmetlerinin karşılanmasını, iş göremezlik hallerinin
+    ortadan kaldırılmasını veya azaltılmasını temin etmek amacıyla Kurumca finansmanı sağlanan
+    sağlık hizmetleri, yol, gündelik ve refakatçi giderlerinden yararlanma esas ve usulleri ile bu
+    hizmetlere ilişkin Sağlık Hizmetleri Fiyatlandırma Komisyonunca belirlenen Kurumca ödenecek
+    bedellerin bildirilmesidir.
+
+1.2 - Kapsam
+    (1) 5510 sayılı Sosyal Sigortalar ve Genel Sağlık Sigortası Kanunu ve diğer kanunlardaki özel
+    hükümler gereği genel sağlık sigortasından yararlandırılan kişiler.
+
+1.3 - Dayanak
+    (1) (Değişik:RG-25/8/2022-31934 Mükerrer)(94) SUT; 5502 sayılı Sosyal Güvenlik
+    Kurumuna İlişkin Bazı Düzenlemeler Hakkında Kanun, 5510 sayılı Kanun ve Genel Sağlık Sigortası
+    Uygulamaları Yönetmeliği hükümleri çerçevesinde düzenlenmiştir.
+
+
+
+--- Chunk 2 ---
+Section: 1.4.1.A
+Title: Birinci basamak resmi sağlık hizmeti sunucuları...
+Level: 4
+Type: full_section
+Words: 102
+Parents: ['1.4', '1.4.1']
+
+Text preview:
+[1.4: Sağlık hizmeti sunucuları  (94)]
+[1.4.1: Birinci basamak sağlık hizmeti sunucuları]
+[SECTION: 1.4.1.A - Birinci basamak resmi sağlık hizmeti sunucuları]
+
+1.4.1.A - Birinci basamak resmi sağlık hizmeti sunucuları
+    1) Bünyesinde birinci basamak sağlık kuruluşu bulunan ilçe sağlık müdürlüğü
+    2) Toplum sağlığı merkezi (TSM)
+    3) Aile sağlığı merkezi (ASM)
+    4) Halk sağlığı laboratuvarı (L1ve L2)
+    5) Kurum tabipliği
+    6) 112 Acil sağlık hizmeti birimleri
+    7) Üniversiteler bünyesindeki mediko-sosyal birimler
+    8) Türk Silahlı Kuvvetlerinin birinci basamak sağlık üniteleri
+    9) Belediyelere ait poliklinikler
+    10) Birinci basamak ayaktan ve yataklı teşhis, tedavi ve rehabilitasyon hizmeti sunan sağlık
+    hizmeti sunucuları entegre ilçe devlet hastaneleridir (E2 ve E3)
+
+
+
+--- Chunk 3 ---
+Section: 1.4.1.B
+Title: Birinci basamak özel sağlık hizmeti sunucuları...
+Level: 4
+Type: full_section
+Words: 71
+Parents: ['1.4', '1.4.1']
+
+Text preview:
+[1.4: Sağlık hizmeti sunucuları  (94)]
+[1.4.1: Birinci basamak sağlık hizmeti sunucuları]
+[SECTION: 1.4.1.B - Birinci basamak özel sağlık hizmeti sunucuları]
+
+1.4.1.B - Birinci basamak özel sağlık hizmeti sunucuları
+    1) Evde bakım merkezleri veya birimler
+    2) İşyeri sağlık ve güvenlik hizmeti sunulan birimler
+    3) Özel poliklinikler
+    4) Ağız ve diş sağlığı hizmeti veren özel sağlık kuruluşları
+    5) 18/12/1953 tarihli ve 6197 sayılı Eczacılar ve Eczaneler Hakkında Kanun kapsamında
+    serbest faaliyet gösteren eczaneler
+
+
+
+--- Chunk 4 ---
+Section: 1.4.2.A
+Title: İkinci basamak resmi sağlık hizmeti sunucuları...
+Level: 4
+Type: full_section
+Words: 108
+Parents: ['1.4', '1.4.2']
+
+Text preview:
+[1.4: Sağlık hizmeti sunucuları  (94)]
+[1.4.2: İkinci basamak sağlık hizmeti sunucuları]
+[SECTION: 1.4.2.A - İkinci basamak resmi sağlık hizmeti sunucuları]
+
+1.4.2.A - İkinci basamak resmi sağlık hizmeti sunucuları
+    1) Eğitim ve araştırma hastanesi olmayan devlet hastaneleri ve dal hastaneleri ile bu
+    hastanelere bağlı semt poliklinikleri
+    2) Entegre ilçe hastanesi (E1)
+    3) Sağlık Bakanlığına bağlı ağız ve diş sağlığı merkezleri (Ek ibare:RG-26/4/2025-32882)(128)
+    ile ağız ve diş sağlığı hastaneleri
+    4) (Mülga:RG-26/4/2025-32882)(128)
+    5) Kamu kurumlarına ait olup Sağlık Bakanlığınca ruhsatlandırılmış olan hastaneler, tıp
+    merkezleri ve dal merkezleri
+    6) Kamu kurumlarına ait diyaliz merkezleri, üremeye yardımcı tedavi merkezleri,
+    hiperbarik oksijen tedavi merkezleri, tıbbi laboratuvarlar gibi müstakil olarak ruhsatlandırılan
+    tanı ve tedavi merkezleri.
+
+
+
+--- Chunk 5 ---
+Section: 1.4.2.B
+Title: İkinci basamak özel sağlık hizmeti sunucuları...
+Level: 4
+Type: full_section
+Words: 67
+Parents: ['1.4', '1.4.2']
+
+Text preview:
+[1.4: Sağlık hizmeti sunucuları  (94)]
+[1.4.2: İkinci basamak sağlık hizmeti sunucuları]
+[SECTION: 1.4.2.B - İkinci basamak özel sağlık hizmeti sunucuları]
+
+1.4.2.B - İkinci basamak özel sağlık hizmeti sunucuları
+    1) Özel hastaneler (ÖH)
+    2) Özel tıp merkezleri ve dal merkezleri
+    3) Özel Diyaliz merkezleri,
+    4) Özel üremeye yardımcı tedavi merkezleri
+    5) Özel hiperbarik oksijen tedavi merkezleri
+    6) Tıbbi laboratuvarlar gibi müstakil olarak ruhsatlandırılan özel tanı ve tedavi
+    merkezleri.
+
+
+
+--- Chunk 6 ---
+Section: 1.4.3.A
+Title: Üçüncü basamak resmi sağlık hizmeti sunucuları...
+Level: 4
+Type: merged_section
+Words: 107
+Parents: ['1.4', '1.4.3']
+
+Text preview:
+[1.4: Sağlık hizmeti sunucuları  (94)]
+[1.4.3: Üçüncü basamak sağlık hizmeti sunucuları]
+[SECTION: 1.4.3.A - Üçüncü basamak resmi sağlık hizmeti sunucuları]
+
+1.4.3.A - Üçüncü basamak resmi sağlık hizmeti sunucuları
+    1) Sağlık Bakanlığına bağlı eğitim ve araştırma hastaneleri ile bu hastanelere bağlı semt
+    poliklinikleri
+    2) Tıp Fakülteleri Bulunan Devlet Üniversiteleri Sağlık Uygulama ve Araştırma Merkezleri
+    (U1)
+    3) Tıp Fakülteleri Bulunan Vakıf Üniversiteleri Sağlık Uygulama ve Araştırma Merkezleri
+    (U2)
+    4) (Ek:RG-21/4/2024-32524)(104) Diş hekimliği fakülteleri bulunan Devlet/vakıf üniversite
+    hastaneleri
+    5) (Ek:RG-21/4/2024-32524)(104) Sağlık Bakanlığınca üçüncü basamak hastane olarak
+    basamaklandırılan Sağlık Bakanlığına bağlı hastaneler
+
+1.4.3.B - Üçüncü basamak özel sağlık hizmeti sunucuları
+    1) Sağlık Bakanlığınca üçüncü basamak hastane olarak basamaklandırılan özel hastaneler
+    (ÖH)
+
+
+
+--- Chunk 7 ---
+Section: 1.4.4
+Title: Sağlık hizmeti sunumu bakımından basamaklandırılam...
+Level: 3
+Type: merged_section
+Words: 88
+Parents: ['1.4']
+
+Text preview:
+[1.4: Sağlık hizmeti sunucuları  (94)]
+[SECTION: 1.4.4 - Sağlık hizmeti sunumu bakımından basamaklandırılamayan sağlı...]
+
+1.4.4 - Sağlık hizmeti sunumu bakımından basamaklandırılamayan sağlık hizmeti
+    sunucuları
+    1) Optisyenlik müesseseleri
+    2) Tıbbi cihaz ve malzeme tedarikçileri
+    3) Kaplıcalar
+    4) Beşeri tıbbi ürün/ürün sunan ve/veya üreten özel hukuk tüzel kişileri ve bunların tüzel
+    kişiliği olmayan şubeleri
+    5) Bu maddenin diğer fıkraları ile 1.4.1, 1.4.2, 1.4.3 numaralı maddelerde yer almayan
+    Sağlık Bakanlığınca ruhsatlandırılmış ve/veya izin verilmiş sağlık hizmet sunumu bakımından
+    basamaklandırılamayan diğer özelleşmiş tanı ve tedavi ve tedarik merkezleri.
+
+1.4.5 - (Mülga:RG-16/3/2023-32134 Mükerrer)(95)
+
+
+
+--- Chunk 8 ---
+Section: 1.5.1
+Title: Özel sevk kurallarına tabi olan kişilerin sağlık h...
+Level: 3
+Type: full_section
+Words: 191
+Parents: ['1.5']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[SECTION: 1.5.1 - Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+
+1.5.1 - Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sunucularına müracaat
+    işlemleri
+    (1) (Değişik:RG-25/3/2017-30018)(81) 5510 sayılı Kanunun 60 ıncı maddesinin birinci
+    fıkrasının (c) bendinin (Değişik ibare:RG-9/9/2017-30175)(92) (1) ve (3) numaralı alt bentleri ile
+    aynı maddenin onikinci, onüçüncü ve ondördüncü fıkraları gereği genel sağlık sigortası
+    kapsamına alınan kişilerin, ayakta veya yatarak teşhis ve tedavi hizmeti veren sağlık hizmeti
+    sunucularına müracaatlarında MEDULA sistemi üzerinden müstahaklık sorgulaması yapılır.
+    Sorgulama sonucu Kurum bilgisi (Değişik ibare:RG-9/9/2017-30175)(92) 60/c-1 veya 60/c-3 dönen
+    kişiler ile 60 ıncı maddenin onikinci, onüçüncü ve ondördüncü fıkralarında tanımlanan kişilerin
+    müracaat kabul ve sevk işlemleri aşağıdaki şekilde yürütülecektir. Aşağıda belirtilen usul ve
+    esaslara uygun olmayan müracaatlara ilişkin sağlık hizmeti bedelleri Kurumca karşılanmaz.
+    (2) Sağlık hizmeti sunucuları tedavilerinin sağlanamaması halinde kişileri, aşağıdaki
+    düzenlemelere göre söz konusu tedavi için doğrudan müracaat hakkı bulunduğu sağlık hizmeti
+    sunucularına sevk de edebilirler.
+    (3) (Değişik:RG-18/1/2016-29597)(45) Acil haller dışında sözleşmesiz özel sağlık hizmeti
+    sunucularından alınan sağlık hizmeti bedelleri Kurumca ödenmez. Sözleşmesiz özel sağlık hizmeti
+    sunucularından acil hallerde alınan sağlık hizmetlerinin bedellerinin ödenebilmesi için bu
+    durumun Kurum inceleme birimlerince kabul edilmesi gerekmektedir.
+
+
+
+--- Chunk 9 ---
+Section: 1.5.1.A-1
+Title: Hasta kabul işlemleri...
+Level: 5
+Type: full_section
+Words: 44
+Parents: ['1.5', '1.5.1', '1.5.1.A']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.A: Sağlık Bakanlığı sağlık hizmeti sunucularınca hasta kabul ve...]
+[SECTION: 1.5.1.A-1 - Hasta kabul işlemleri]
+
+1.5.1.A-1 - Hasta kabul işlemleri
+    (1) Doğrudan veya sevkli müracaatlar kabul edilir.
+
+
+
+--- Chunk 10 ---
+Section: 1.5.1.A-2
+Title: Hasta sevk işlemleri...
+Level: 5
+Type: sentence_split
+Words: 320
+Parents: ['1.5', '1.5.1', '1.5.1.A']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.A: Sağlık Bakanlığı sağlık hizmeti sunucularınca hasta kabul ve...]
+[SECTION: 1.5.1.A-2 - Hasta sevk işlemleri]
+[FIKRA: (1)]
+
+(1) Tedavinin sağlanamaması halinde;
+    a) Birinci basamak sağlık hizmeti sunucularınca; sevkler aynı yerleşim yeri içindeki
+    Sağlık Bakanlığı ikinci veya üçüncü basamak sağlık hizmeti sunucusuna yapılabilir. b)İkinci basamak sağlık hizmeti sunucularınca;
+    1)Kişiler, aynı yerleşim yeri içindeki Sağlık Bakanlığı ikinci veya üçüncü basamak sağlık
+    hizmeti sunucusuna sevk edilebilir. 2)Kişiler, aynı yerleşim yerinde Sağlık Bakanlığı üçüncü basamak sağlık hizmeti sunucusu
+    yoksa aynı yerleşim yerindeki diğer resmi sağlık hizmeti sunucularına veya yerleşim yeri dışındaki
+    Sağlık Bakanlığı ikinci veya üçüncü basamak sağlık hizmeti sunucularına sevk edilebilir. 3) Kişiler, resmi sağlık hizmeti sunucularında uygun yoğun bakım yatağının bulunmaması
+    ve hasta naklinin 112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştirilmesi koşuluyla
+    yoğun bakım tedavisi için özel sağlık hizmeti sunucularına da sevk edilebilir. Bu durumda, naklin
+    112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştiğini gösterir belge yeterli kabul
+    edilecektir. 4)Kişiler, aynı il içindeki resmi sağlık hizmeti sunucularında tedavinin sağlanabileceği
+    radyoterapi merkezi bulunmaması halinde radyoterapi tedavisi için aynı il içindeki özel sağlık
+    hizmeti sunucularına sevk edilebilir. 5) Sağlık Bakanlığı dışındaki resmi sağlık hizmeti sunucularına kronik hemodiyaliz
+    tedavisi programı için yapılacak sevkler, aynı yerleşim yerinde varsa bünyesinde hemodiyaliz
+    merkezi bulunan Sağlık Bakanlığı sağlık hizmeti sunucularınca yoksa müracaat edilen sağlık
+    hizmeti sunucusunca yapılacaktır. Sağlık Bakanlığı dışındaki resmi sağlık hizmeti sunucularına
+    yapılan hemodiyaliz amaçlı sevkler 3 ay süre ile geçerli olup sürenin bitiminde sevk belgesinin
+    yenilenmesi gerekmektedir. c) Üçüncü basamak sağlık hizmeti sunucularınca;
+    1)Kişiler, aynı yerleşim yeri içindeki veya dışındaki; Sağlık Bakanlığı ikinci veya üçüncü
+    basamak sağlık hizmeti sunucusuna veya diğer resmi sağlık hizmeti sunucularına sevk edilebilir. 2)Kişiler, resmi sağlık hizmeti sunucularında uygun yoğun bakım yatağının bulunmaması ve
+    hasta naklinin 112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştirilmesi koşuluyla
+    yoğun bakım tedavisi için özel sağlık hizmeti sunucularına da sevk edilebilir. Bu durumda, naklin
+    112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştiğini gösterir belge yeterli kabul
+    edilecektir.
+
+
+
+--- Chunk 11 ---
+Section: 1.5.1.A-2
+Title: Hasta sevk işlemleri...
+Level: 5
+Type: sentence_split
+Words: 119
+Parents: ['1.5', '1.5.1', '1.5.1.A']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.A: Sağlık Bakanlığı sağlık hizmeti sunucularınca hasta kabul ve...]
+[SECTION: 1.5.1.A-2 - Hasta sevk işlemleri]
+[FIKRA: (1)]
+
+3) Kişiler, aynı il içindeki resmi sağlık hizmeti sunucularında tedavinin sağlanabileceği
+    radyoterapi merkezi bulunmaması halinde radyoterapi tedavisi için aynı il içindeki özel sağlık
+    hizmeti sunucularına sevk edilebilir. 4) Sağlık Bakanlığı dışındaki resmi sağlık hizmeti sunucularına kronik hemodiyaliz
+    tedavisi programı için yapılacak sevkler, aynı yerleşim yerinde varsa bünyesinde hemodiyaliz
+    merkezi bulunan Sağlık Bakanlığı sağlık hizmeti sunucularınca yoksa müracaat edilen sağlık
+    hizmeti sunucusunca yapılacaktır. Sağlık Bakanlığı dışındaki resmi sağlık hizmeti sunucularına
+    yapılan hemodiyaliz amaçlı sevkler 3 ay süre ile geçerli olup sürenin bitiminde sevk belgesinin
+    yenilenmesi gerekmektedir.
+
+
+
+--- Chunk 12 ---
+Section: 1.5.1.B-1
+Title: Hasta kabul işlemleri...
+Level: 5
+Type: full_section
+Words: 336
+Parents: ['1.5', '1.5.1', '1.5.1.B']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.B: Sağlık Bakanlığı dışındaki üçüncü basamak resmi sağlık hizme...]
+[SECTION: 1.5.1.B-1 - Hasta kabul işlemleri]
+
+1.5.1.B-1 - Hasta kabul işlemleri
+    (1) Sağlık Bakanlığı dışındaki üçüncü basamak (Ek ibare:RG-25/8/2022-31934
+    Mükerrer)(94) resmi sağlık hizmeti sunucularınca aşağıda belirtilen müracaatlar kabul edilir.
+    a) Sevkli müracaatlar
+    1) Sağlık Bakanlığı ikinci ve üçüncü basamak sağlık hizmeti sunucularınca SUT’un 1.5.1.A-
+    2 maddesine uygun olarak düzenlenen sevk belgesi ile müracaat eden hastalar.
+    2) Sağlık Bakanlığı dışındaki üçüncü basamak (Ek ibare:RG-25/8/2022-31934
+    Mükerrer)(94) resmi sağlık hizmeti sunucularınca SUT’un 1.5.1.B-2 maddesine uygun olarak
+    düzenlenen sevk belgesi ile müracaat eden hastalar.
+    b) Doğrudan müracaatlar
+    1) Organ, doku ve kök hücre nakline ilişkin; sağlık hizmetleri ve naklin yapıldığı sağlık
+    hizmeti sunucusundaki kontroller ve devam tedavileri için yapılan müracaatlar.
+    2) Akkiz immün yetmezlik sendrom tanılı hasta müracaatları.
+    3) Hiperbarik oksijen tedavisi için yapılan müracaatlar.
+    4) Trafik kazası nedeniyle yapılan müracaatlar.
+    5) Acil servis müracaatları (SUT’un 2.3 maddesi hükümleri doğrultusunda işlem
+    yürütülür).
+    6) Kurum ile götürü bedel üzerinden sağlık hizmeti alım sözleşmesi imzalanan Sağlık
+    Bakanlığı dışındaki üçüncü basamak (Ek ibare:RG-25/8/2022-31934 Mükerrer)(94) resmi sağlık
+    hizmeti sunucularına yapılan müracaatlar.
+    c) Diğer müracaatlar
+    1) SUT’un 1.5.1.B-1(1)a bendine göre müracaatları kabul edilen hastaların aynı sağlık
+    hizmeti sunucusunda diğer branşlarda da muayene veya tedavisinin gerekli görülmesi
+    durumunda (konsültasyon istemi hariç); branş hekimince aynı sevk belgesi üzerinde
+    gönderilecek branşın belirtilmesi şartıyla ilgili branşa yapılan müracaatlar. Bu durumda Kurum
+    bilgi işlem sistemine yeniden sevk beyanı (hastane içi sevk) girilecektir.
+    2) SUT’un 1.5.1.B-1(1) fıkrasının a ve b bentlerine göre müracaatları kabul edilen
+    hastalardan çağrı evrakı düzenlenmek suretiyle tedavi veya kontrol amaçlı çağrılanların
+    müracaatları. (Bu durumda müracaatın çağrıya istinaden yapıldığına dair Kurum bilgi işlem
+    sistemine beyan girilecektir.)
+    3) SUT’un 1.5.1.B-1(1) fıkrasının a ve b bentlerine göre müracaatları kabul edilen
+    hastalardan fizik tedavi ve rehabilitasyon tedavisi, hemodiyaliz tedavisi, radyoterapi ve
+    kemoterapi gibi belli bir program dahilinde tedavi gören hastaların tedavi süresi içindeki, ilk sevk
+    belgesine istinaden yapılan müteakip müracaatları. Hemodiyaliz amaçlı sevkler 3 ay süre ile
+    geçerli olup sürenin bitiminde sevk belgesinin yenilenmesi gerekmektedir.
+
+
+
+--- Chunk 13 ---
+Section: 1.5.1.B-2
+Title: Hasta sevk işlemleri...
+Level: 5
+Type: full_section
+Words: 203
+Parents: ['1.5', '1.5.1', '1.5.1.B']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.B: Sağlık Bakanlığı dışındaki üçüncü basamak resmi sağlık hizme...]
+[SECTION: 1.5.1.B-2 - Hasta sevk işlemleri]
+
+1.5.1.B-2 - Hasta sevk işlemleri
+    (1) Tedavinin sağlanamaması halinde;
+    1) Kişiler, Sağlık Bakanlığı sağlık hizmeti sunucularına sevk edilebilir.
+    2) Kişiler, Sağlık Bakanlığı dışındaki üçüncü basamak (Ek ibare:RG-25/8/2022-31934
+    Mükerrer)(94) resmi sağlık hizmeti sunucularına sevk edilebilir.
+    3) Kişiler, resmi sağlık hizmeti sunucularında uygun yoğun bakım yatağının bulunmaması
+    ve hasta naklinin 112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştirilmesi koşuluyla
+    yoğun bakım tedavisi için özel sağlık hizmeti sunucularına da sevk edilebilir. Bu durumda, naklin
+    112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştiğini gösterir belge yeterli kabul
+    edilecektir.
+    4) Kişiler, kronik hemodiyaliz tedavisi programı için aynı yerleşim yerinde varsa
+    bünyesinde hemodiyaliz merkezi bulunan Sağlık Bakanlığı sağlık hizmeti sunucularına yoksa diğer
+    resmi sağlık hizmeti sunucularına, yerleşim yeri içinde resmi sağlık hizmeti sunucularınca diyaliz
+    tedavisinin yapılamaması halinde ise yerleşim yeri dışındaki Sağlık Bakanlığı sağlık hizmeti
+    sunucularına sevk edilebilir. Sağlık Bakanlığı dışındaki resmi sağlık hizmeti sunucularına yapılan
+    hemodiyaliz amaçlı sevkler 3 ay süre ile geçerlidir.
+    5) Kişiler, aynı il içindeki resmi sağlık hizmeti sunucularında tedavinin sağlanabileceği
+    radyoterapi merkezi bulunmaması halinde radyoterapi tedavisi için aynı il içindeki özel sağlık
+    hizmeti sunucularına sevk edilebilir.
+
+
+
+--- Chunk 14 ---
+Section: 1.5.1.C-1
+Title: Hasta kabul işlemleri...
+Level: 5
+Type: full_section
+Words: 156
+Parents: ['1.5', '1.5.1', '1.5.1.C']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.C: Sağlık Bakanlığı dışındaki ikinci basamak resmi sağlık hizme...]
+[SECTION: 1.5.1.C-1 - Hasta kabul işlemleri]
+
+1.5.1.C-1 - Hasta kabul işlemleri
+    (1) Hasta kabul işlemleri yürütümünde aşağıdaki düzenlemelere uyulacaktır.
+    a) Kurum ile götürü bedel üzerinden sağlık hizmeti alım sözleşmesi imzalanan sağlık
+    hizmeti sunucularınca (Değişik ibare:RG-4/2/2018-30322)(102) ve belediyelere ait sağlık hizmeti
+    sunucularınca;
+    1) Doğrudan veya sevkli müracaatlar kabul edilir.
+    b) Diğer resmi sağlık hizmeti sunucularınca;
+    1) Sevkli müracaatlar
+    aa) SUT’un 1.5.1.A-2 ve 1.5.1.B-2 maddelerine uygun olarak düzenlenen sevk belgesi ile
+    müracaat eden hastalar.
+    2) Doğrudan müracaatlar
+    aa) Organ, doku ve kök hücre nakline ilişkin; sağlık hizmetleri ve naklin yapıldığı sağlık
+    hizmeti sunucusundaki kontroller ve devam tedavileri için yapılan müracaatlar.
+    bb) Akkiz immün yetmezlik sendrom tanılı hasta müracaatları.
+    cc) Hiperbarik oksijen tedavisi için yapılan müracaatlar.
+    çç) Trafik kazası nedeniyle yapılan müracaatlar.
+    dd) Acil servis müracaatları (SUT’un 2.3 maddesi hükümleri doğrultusunda işlem
+    yürütülür.)
+
+
+
+--- Chunk 15 ---
+Section: 1.5.1.C-2
+Title: Hasta sevk işlemleri...
+Level: 5
+Type: full_section
+Words: 83
+Parents: ['1.5', '1.5.1', '1.5.1.C']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.C: Sağlık Bakanlığı dışındaki ikinci basamak resmi sağlık hizme...]
+[SECTION: 1.5.1.C-2 - Hasta sevk işlemleri]
+
+1.5.1.C-2 - Hasta sevk işlemleri
+    (1) Kişiler, resmi sağlık hizmeti sunucularında uygun yoğun bakım yatağının bulunmaması
+    ve hasta naklinin 112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştirilmesi koşuluyla
+    yoğun bakım tedavisi için özel sağlık hizmeti sunucularına da sevk edilebilir. Bu durumda, naklin
+    112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştiğini gösterir belge yeterli kabul
+    edilecektir.
+
+
+
+--- Chunk 16 ---
+Section: 1.5.1.Ç-1
+Title: Hasta kabul işlemleri...
+Level: 5
+Type: full_section
+Words: 144
+Parents: ['1.5', '1.5.1', '1.5.1.Ç']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.Ç: Özel sağlık hizmeti sunucularınca hasta kabul ve sevk işleml...]
+[SECTION: 1.5.1.Ç-1 - Hasta kabul işlemleri]
+
+1.5.1.Ç-1 - Hasta kabul işlemleri
+    (1) Hasta kabul işlemleri yürütümünde aşağıdaki düzenlemelere uyulacaktır.
+    a) Sevkli müracaatlar
+    1) Resmi sağlık hizmeti sunucularında uygun yoğun bakım yatağının bulunmaması ve
+    hasta naklinin 112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştirilmesi koşuluyla
+    yoğun bakım tedavisi için gönderilen hastalar. Bu durumda, naklin 112 Komuta Kontrol Merkezi
+    koordinasyonunda gerçekleştiğini gösterir belge yeterli kabul edilecektir.
+    2) SUT’un 1.5.1.A-2 ve 1.5.1.B-2 maddelerine uygun olarak düzenlenen sevk belgesi ile
+    radyoterapi tedavisi için sevk edilen hastalar.
+    b) Doğrudan müracaatlar
+    1) (Değişik:RG-18/1/2016-29597) (45) Acil haller nedeniyle yapılan müracaatlar. Hasta
+    müracaatının söz konusu durum nedeniyle yapıldığının Kurum inceleme birimlerince kabul
+    edilmesi gerekmektedir.
+    2) Hiperbarik oksijen tedavisi için yapılan müracaatlar.
+    3) Trafik kazası nedeniyle yapılan müracaatlar.
+
+
+
+--- Chunk 17 ---
+Section: 1.5.1.Ç-2
+Title: Hasta sevk işlemleri...
+Level: 5
+Type: full_section
+Words: 84
+Parents: ['1.5', '1.5.1', '1.5.1.Ç']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[1.5.1.Ç: Özel sağlık hizmeti sunucularınca hasta kabul ve sevk işleml...]
+[SECTION: 1.5.1.Ç-2 - Hasta sevk işlemleri]
+
+1.5.1.Ç-2 - Hasta sevk işlemleri
+    (1) Kişiler, resmi sağlık hizmeti sunucularında uygun yoğun bakım yatağının bulunmaması
+    ve hasta naklinin 112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştirilmesi koşuluyla
+    yoğun bakım tedavisi için özel sağlık hizmeti sunucularına da sevk edilebilir. Bu durumda, naklin
+    112 Komuta Kontrol Merkezi koordinasyonunda gerçekleştiğini gösterir belge yeterli kabul
+    edilecektir.
+
+
+
+--- Chunk 18 ---
+Section: 1.5.1.D
+Title: Diğer hükümler...
+Level: 4
+Type: full_section
+Words: 236
+Parents: ['1.5', '1.5.1']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[1.5.1: Özel sevk kurallarına tabi olan kişilerin sağlık hizmeti sun...]
+[SECTION: 1.5.1.D - Diğer hükümler]
+
+1.5.1.D - Diğer hükümler
+    (1) Sağlık hizmeti sunucularınca sevkler, Kurum bilgi işlem sistemi üzerinden elektronik
+    olarak düzenlenmesi sağlanıncaya kadar SUT eki “Hasta Sevk Formu” (EK-2/F) ile veya bu formda
+    istenilen bilgilerin yer aldığı belge tanzim edilerek yapılacaktır. Düzenlenen sevkin bir örneği
+    hastaya verilecektir. Sevk belgesinde sevk edilen branş ile birlikte sağlık hizmeti sunucusu adı
+    mutlaka yer alacaktır. Kişiler sevk belgesi ile sevkin düzenlendiği tarih dahil 5 işgünü içinde sevk
+    edildikleri sağlık hizmeti sunucusuna müracaat edeceklerdir.
+    (2) Sevkli müracaatı kabul eden sağlık hizmeti sunucusunca, SUT eki EK-2/F veya bu
+    formda istenilen bilgilerin yer aldığı belgenin bir örneği fatura ekinde Kuruma gönderilecektir.
+    Ayrıca SUT’un 1.5 maddesinde hasta müracaatının kabulüne ilişkin düzenleneceği belirtilen diğer
+    belgelerin (112 Komuta Kontrol Merkezi koordinasyonunu gösterir belge, çağrı evrakı gibi)
+    düzenlenme ve takip işlemlerinin Kurum bilgi işlem sistemi üzerinden yapılması sağlanıncaya
+    kadar söz konusu belgelerin bir örneği fatura ekinde Kuruma gönderilecektir.
+    (3) Sevklerin, Kurum bilgi işlem sistemi üzerinden elektronik olarak düzenlenmesi
+    uygulamasına geçilmesi halinde yürütülecek işlemler Kurumca ayrıca duyurulur.
+    (4) Kurum gerekli gördüğü hallerde, Sağlık Bakanlığı dışındaki resmi sağlık hizmeti
+    sunucuları ile sağlık hizmetinin sunulduğu il, sağlık hizmetinin niteliği itibarıyla hayati öneme
+    sahip olup olmaması, sağlık hizmeti ihtiyacının resmi sağlık hizmeti sunucularında karşılanıp
+    karşılanmaması, hizmetin niteliği gibi hususları dikkate alarak özel sağlık hizmeti sunucularına
+    müracaatlara ilişkin ayrıca usul ve esas belirlemeye yetkilidir.
+
+
+
+--- Chunk 19 ---
+Section: 1.5.2
+Title: Genel sağlık sigortası kapsamındaki diğer kişileri...
+Level: 3
+Type: full_section
+Words: 104
+Parents: ['1.5']
+
+Text preview:
+[1.5: Sağlık hizmeti sunucularına müracaat ve yükümlülükler]
+[SECTION: 1.5.2 - Genel sağlık sigortası kapsamındaki diğer kişilerin sağlık h...]
+
+1.5.2 - Genel sağlık sigortası kapsamındaki diğer kişilerin sağlık hizmeti sunucularına
+    müracaat işlemleri
+    (1) Kişiler, SUT’ta belirtilen özel hükümler saklı kalmak kaydıyla Kurum ile sözleşmesi
+    bulunan ayakta ve yatarak tedavi hizmeti sağlayan sağlık hizmeti sunucularına doğrudan veya
+    sevk edilmek suretiyle müracaat edebilirler.
+    (2) Kişilerin, SUT’un 2.2(5) fıkrasında belirtilen istisnalar hariç olmak üzere acil haller
+    dışında Kurum ile sözleşmesi olmayan sağlık hizmeti sunucularından aldıkları sağlık hizmeti
+    bedelleri Kurumca karşılanmaz.
+    (3) Kurum ile sözleşmeli sağlık hizmeti sunucuları, Kurum sağlık yardımlarından
+    yararlandırılan kişilerin müracaatlarını ayrım yapmaksızın kabul etmek zorundadır.
+
+
+
+--- Chunk 20 ---
+Section: 1.6
+Title: Kimlik tespiti...
+Level: 2
+Type: merged_section
+Words: 217
+Parents: []
+
+Text preview:
+[SECTION: 1.6 - Kimlik tespiti]
+
+1.6 - Kimlik tespiti
+    (1) Sağlık (Değişik ibare:RG-25/8/2022-31934 Mükerrer)(94) hizmeti sunucularınca,
+    kişilerin müracaatı aşamasında, acil hallerde ise acil halin sona ermesinden sonra, nüfus cüzdanı,
+    sürücü belgesi, evlenme cüzdanı, pasaport veya verilmiş ise Kurum sağlık kartı belgelerinden biri
+    ile kimlik tespiti ve biyometrik yöntemlerle kimlik doğrulaması yapılması zorunludur. Kimlik
+    tespiti, biyometrik kayıt işlemi veya biyometrik kimlik doğrulama işlemini usulüne uygun
+    yapmayan ve bu nedenle bir başka kişiye sağlık hizmeti sunulması nedeniyle Kurumun zarara
+    uğramasına sebebiyet veren sağlık hizmeti sunucularından ödenen tutar geri alınır.
+    (2) 2828 sayılı Sosyal Hizmetler Kanunu kapsamında sağlanan yardımlardan ücretsiz
+    faydalananların, sağlık (Değişik ibare:RG-25/8/2022-31934 Mükerrer)(94) hizmeti sunucularına
+    birinci fıkrada belirtilen belgeleri ibraz edememeleri halinde 2828 sayılı Kanun kapsamında
+    bulunduklarını gösterir belgeye göre gerekli işlemler yürütülecek sonrasında söz konusu
+    belgelerin ibrazı ilgili Kurumdan istenecektir.
+    (3) Kapsamdaki kişilerin kendi adına bir başkasının sağlık hizmeti almasını veya Kurumdan
+    haksız bir menfaat temin etmesini sağlaması yasaktır. Bu fiilleri işleyenlerden Kurumun uğradığı
+    zararın iki katı kanunî faiziyle birlikte müştereken ve müteselsilen tahsil edilir ve ilgililer hakkında
+    5237 sayılı Türk Ceza Kanunu hükümleri doğrultusunda suç duyurusunda bulunulur.
+
+1.6.1 - Biyometrik kimlik doğrulama işlemi
+    (1) Kimlik doğrulamada kullanılacak olan biyometrik sistem ve uygulamaya geçilecek sağlık
+    hizmeti sunucuları, uygulama tarihi ile uygulamaya ilişkin usul ve esaslar Kurum tarafından
+    belirlenir.
+    (2) Kişinin sağlık hizmeti sunucusuna müracaatı sırasında ilk biyometrik
+
+
