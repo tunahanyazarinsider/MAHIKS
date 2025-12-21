@@ -1180,8 +1180,3 @@ if __name__ == "__main__":
             f.write(f"Parents: {chunk.metadata.parent_chain}\n")
             f.write(f"\nText preview:\n")
             f.write(chunk.text + "\n\n\n")
-        
-        
-
-
-
