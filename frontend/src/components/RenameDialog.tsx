@@ -22,7 +22,9 @@ export function RenameDialog({ open, currentTitle, onOpenChange, onRename }: Ren
   const [title, setTitle] = useState(currentTitle);
 
   useEffect(() => {
-    setTitle(currentTitle);
+    if (open) {
+      setTitle(currentTitle);
+    }
   }, [currentTitle, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -33,34 +35,45 @@ export function RenameDialog({ open, currentTitle, onOpenChange, onRename }: Ren
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onKeyDown={handleKeyDown}>
         <DialogHeader>
-          <DialogTitle>Rename Conversation</DialogTitle>
+          <DialogTitle>Sohbeti Yeniden Adlandır</DialogTitle>
           <DialogDescription>
-            Enter a new name for this conversation.
+            Bu sohbet için yeni bir başlık girin.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Conversation Title</Label>
+              <Label htmlFor="title">Sohbet Başlığı</Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter conversation title..."
+                placeholder="Sohbet başlığını girin..."
+                maxLength={100}
                 autoFocus
+                aria-describedby="title-hint"
               />
+              <p id="title-hint" className="text-xs text-gray-500">
+                Maksimum 100 karakter
+              </p>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              İptal
             </Button>
             <Button type="submit" disabled={!title.trim()}>
-              Rename
+              Kaydet
             </Button>
           </DialogFooter>
         </form>
