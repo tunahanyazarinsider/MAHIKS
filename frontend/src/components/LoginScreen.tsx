@@ -20,12 +20,10 @@ export function LoginScreen({ onLogin, onSwitchToSignUp, onForgotPassword }: Log
   const [error, setError] = useState<string | null>(null);
 
   const getErrorMessage = (err: any): string => {
-    // Backend returns: { status, message, data: { errorCode } }
     const message = err.response?.data?.message;
     const errorCode = err.response?.data?.data?.errorCode;
     
     if (message) {
-      // Map English messages to Turkish
       const errorMap: Record<string, string> = {
         'Invalid credentials': 'E-posta veya şifre hatalı',
         'User not found': 'Kullanıcı bulunamadı',
@@ -35,7 +33,6 @@ export function LoginScreen({ onLogin, onSwitchToSignUp, onForgotPassword }: Log
       return errorMap[message] || message;
     }
 
-    // Fallback to error codes
     if (errorCode) {
       const codeMap: Record<string, string> = {
         'INVALID_CREDENTIALS': 'E-posta veya şifre hatalı',
@@ -111,7 +108,6 @@ export function LoginScreen({ onLogin, onSwitchToSignUp, onForgotPassword }: Log
                 required
                 disabled={isLoading}
                 autoComplete="email"
-                aria-describedby={error ? 'login-error' : undefined}
               />
             </div>
             
@@ -128,7 +124,7 @@ export function LoginScreen({ onLogin, onSwitchToSignUp, onForgotPassword }: Log
                   </button>
                 )}
               </div>
-              <div className="relative flex items-center">
+              <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -143,14 +139,10 @@ export function LoginScreen({ onLogin, onSwitchToSignUp, onForgotPassword }: Log
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>

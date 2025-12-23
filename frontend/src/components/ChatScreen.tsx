@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { ScrollArea } from './ui/scroll-area';
 import { Card } from './ui/card';
 import { ChatMessage } from './ChatMessage';
 import { ChatHistory } from './ChatHistory';
 import { RenameDialog } from './RenameDialog';
-import { Send, LogOut, HeartPulse, Menu, X } from 'lucide-react';
+import { Send, LogOut, HeartPulse } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { chatRequest } from '../api/ChatApi';
 import { Message, Conversation, ConversationData, createQueryRequest } from '../models';
@@ -44,17 +43,17 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
   const [currentConversationId, setCurrentConversationId] = useState<string>(conversations[0].id);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renamingConversationId, setRenamingConversationId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const currentConversation = conversations.find(c => c.id === currentConversationId);
   const messages = currentConversation?.messages || [];
 
-  // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages, isTyping]);
 
   const addMessage = (message: Message) => {
@@ -121,7 +120,6 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
   const handleDeleteConversation = (id: string) => {
     if (conversations.length === 1) {
-      // Don't delete the last conversation, just reset it
       const newConversation: ConversationData = {
         id: crypto.randomUUID(),
         messages: [createInitialMessage()]
@@ -162,7 +160,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     
     const firstUserMessage = conv.messages.find(m => m.sender === 'user');
     if (firstUserMessage) {
-      const maxLength = 50;
+      const maxLength = 25;
       return firstUserMessage.content.length > maxLength
         ? `${firstUserMessage.content.slice(0, maxLength)}...`
         : firstUserMessage.content;
@@ -177,7 +175,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     
     if (!lastUserMessage) return 'Henüz mesaj yok';
     
-    const maxLength = 60;
+    const maxLength = 30;
     return lastUserMessage.content.length > maxLength
       ? `${lastUserMessage.content.slice(0, maxLength)}...`
       : lastUserMessage.content;
@@ -196,20 +194,18 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     : null;
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Toggleable */}
-      {sidebarOpen && (
-        <aside className="h-full flex-shrink-0 bg-white">
-          <ChatHistory
-            conversations={conversationsList}
-            currentConversationId={currentConversationId}
-            onSelectConversation={handleSelectConversation}
-            onNewConversation={handleNewConversation}
-            onDeleteConversation={handleDeleteConversation}
-            onRenameConversation={handleRenameConversation}
-          />
-        </aside>
-      )}
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      {/* Fixed Sidebar */}
+      <div style={{ width: '280px', flexShrink: 0, borderRight: '1px solid #e5e7eb', backgroundColor: 'white' }}>
+        <ChatHistory
+          conversations={conversationsList}
+          currentConversationId={currentConversationId}
+          onSelectConversation={handleSelectConversation}
+          onNewConversation={handleNewConversation}
+          onDeleteConversation={handleDeleteConversation}
+          onRenameConversation={handleRenameConversation}
+        />
+      </div>
 
       {/* Rename Dialog */}
       <RenameDialog
@@ -220,45 +216,22 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
       />
 
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1 min-w-0">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: '#f9fafb' }}>
         {/* Header */}
-        <header className="bg-white border-b px-6 py-4">
+        <header style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 24px', flexShrink: 0 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                aria-label={sidebarOpen ? 'Menüyü kapat' : 'Menüyü aç'}
-                className="mr-2"
-              >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
               <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
                 <HeartPulse className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-lg font-semibold">
-                Sağlık Sigortası Asistanı
-              </h1>
+              <h1 className="text-lg font-semibold">Sağlık Sigortası Asistanı</h1>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onOpenProfile}
-                aria-label="Profil ayarları"
-              >
-                <span className="text-sm text-gray-600">
-                  {userName}
-                </span>
+              <Button variant="ghost" size="sm" onClick={onOpenProfile}>
+                <span className="text-sm text-gray-600">{userName}</span>
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onLogout}
-                aria-label="Çıkış yap"
-              >
+              <Button variant="outline" size="sm" onClick={onLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Çıkış Yap
               </Button>
@@ -267,9 +240,10 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
         </header>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-hidden p-6">
-          <Card className="h-full flex flex-col max-w-5xl mx-auto">
-            <ScrollArea className="flex-1 p-4">
+        <div style={{ flex: 1, overflow: 'hidden', padding: '24px' }}>
+          <Card className="h-full flex flex-col" style={{ maxWidth: '900px', margin: '0 auto' }}>
+            {/* Messages */}
+            <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
               <div className="space-y-4">
                 {messages.map(message => (
                   <ChatMessage key={message.id} message={message} />
@@ -286,15 +260,13 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
                     }} 
                   />
                 )}
-                
-                <div ref={messagesEndRef} />
               </div>
-            </ScrollArea>
+            </div>
 
             <Separator />
 
-            {/* Input Area */}
-            <div className="p-4 flex-shrink-0">
+            {/* Input */}
+            <div style={{ padding: '16px', flexShrink: 0 }}>
               <div className="flex gap-2">
                 <Input
                   value={input}
@@ -302,14 +274,9 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
                   onKeyDown={handleKeyDown}
                   placeholder="Sağlık sigortanızla ilgili sorunuzu yazın..."
                   disabled={isTyping}
-                  aria-label="Mesaj yazın"
                   className="flex-1"
                 />
-                <Button 
-                  onClick={handleSend} 
-                  disabled={!input.trim() || isTyping}
-                  aria-label="Mesaj gönder"
-                >
+                <Button onClick={handleSend} disabled={!input.trim() || isTyping}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

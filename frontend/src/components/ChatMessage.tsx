@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback } from './ui/avatar';
 import { User, Bot } from 'lucide-react';
 import { Message } from '../models';
 
@@ -22,14 +21,20 @@ export function ChatMessage({ message }: ChatMessageProps) {
       role="article"
       aria-label={isUser ? 'Sizin mesajınız' : 'Asistan yanıtı'}
     >
-      <Avatar className="h-8 w-8 flex-shrink-0">
-        <AvatarFallback 
-          className={isUser ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white'}
-        >
-          {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-        </AvatarFallback>
-      </Avatar>
+      {/* Avatar */}
+      <div 
+        className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+          isUser ? 'bg-blue-600' : 'bg-emerald-600'
+        }`}
+      >
+        {isUser ? (
+          <User className="h-4 w-4 text-white" />
+        ) : (
+          <Bot className="h-4 w-4 text-white" />
+        )}
+      </div>
       
+      {/* Message Content */}
       <div className={`flex flex-col gap-1 max-w-[70%] ${isUser ? 'items-end' : 'items-start'}`}>
         <div 
           className={`rounded-lg px-4 py-2 ${

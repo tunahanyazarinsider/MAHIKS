@@ -69,12 +69,10 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
   };
 
   const getErrorMessage = (err: any): string => {
-    // Backend returns: { status, message, data: { errorCode } }
     const message = err.response?.data?.message;
     const errorCode = err.response?.data?.data?.errorCode;
     
     if (message) {
-      // Map English messages to Turkish
       const errorMap: Record<string, string> = {
         'Email already registered': 'Bu e-posta adresi zaten kayıtlı',
         'Invalid email format': 'Geçersiz e-posta formatı',
@@ -84,7 +82,6 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
       return errorMap[message] || message;
     }
 
-    // Fallback to error codes
     if (errorCode) {
       const codeMap: Record<string, string> = {
         'USER_ALREADY_EXISTS': 'Bu e-posta adresi zaten kayıtlı',
@@ -128,7 +125,6 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Clear related errors on change
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -136,64 +132,6 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
       setErrors(prev => ({ ...prev, confirmPassword: '' }));
     }
   };
-
-  const PasswordField = ({
-    id,
-    label,
-    value,
-    onChange,
-    error,
-    hint,
-    showKey
-  }: {
-    id: string;
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    error?: string;
-    hint?: string;
-    showKey: 'password' | 'confirmPassword';
-  }) => (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative flex items-center">
-        <Input
-          id={id}
-          type={showPasswords[showKey] ? 'text' : 'password'}
-          placeholder="••••••••"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={isLoading}
-          className="pr-10"
-          aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
-          required
-        />
-        <button
-          type="button"
-          onClick={() => setShowPasswords(prev => ({ ...prev, [showKey]: !prev[showKey] }))}
-          className="absolute right-3 text-gray-400 hover:text-gray-600"
-          aria-label={showPasswords[showKey] ? 'Şifreyi gizle' : 'Şifreyi göster'}
-          tabIndex={-1}
-        >
-          {showPasswords[showKey] ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-      {error && (
-        <p id={`${id}-error`} className="text-sm text-red-500" role="alert">
-          {error}
-        </p>
-      )}
-      {hint && !error && (
-        <p id={`${id}-hint`} className="text-xs text-gray-500">
-          {hint}
-        </p>
-      )}
-    </div>
-  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -230,14 +168,11 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
                 value={formData.fullName}
                 onChange={(e) => handleChange('fullName', e.target.value)}
                 disabled={isLoading}
-                aria-describedby={errors.fullName ? 'fullName-error' : undefined}
                 autoComplete="name"
                 required
               />
               {errors.fullName && (
-                <p id="fullName-error" className="text-sm text-red-500" role="alert">
-                  {errors.fullName}
-                </p>
+                <p className="text-sm text-red-500" role="alert">{errors.fullName}</p>
               )}
             </div>
 
@@ -250,35 +185,73 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 disabled={isLoading}
-                aria-describedby={errors.email ? 'email-error' : undefined}
                 autoComplete="email"
                 required
               />
               {errors.email && (
-                <p id="email-error" className="text-sm text-red-500" role="alert">
-                  {errors.email}
-                </p>
+                <p className="text-sm text-red-500" role="alert">{errors.email}</p>
               )}
             </div>
 
-            <PasswordField
-              id="password"
-              label="Şifre"
-              value={formData.password}
-              onChange={(value) => handleChange('password', value)}
-              error={errors.password}
-              hint="En az 8 karakter"
-              showKey="password"
-            />
+            {/* Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="password">Şifre</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPasswords.password ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => handleChange('password', e.target.value)}
+                  disabled={isLoading}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, password: !prev.password }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPasswords.password ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  tabIndex={-1}
+                >
+                  {showPasswords.password ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password ? (
+                <p className="text-sm text-red-500" role="alert">{errors.password}</p>
+              ) : (
+                <p className="text-xs text-gray-500">En az 8 karakter</p>
+              )}
+            </div>
 
-            <PasswordField
-              id="confirmPassword"
-              label="Şifre (Tekrar)"
-              value={formData.confirmPassword}
-              onChange={(value) => handleChange('confirmPassword', value)}
-              error={errors.confirmPassword}
-              showKey="confirmPassword"
-            />
+            {/* Confirm Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Şifre (Tekrar)</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showPasswords.confirmPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                  disabled={isLoading}
+                  required
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPasswords.confirmPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  tabIndex={-1}
+                >
+                  {showPasswords.confirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-500" role="alert">{errors.confirmPassword}</p>
+              )}
+            </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Kayıt yapılıyor...' : 'Kayıt Ol'}

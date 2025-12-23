@@ -126,7 +126,7 @@ export function ProfileScreen({
       });
       setErrors({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
-      const message = error.response?.data?.detail || 'Şifre güncellenirken bir hata oluştu.';
+      const message = error.response?.data?.message || 'Şifre güncellenirken bir hata oluştu.';
       
       if (message.toLowerCase().includes('incorrect') || message.toLowerCase().includes('wrong')) {
         setErrors(prev => ({ ...prev, currentPassword: 'Mevcut şifre hatalı' }));
@@ -138,70 +138,10 @@ export function ProfileScreen({
     }
   };
 
-  const PasswordInput = ({ 
-    id, 
-    label, 
-    value, 
-    onChange, 
-    placeholder,
-    error,
-    hint,
-    showKey
-  }: {
-    id: string;
-    label: string;
-    value: string;
-    onChange: (value: string) => void;
-    placeholder: string;
-    error?: string;
-    hint?: string;
-    showKey: 'current' | 'new' | 'confirm';
-  }) => (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative flex items-center">
-        <Input
-          id={id}
-          type={showPasswords[showKey] ? 'text' : 'password'}
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={isUpdatingPassword}
-          className="pr-10"
-          aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
-          required
-        />
-        <button
-          type="button"
-          onClick={() => setShowPasswords(prev => ({ ...prev, [showKey]: !prev[showKey] }))}
-          className="absolute right-3 text-gray-400 hover:text-gray-600"
-          aria-label={showPasswords[showKey] ? 'Şifreyi gizle' : 'Şifreyi göster'}
-          tabIndex={-1}
-        >
-          {showPasswords[showKey] ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-      {error && (
-        <p id={`${id}-error`} className="text-sm text-red-500" role="alert">
-          {error}
-        </p>
-      )}
-      {hint && !error && (
-        <p id={`${id}-hint`} className="text-xs text-gray-500">
-          {hint}
-        </p>
-      )}
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b px-4 md:px-6 py-4">
+      <header className="bg-white border-b px-6 py-4">
         <div className="flex items-center justify-between max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
             <Button 
@@ -233,7 +173,7 @@ export function ProfileScreen({
       </header>
 
       {/* Content */}
-      <main className="max-w-3xl mx-auto p-4 md:p-6 space-y-6">
+      <main className="max-w-3xl mx-auto p-6 space-y-6">
         {/* Profile Information Card */}
         <Card>
           <CardHeader>
@@ -311,36 +251,94 @@ export function ProfileScreen({
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <PasswordInput
-                id="currentPassword"
-                label="Mevcut Şifre"
-                value={passwordData.currentPassword}
-                onChange={(value) => setPasswordData(prev => ({ ...prev, currentPassword: value }))}
-                placeholder="Mevcut şifrenizi girin"
-                error={errors.currentPassword}
-                showKey="current"
-              />
+              {/* Current Password */}
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Mevcut Şifre</Label>
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    type={showPasswords.current ? 'text' : 'password'}
+                    placeholder="Mevcut şifrenizi girin"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    disabled={isUpdatingPassword}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={showPasswords.current ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                    tabIndex={-1}
+                  >
+                    {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.currentPassword && (
+                  <p className="text-sm text-red-500" role="alert">{errors.currentPassword}</p>
+                )}
+              </div>
 
-              <PasswordInput
-                id="newPassword"
-                label="Yeni Şifre"
-                value={passwordData.newPassword}
-                onChange={(value) => setPasswordData(prev => ({ ...prev, newPassword: value }))}
-                placeholder="Yeni şifrenizi girin"
-                error={errors.newPassword}
-                hint="Şifre en az 8 karakter olmalıdır"
-                showKey="new"
-              />
+              {/* New Password */}
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Yeni Şifre</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showPasswords.new ? 'text' : 'password'}
+                    placeholder="Yeni şifrenizi girin"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    disabled={isUpdatingPassword}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={showPasswords.new ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                    tabIndex={-1}
+                  >
+                    {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.newPassword ? (
+                  <p className="text-sm text-red-500" role="alert">{errors.newPassword}</p>
+                ) : (
+                  <p className="text-xs text-gray-500">Şifre en az 8 karakter olmalıdır</p>
+                )}
+              </div>
 
-              <PasswordInput
-                id="confirmPassword"
-                label="Yeni Şifre (Tekrar)"
-                value={passwordData.confirmPassword}
-                onChange={(value) => setPasswordData(prev => ({ ...prev, confirmPassword: value }))}
-                placeholder="Yeni şifrenizi tekrar girin"
-                error={errors.confirmPassword}
-                showKey="confirm"
-              />
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Yeni Şifre (Tekrar)</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showPasswords.confirm ? 'text' : 'password'}
+                    placeholder="Yeni şifrenizi tekrar girin"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    disabled={isUpdatingPassword}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={showPasswords.confirm ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                    tabIndex={-1}
+                  >
+                    {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-red-500" role="alert">{errors.confirmPassword}</p>
+                )}
+              </div>
 
               <Button 
                 type="submit" 
