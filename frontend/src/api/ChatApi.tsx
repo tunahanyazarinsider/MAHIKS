@@ -1,7 +1,40 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
-import { QueryRequest, ChatResponse, ApiError } from "../models";
+import { QueryRequest, ApiError } from "../models";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Backend QueryResponse type (matches backend schema)
+interface BackendQueryResponse {
+  query: string;
+  answer: string;
+  citations: Array<{
+    source: string;
+    type: string;
+    similarity: number;
+    ce_score?: number;
+  }>;
+  sources: Record<string, unknown>;
+  metadata: {
+    response_time_ms: number;
+    chunks_retrieved: number;
+    facts_retrieved: number;
+    model: string;
+    success: boolean;
+  };
+  error?: string;
+}
+
+// Frontend ChatResponse type
+export interface ChatResponse {
+  answer: string;
+  citations?: Array<{
+    source: string;
+    content: string;
+    relevance_score?: number;
+  }>;
+  confidence?: number;
+}
+
+// Remove trailing slash from BASE_URL if present
+const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/+$/, "");
 
 const chatApi: AxiosInstance = axios.create({
   baseURL: `${BASE_URL}/api`,
@@ -39,20 +72,35 @@ chatApi.interceptors.response.use(
 );
 
 export const chatRequest = async (queryRequest: QueryRequest): Promise<ChatResponse> => {
-  const response = await chatApi.post<ChatResponse>("/ask", queryRequest);
-  return response.data;
+  const response = await chatApi.post<BackendQueryResponse>("/ask", queryRequest);
+  
+  // Transform backend response to frontend format
+  const backendData = response.data;
+  
+  return {
+    answer: backendData.answer,
+    citations: backendData.citations?.map(c => ({
+      source: c.source,
+      content: c.type,
+      relevance_score: c.similarity
+    })),
+    confidence: backendData.metadata?.success ? 1.0 : 0.0
+  };
 };
 
 // Optional: Batch query endpoint
 export const batchChatRequest = async (queries: QueryRequest[]): Promise<ChatResponse[]> => {
-  const response = await chatApi.post<ChatResponse[]>("/batch-ask", { queries });
-  return response.data;
-};
-
-// Optional: Get chat history
-export const getChatHistory = async (conversationId: string): Promise<ChatResponse[]> => {
-  const response = await chatApi.get<ChatResponse[]>(`/history/${conversationId}`);
-  return response.data;
+  const response = await chatApi.post<{ results: BackendQueryResponse[] }>("/batch-ask", { queries });
+  
+  return response.data.results.map(backendData => ({
+    answer: backendData.answer,
+    citations: backendData.citations?.map(c => ({
+      source: c.source,
+      content: c.type,
+      relevance_score: c.similarity
+    })),
+    confidence: backendData.metadata?.success ? 1.0 : 0.0
+  }));
 };
 
 export default chatApi;
