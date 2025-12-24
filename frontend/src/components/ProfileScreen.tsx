@@ -254,27 +254,26 @@ export function ProfileScreen({
               {/* Current Password */}
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Mevcut Şifre</Label>
-                <div className="relative">
-                  <Input
-                    id="currentPassword"
-                    type={showPasswords.current ? 'text' : 'password'}
-                    placeholder="Mevcut şifrenizi girin"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    disabled={isUpdatingPassword}
-                    required
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    aria-label={showPasswords.current ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                    tabIndex={-1}
-                  >
-                    {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <Input
+                  id="currentPassword"
+                  type={showPasswords.current ? 'text' : 'password'}
+                  placeholder="Mevcut şifrenizi girin"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  disabled={isUpdatingPassword}
+                  required
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                      className="text-gray-400 hover:text-gray-600"
+                      aria-label={showPasswords.current ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                      tabIndex={-1}
+                    >
+                      {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                />
                 {errors.currentPassword && (
                   <p className="text-sm text-red-500" role="alert">{errors.currentPassword}</p>
                 )}
@@ -283,27 +282,26 @@ export function ProfileScreen({
               {/* New Password */}
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Yeni Şifre</Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    type={showPasswords.new ? 'text' : 'password'}
-                    placeholder="Yeni şifrenizi girin"
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                    disabled={isUpdatingPassword}
-                    required
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    aria-label={showPasswords.new ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                    tabIndex={-1}
-                  >
-                    {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <Input
+                  id="newPassword"
+                  type={showPasswords.new ? 'text' : 'password'}
+                  placeholder="Yeni şifrenizi girin"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                  disabled={isUpdatingPassword}
+                  required
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                      className="text-gray-400 hover:text-gray-600"
+                      aria-label={showPasswords.new ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                      tabIndex={-1}
+                    >
+                      {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                />
                 {errors.newPassword ? (
                   <p className="text-sm text-red-500" role="alert">{errors.newPassword}</p>
                 ) : (
@@ -314,27 +312,26 @@ export function ProfileScreen({
               {/* Confirm Password */}
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Yeni Şifre (Tekrar)</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showPasswords.confirm ? 'text' : 'password'}
-                    placeholder="Yeni şifrenizi tekrar girin"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    disabled={isUpdatingPassword}
-                    required
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    aria-label={showPasswords.confirm ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                    tabIndex={-1}
-                  >
-                    {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
+                <Input
+                  id="confirmPassword"
+                  type={showPasswords.confirm ? 'text' : 'password'}
+                  placeholder="Yeni şifrenizi tekrar girin"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  disabled={isUpdatingPassword}
+                  required
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                      className="text-gray-400 hover:text-gray-600"
+                      aria-label={showPasswords.confirm ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                      tabIndex={-1}
+                    >
+                      {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                />
                 {errors.confirmPassword && (
                   <p className="text-sm text-red-500" role="alert">{errors.confirmPassword}</p>
                 )}

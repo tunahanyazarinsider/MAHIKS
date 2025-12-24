@@ -196,27 +196,26 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
             {/* Password Field */}
             <div className="space-y-2">
               <Label htmlFor="password">Şifre</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPasswords.password ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
-                  disabled={isLoading}
-                  required
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPasswords(prev => ({ ...prev, password: !prev.password }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  aria-label={showPasswords.password ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                  tabIndex={-1}
-                >
-                  {showPasswords.password ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              <Input
+                id="password"
+                type={showPasswords.password ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                disabled={isLoading}
+                required
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, password: !prev.password }))}
+                    className="text-gray-400 hover:text-gray-600"
+                    aria-label={showPasswords.password ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                    tabIndex={-1}
+                  >
+                    {showPasswords.password ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
+              />
               {errors.password ? (
                 <p className="text-sm text-red-500" role="alert">{errors.password}</p>
               ) : (
@@ -227,27 +226,26 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
             {/* Confirm Password Field */}
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Şifre (Tekrar)</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showPasswords.confirmPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.confirmPassword}
-                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                  disabled={isLoading}
-                  required
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPasswords(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  aria-label={showPasswords.confirmPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                  tabIndex={-1}
-                >
-                  {showPasswords.confirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              <Input
+                id="confirmPassword"
+                type={showPasswords.confirmPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={formData.confirmPassword}
+                onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                disabled={isLoading}
+                required
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
+                    className="text-gray-400 hover:text-gray-600"
+                    aria-label={showPasswords.confirmPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                    tabIndex={-1}
+                  >
+                    {showPasswords.confirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
+              />
               {errors.confirmPassword && (
                 <p className="text-sm text-red-500" role="alert">{errors.confirmPassword}</p>
               )}

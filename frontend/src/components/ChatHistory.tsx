@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { Button } from './ui/button';
 import { MessageSquarePlus, MessageSquare, Trash2, Pencil } from 'lucide-react';
-import { DeleteDialog } from './DeleteDialog';
 import { Conversation } from '../models';
 
 interface ChatHistoryProps {
@@ -21,8 +19,6 @@ export function ChatHistory({
   onDeleteConversation,
   onRenameConversation
 }: ChatHistoryProps) {
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
   
   const formatDate = (date: Date): string => {
     const now = new Date();
@@ -47,19 +43,6 @@ export function ChatHistory({
     return `${count} mesaj`;
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
-    e.stopPropagation();
-    setDeletingConversationId(conversationId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (deletingConversationId) {
-      onDeleteConversation(deletingConversationId);
-      setDeletingConversationId(null);
-    }
-  };
-
   const groupedConversations = conversations.reduce((groups, conv) => {
     const date = formatDate(conv.timestamp);
     if (!groups[date]) {
@@ -70,136 +53,132 @@ export function ChatHistory({
   }, {} as Record<string, Conversation[]>);
 
   return (
-    <>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-        {/* New Chat Button */}
-        <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
-          <Button onClick={onNewConversation} className="w-full">
-            <MessageSquarePlus className="h-4 w-4 mr-2" />
-            Yeni Sohbet
-          </Button>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* New Chat Button */}
+      <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+        <Button onClick={onNewConversation} className="w-full">
+          <MessageSquarePlus className="h-4 w-4 mr-2" />
+          Yeni Sohbet
+        </Button>
+      </div>
 
-        {/* Chat List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
-          {Object.entries(groupedConversations).map(([date, convs]) => (
-            <div key={date} style={{ marginBottom: '16px' }}>
-              <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>
-                {date}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {convs.map((conversation) => (
-                  <div
-                    key={conversation.id}
-                    onClick={() => onSelectConversation(conversation.id)}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      backgroundColor: currentConversationId === conversation.id ? '#eff6ff' : 'transparent',
-                      border: currentConversationId === conversation.id ? '1px solid #bfdbfe' : '1px solid transparent',
-                      position: 'relative'
-                    }}
-                    className="group hover:bg-gray-50"
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <MessageSquare style={{ width: '16px', height: '16px', color: '#9ca3af', flexShrink: 0, marginTop: '2px' }} />
-                      <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
-                        <p style={{ 
-                          fontSize: '14px', 
-                          fontWeight: 500, 
-                          whiteSpace: 'nowrap', 
-                          overflow: 'hidden', 
-                          textOverflow: 'ellipsis',
-                          color: '#111827'
-                        }}>
-                          {conversation.title}
-                        </p>
-                        <p style={{ 
-                          fontSize: '12px', 
-                          color: '#6b7280', 
-                          marginTop: '4px',
-                          whiteSpace: 'nowrap', 
-                          overflow: 'hidden', 
-                          textOverflow: 'ellipsis'
-                        }}>
-                          {conversation.lastMessage}
-                        </p>
-                        <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
-                          {formatMessageCount(conversation.messageCount)}
-                        </p>
+      {/* Chat List */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+        {Object.entries(groupedConversations).map(([date, convs]) => (
+          <div key={date} style={{ marginBottom: '16px' }}>
+            <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>
+              {date}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {convs.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  onClick={() => onSelectConversation(conversation.id)}
+                  style={{
+                    padding: '12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    backgroundColor: currentConversationId === conversation.id ? '#eff6ff' : 'transparent',
+                    border: currentConversationId === conversation.id ? '1px solid #bfdbfe' : '1px solid transparent',
+                  }}
+                  className="group hover:bg-gray-50"
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    {/* Left column: Icon + Action buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                      <MessageSquare style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
+                      
+                      {/* Action Buttons - below icon */}
+                      <div 
+                        className="opacity-0 group-hover:opacity-100"
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          gap: '2px',
+                          transition: 'opacity 0.2s'
+                        }}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          style={{ height: '24px', width: '24px', padding: 0 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRenameConversation(conversation.id);
+                          }}
+                        >
+                          <Pencil style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          style={{ height: '24px', width: '24px', padding: 0 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteConversation(conversation.id);
+                          }}
+                        >
+                          <Trash2 style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
+                        </Button>
                       </div>
                     </div>
                     
-                    {/* Action Buttons */}
-                    <div 
-                      className="opacity-0 group-hover:opacity-100"
-                      style={{ 
-                        position: 'absolute', 
-                        top: '8px', 
-                        right: '8px', 
-                        display: 'flex', 
-                        gap: '4px',
-                        transition: 'opacity 0.2s'
-                      }}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        style={{ height: '28px', width: '28px', padding: 0 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRenameConversation(conversation.id);
-                        }}
-                      >
-                        <Pencil style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        style={{ height: '28px', width: '28px', padding: 0 }}
-                        onClick={(e) => handleDeleteClick(e, conversation.id)}
-                      >
-                        <Trash2 style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
-                      </Button>
+                    {/* Right column: Text content */}
+                    <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
+                      <p style={{ 
+                        fontSize: '14px', 
+                        fontWeight: 500, 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis',
+                        color: '#111827'
+                      }}>
+                        {conversation.title}
+                      </p>
+                      <p style={{ 
+                        fontSize: '12px', 
+                        color: '#6b7280', 
+                        marginTop: '4px',
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {conversation.lastMessage}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+                        {formatMessageCount(conversation.messageCount)}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        ))}
 
-          {/* Empty State */}
-          {conversations.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '48px 16px' }}>
-              <div style={{ 
-                backgroundColor: '#f3f4f6', 
-                borderRadius: '50%', 
-                width: '64px', 
-                height: '64px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                margin: '0 auto 16px' 
-              }}>
-                <MessageSquare style={{ width: '32px', height: '32px', color: '#9ca3af' }} />
-              </div>
-              <p style={{ fontSize: '14px', fontWeight: 500, color: '#4b5563' }}>Henüz sohbet yok</p>
-              <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px' }}>
-                Sağlık sigortası hakkında soru sormak için yukarıdaki butona tıklayın
-              </p>
+        {/* Empty State */}
+        {conversations.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '48px 16px' }}>
+            <div style={{ 
+              backgroundColor: '#f3f4f6', 
+              borderRadius: '50%', 
+              width: '64px', 
+              height: '64px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto 16px' 
+            }}>
+              <MessageSquare style={{ width: '32px', height: '32px', color: '#9ca3af' }} />
             </div>
-          )}
-        </div>
+            <p style={{ fontSize: '14px', fontWeight: 500, color: '#4b5563' }}>Henüz sohbet yok</p>
+            <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px' }}>
+              Sağlık sigortası hakkında soru sormak için yukarıdaki butona tıklayın
+            </p>
+          </div>
+        )}
       </div>
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
-      />
-    </>
+    </div>
   );
 }

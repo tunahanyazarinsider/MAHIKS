@@ -1,4 +1,4 @@
-import { User, Bot } from 'lucide-react';
+import { User, HeartPulse } from 'lucide-react';
 import { Message } from '../models';
 
 interface ChatMessageProps {
@@ -24,13 +24,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
       {/* Avatar */}
       <div 
         className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-          isUser ? 'bg-blue-600' : 'bg-emerald-600'
+          isUser ? 'bg-blue-600' : 'bg-blue-600'
         }`}
       >
         {isUser ? (
           <User className="h-4 w-4 text-white" />
         ) : (
-          <Bot className="h-4 w-4 text-white" />
+          <HeartPulse className="h-4 w-4 text-white" />
         )}
       </div>
       
