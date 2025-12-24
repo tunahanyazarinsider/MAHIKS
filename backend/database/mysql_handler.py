@@ -97,6 +97,34 @@ class MySQLHandler:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
 
+            # Create conversations table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    title VARCHAR(255) DEFAULT 'Yeni Sohbet',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    INDEX idx_user_id (user_id),
+                    INDEX idx_updated_at (updated_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+
+            # Create messages table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    conversation_id INT NOT NULL,
+                    content TEXT NOT NULL,
+                    sender ENUM('user', 'agent') NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+                    INDEX idx_conversation_id (conversation_id),
+                    INDEX idx_created_at (created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+
             self.connection.commit()
             print("✓ Database tables created successfully")
         except Error as e:
@@ -261,6 +289,122 @@ class MySQLHandler:
         """Get total number of chunks"""
         self.cursor.execute("SELECT COUNT(*) as count FROM chunks")
         return self.cursor.fetchone()['count']
+
+    # ============================================
+    # Conversation Methods
+    # ============================================
+
+    def create_conversation(self, user_id: int, title: str = "Yeni Sohbet") -> int:
+        """Create a new conversation"""
+        try:
+            query = """
+                INSERT INTO conversations (user_id, title)
+                VALUES (%s, %s)
+            """
+            self.cursor.execute(query, (user_id, title))
+            self.connection.commit()
+            return self.cursor.lastrowid
+        except Error as e:
+            print(f"✗ Error creating conversation: {e}")
+            raise
+
+    def get_conversations_by_user(self, user_id: int) -> List[Dict]:
+        """Get all conversations for a user"""
+        try:
+            query = """
+                SELECT c.*, 
+                    (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id) as message_count,
+                    (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message
+                FROM conversations c
+                WHERE c.user_id = %s
+                ORDER BY c.updated_at DESC
+            """
+            self.cursor.execute(query, (user_id,))
+            return self.cursor.fetchall()
+        except Error as e:
+            print(f"✗ Error getting conversations: {e}")
+            return []
+
+    def get_conversation_by_id(self, conversation_id: int, user_id: int) -> Optional[Dict]:
+        """Get a specific conversation (with ownership check)"""
+        try:
+            query = """
+                SELECT * FROM conversations
+                WHERE id = %s AND user_id = %s
+            """
+            self.cursor.execute(query, (conversation_id, user_id))
+            return self.cursor.fetchone()
+        except Error as e:
+            print(f"✗ Error getting conversation: {e}")
+            return None
+
+    def update_conversation_title(self, conversation_id: int, user_id: int, title: str) -> bool:
+        """Update conversation title"""
+        try:
+            query = """
+                UPDATE conversations
+                SET title = %s
+                WHERE id = %s AND user_id = %s
+            """
+            self.cursor.execute(query, (title, conversation_id, user_id))
+            self.connection.commit()
+            return self.cursor.rowcount > 0
+        except Error as e:
+            print(f"✗ Error updating conversation: {e}")
+            return False
+
+    def delete_conversation(self, conversation_id: int, user_id: int) -> bool:
+        """Delete a conversation (messages will be cascade deleted)"""
+        try:
+            query = """
+                DELETE FROM conversations
+                WHERE id = %s AND user_id = %s
+            """
+            self.cursor.execute(query, (conversation_id, user_id))
+            self.connection.commit()
+            return self.cursor.rowcount > 0
+        except Error as e:
+            print(f"✗ Error deleting conversation: {e}")
+            return False
+
+    # ============================================
+    # Message Methods
+    # ============================================
+
+    def add_message(self, conversation_id: int, content: str, sender: str) -> int:
+        """Add a message to a conversation"""
+        try:
+            query = """
+                INSERT INTO messages (conversation_id, content, sender)
+                VALUES (%s, %s, %s)
+            """
+            self.cursor.execute(query, (conversation_id, content, sender))
+            
+            # Update conversation's updated_at
+            self.cursor.execute(
+                "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                (conversation_id,)
+            )
+            
+            self.connection.commit()
+            return self.cursor.lastrowid
+        except Error as e:
+            print(f"✗ Error adding message: {e}")
+            raise
+
+    def get_messages_by_conversation(self, conversation_id: int) -> List[Dict]:
+        """Get all messages for a conversation"""
+        try:
+            query = """
+                SELECT * FROM messages
+                WHERE conversation_id = %s
+                ORDER BY created_at ASC
+            """
+            self.cursor.execute(query, (conversation_id,))
+            return self.cursor.fetchall()
+        except Error as e:
+            print(f"✗ Error getting messages: {e}")
+            return []
 
     def close(self):
         """Close database connection"""

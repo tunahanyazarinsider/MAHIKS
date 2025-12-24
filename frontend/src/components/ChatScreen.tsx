@@ -5,10 +5,21 @@ import { Card } from './ui/card';
 import { ChatMessage } from './ChatMessage';
 import { ChatHistory } from './ChatHistory';
 import { RenameDialog } from './RenameDialog';
-import { Send, LogOut, HeartPulse } from 'lucide-react';
+import { DeleteDialog } from './DeleteDialog';
+import { Send, LogOut, HeartPulse, Loader2 } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { chatRequest } from '../api/ChatApi';
-import { Message, Conversation, ConversationData, createQueryRequest } from '../models';
+import { 
+  createConversation, 
+  getConversations, 
+  getConversation,
+  updateConversationTitle,
+  deleteConversation as deleteConversationApi,
+  addMessage,
+  ConversationResponse,
+  MessageResponse
+} from '../api/ConversationApi';
+import { Message, Conversation, createQueryRequest } from '../models';
 
 interface ChatScreenProps {
   userEmail: string;
@@ -17,81 +28,130 @@ interface ChatScreenProps {
   onOpenProfile: () => void;
 }
 
-async function getResponseForQuery(query: string): Promise<string> {
-  const request = createQueryRequest(query);
-
-  try {
-    const response = await chatRequest(request);
-    return response.answer;
-  } catch (error) {
-    console.error('Chat request failed:', error);
-    return "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.";
-  }
-}
-
-const createInitialMessage = (): Message => ({
-  id: crypto.randomUUID(),
-  content: "Merhaba! Ben sağlık sigortası asistanınızım. Size nasıl yardımcı olabilirim?",
-  sender: 'agent',
-  timestamp: new Date()
-});
-
 export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: ChatScreenProps) {
-  const [conversations, setConversations] = useState<ConversationData[]>([
-    { id: crypto.randomUUID(), messages: [createInitialMessage()] }
-  ]);
-  const [currentConversationId, setCurrentConversationId] = useState<string>(conversations[0].id);
+  const [conversations, setConversations] = useState<ConversationResponse[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [renamingConversationId, setRenamingConversationId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [renamingConversationId, setRenamingConversationId] = useState<number | null>(null);
+  const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const currentConversation = conversations.find(c => c.id === currentConversationId);
-  const messages = currentConversation?.messages || [];
+  // Load conversations on mount
+  useEffect(() => {
+    loadConversations();
+  }, []);
 
+  // Scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
 
-  const addMessage = (message: Message) => {
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === currentConversationId
-          ? { ...conv, messages: [...conv.messages, message] }
-          : conv
-      )
-    );
+  const loadConversations = async () => {
+    try {
+      setIsLoading(true);
+      const convs = await getConversations();
+      setConversations(convs);
+      
+      // If there are conversations, load the first one
+      if (convs.length > 0) {
+        await loadConversation(convs[0].id);
+      } else {
+        // Create a new conversation if none exist
+        await handleNewConversation();
+      }
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadConversation = async (conversationId: number) => {
+    try {
+      const conv = await getConversation(conversationId);
+      setCurrentConversationId(conversationId);
+      
+      // Convert backend messages to frontend format
+      const formattedMessages: Message[] = conv.messages.map((msg: MessageResponse) => ({
+        id: msg.id.toString(),
+        content: msg.content,
+        sender: msg.sender,
+        timestamp: new Date(msg.created_at)
+      }));
+      
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Failed to load conversation:', error);
+    }
   };
 
   const handleSend = async () => {
-    if (!input.trim() || isTyping) return;
+    if (!input.trim() || isTyping || !currentConversationId) return;
 
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      content: input.trim(),
+    const userMessageContent = input.trim();
+    setInput('');
+    
+    // Add user message to UI immediately
+    const tempUserMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content: userMessageContent,
       sender: 'user',
       timestamp: new Date()
     };
-
-    addMessage(userMessage);
-    const queryText = input.trim();
-    setInput('');
+    setMessages(prev => [...prev, tempUserMessage]);
     setIsTyping(true);
 
     try {
-      const response = await getResponseForQuery(queryText);
+      // Save user message to backend
+      await addMessage(currentConversationId, userMessageContent, 'user');
 
+      // Get AI response
+      const request = createQueryRequest(userMessageContent);
+      const response = await chatRequest(request);
+
+      // Save agent message to backend
+      await addMessage(currentConversationId, response.answer, 'agent');
+
+      // Add agent message to UI
       const agentMessage: Message = {
-        id: crypto.randomUUID(),
-        content: response,
+        id: `agent-${Date.now()}`,
+        content: response.answer,
         sender: 'agent',
         timestamp: new Date()
       };
+      setMessages(prev => [...prev, agentMessage]);
 
-      addMessage(agentMessage);
+      // Update conversation title if it's the first user message
+      const currentConv = conversations.find(c => c.id === currentConversationId);
+      if (currentConv && currentConv.title === 'Yeni Sohbet') {
+        const newTitle = userMessageContent.slice(0, 30) + (userMessageContent.length > 30 ? '...' : '');
+        await updateConversationTitle(currentConversationId, newTitle);
+        setConversations(prev => 
+          prev.map(c => c.id === currentConversationId ? { ...c, title: newTitle } : c)
+        );
+      }
+
+      // Refresh conversations list to update last_message and message_count
+      const updatedConvs = await getConversations();
+      setConversations(updatedConvs);
+
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      // Add error message
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        content: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
+        sender: 'agent',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
     }
@@ -104,94 +164,98 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     }
   };
 
-  const handleNewConversation = () => {
-    const newId = crypto.randomUUID();
-    const newConversation: ConversationData = {
-      id: newId,
-      messages: [createInitialMessage()]
-    };
-    setConversations(prev => [newConversation, ...prev]);
-    setCurrentConversationId(newId);
+  const handleNewConversation = async () => {
+    try {
+      const newConvId = await createConversation();
+      const updatedConvs = await getConversations();
+      setConversations(updatedConvs);
+      await loadConversation(newConvId);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+    }
   };
 
-  const handleSelectConversation = (id: string) => {
-    setCurrentConversationId(id);
+  const handleSelectConversation = async (id: string) => {
+    await loadConversation(parseInt(id));
   };
 
   const handleDeleteConversation = (id: string) => {
-    if (conversations.length === 1) {
-      const newConversation: ConversationData = {
-        id: crypto.randomUUID(),
-        messages: [createInitialMessage()]
-      };
-      setConversations([newConversation]);
-      setCurrentConversationId(newConversation.id);
-      return;
-    }
+    setDeletingConversationId(parseInt(id));
+    setDeleteDialogOpen(true);
+  };
 
-    const remainingConversations = conversations.filter(c => c.id !== id);
-    setConversations(remainingConversations);
-    
-    if (currentConversationId === id) {
-      setCurrentConversationId(remainingConversations[0].id);
+  const handleDeleteConfirm = async () => {
+    if (!deletingConversationId) return;
+
+    try {
+      await deleteConversationApi(deletingConversationId);
+      
+      const updatedConvs = await getConversations();
+      setConversations(updatedConvs);
+      
+      // If we deleted the current conversation, load another one
+      if (currentConversationId === deletingConversationId) {
+        if (updatedConvs.length > 0) {
+          await loadConversation(updatedConvs[0].id);
+        } else {
+          await handleNewConversation();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    } finally {
+      setDeletingConversationId(null);
+      setDeleteDialogOpen(false);
     }
   };
 
   const handleRenameConversation = (id: string) => {
-    setRenamingConversationId(id);
+    setRenamingConversationId(parseInt(id));
     setRenameDialogOpen(true);
   };
 
-  const handleRenameSubmit = (newTitle: string) => {
-    if (renamingConversationId && newTitle.trim()) {
+  const handleRenameSubmit = async (newTitle: string) => {
+    if (!renamingConversationId || !newTitle.trim()) return;
+
+    try {
+      await updateConversationTitle(renamingConversationId, newTitle.trim());
       setConversations(prev =>
         prev.map(conv =>
           conv.id === renamingConversationId
-            ? { ...conv, customTitle: newTitle.trim() }
+            ? { ...conv, title: newTitle.trim() }
             : conv
         )
       );
+    } catch (error) {
+      console.error('Failed to rename conversation:', error);
+    } finally {
+      setRenamingConversationId(null);
     }
-    setRenamingConversationId(null);
   };
 
-  const getConversationTitle = (conv: ConversationData): string => {
-    if (conv.customTitle) return conv.customTitle;
-    
-    const firstUserMessage = conv.messages.find(m => m.sender === 'user');
-    if (firstUserMessage) {
-      const maxLength = 25;
-      return firstUserMessage.content.length > maxLength
-        ? `${firstUserMessage.content.slice(0, maxLength)}...`
-        : firstUserMessage.content;
-    }
-    
-    return 'Yeni Sohbet';
-  };
-
-  const getLastMessagePreview = (conv: ConversationData): string => {
-    const userMessages = conv.messages.filter(m => m.sender === 'user');
-    const lastUserMessage = userMessages[userMessages.length - 1];
-    
-    if (!lastUserMessage) return 'Henüz mesaj yok';
-    
-    const maxLength = 30;
-    return lastUserMessage.content.length > maxLength
-      ? `${lastUserMessage.content.slice(0, maxLength)}...`
-      : lastUserMessage.content;
-  };
-
+  // Convert backend conversations to frontend format
   const conversationsList: Conversation[] = conversations.map(conv => ({
-    id: conv.id,
-    title: getConversationTitle(conv),
-    lastMessage: getLastMessagePreview(conv),
-    timestamp: conv.messages[conv.messages.length - 1]?.timestamp || new Date(),
-    messageCount: conv.messages.length
+    id: conv.id.toString(),
+    title: conv.title,
+    lastMessage: conv.last_message || 'Henüz mesaj yok',
+    timestamp: new Date(conv.updated_at),
+    messageCount: conv.message_count
   }));
 
   const renamingConversation = renamingConversationId
-    ? conversationsList.find(c => c.id === renamingConversationId)
+    ? conversationsList.find(c => c.id === renamingConversationId.toString())
     : null;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
@@ -199,7 +263,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
       <div style={{ width: '280px', flexShrink: 0, borderRight: '1px solid #e5e7eb', backgroundColor: 'white' }}>
         <ChatHistory
           conversations={conversationsList}
-          currentConversationId={currentConversationId}
+          currentConversationId={currentConversationId?.toString() || null}
           onSelectConversation={handleSelectConversation}
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
@@ -213,6 +277,13 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
         currentTitle={renamingConversation?.title || ''}
         onOpenChange={setRenameDialogOpen}
         onRename={handleRenameSubmit}
+      />
+
+      {/* Delete Dialog */}
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
       />
 
       {/* Main Chat Area */}

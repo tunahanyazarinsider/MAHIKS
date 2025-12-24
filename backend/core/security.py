@@ -3,9 +3,12 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import jwt, JWTError
 from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from backend.config import Config
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
@@ -150,3 +153,46 @@ def get_token_subject(token: str) -> Optional[str]:
         return payload.get("sub")
     except JWTError:
         return None
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> Dict[str, Any]:
+    """
+    FastAPI dependency to get current authenticated user from JWT token.
+    
+    Args:
+        credentials: HTTP Bearer credentials from request header
+        
+    Returns:
+        Dict containing user info (id, email, etc.) from token claims
+        
+    Raises:
+        HTTPException: 401 if token is invalid or expired
+    """
+    token = credentials.credentials
+    
+    payload = decode_access_token(token)
+    
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Extract user info from token claims
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Return user dict with info from token
+    return {
+        "id": int(user_id),
+        "email": payload.get("email"),
+        "display_name": payload.get("display_name"),
+    }

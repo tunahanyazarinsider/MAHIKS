@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import uvicorn
 from pathlib import Path
+from backend.controller.ConversationController import conversation_router, set_mysql_handler as set_conversation_mysql_handler
 
 from backend.config import Config
 from backend.models.schemas import (
@@ -109,6 +110,7 @@ async def lifespan(app: FastAPI):
         '''
 
         print("✓ All databases initialized")
+        set_conversation_mysql_handler(mysql_handler)
 
     except Exception as e:
         print(f"✗ Database initialization failed: {e}")
@@ -178,6 +180,7 @@ app.add_middleware(
 
 # Include user router
 app.include_router(user_router)
+app.include_router(conversation_router)
 
 # Register exception handlers
 register_exception_handlers(app)
