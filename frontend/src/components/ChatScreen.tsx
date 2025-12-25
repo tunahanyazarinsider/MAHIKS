@@ -1,15 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { ScrollArea } from './ui/scroll-area';
 import { Card } from './ui/card';
-import { ChatMessage, Message } from './ChatMessage';
-import { ChatHistory, Conversation } from './ChatHistory';
+import { ChatMessage } from './ChatMessage';
+import { ChatHistory } from './ChatHistory';
 import { RenameDialog } from './RenameDialog';
-import { Send, LogOut, HeartPulse, Menu, X } from 'lucide-react';
+import { DeleteDialog } from './DeleteDialog';
+import { Send, LogOut, HeartPulse, Loader2 } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { chatRequest } from '../api/ChatApi';
-import { QueryRequest } from '../models/QueryRequest';
+import { 
+  createConversation, 
+  getConversations, 
+  getConversation,
+  updateConversationTitle,
+  deleteConversation as deleteConversationApi,
+  addMessage,
+  ConversationResponse,
+  MessageResponse
+} from '../api/ConversationApi';
+import { Message, Conversation, createQueryRequest } from '../models';
 
 interface ChatScreenProps {
   userEmail: string;
@@ -18,181 +28,248 @@ interface ChatScreenProps {
   onOpenProfile: () => void;
 }
 
-async function getResponseForQuery(query: string): Promise<string> {
-
-  const request = new QueryRequest(query);
-
-  try {
-    const response = await chatRequest(request);
-    return response.answer;
-  } catch (error) {
-    console.error(error);
-    return "I'm sorry, I couldn't understand your question.";
-  }
-}
-
-const initialMessage: Message = {
-  id: '1',
-  content: "Hello! I'm your healthcare insurance assistant. I can help you with claims, billing, coverage questions, and general support. How can I assist you today?",
-  sender: 'agent',
-  timestamp: new Date()
-};
-
-interface ConversationData {
-  id: string;
-  messages: Message[];
-  customTitle?: string;
-}
-
 export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: ChatScreenProps) {
-  const [conversations, setConversations] = useState<ConversationData[]>([
-    { id: '1', messages: [initialMessage] }
-  ]);
-  const [currentConversationId, setCurrentConversationId] = useState<string>('1');
+  const [conversations, setConversations] = useState<ConversationResponse[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [renamingConversationId, setRenamingConversationId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [renamingConversationId, setRenamingConversationId] = useState<number | null>(null);
+  const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const currentConversation = conversations.find(c => c.id === currentConversationId);
-  const messages = currentConversation?.messages || [];
+  // Load conversations on mount
+  useEffect(() => {
+    loadConversations();
+  }, []);
 
+  // Scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  const addMessage = (message: Message) => {
-    setConversations(prev =>
-      prev.map(conv =>
-        conv.id === currentConversationId
-          ? { ...conv, messages: [...conv.messages, message] }
-          : conv
-      )
-    );
+  const loadConversations = async () => {
+    try {
+      setIsLoading(true);
+      const convs = await getConversations();
+      setConversations(convs);
+      
+      // If there are conversations, load the first one
+      if (convs.length > 0) {
+        await loadConversation(convs[0].id);
+      } else {
+        // Create a new conversation if none exist
+        await handleNewConversation();
+      }
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadConversation = async (conversationId: number) => {
+    try {
+      const conv = await getConversation(conversationId);
+      setCurrentConversationId(conversationId);
+      
+      // Convert backend messages to frontend format
+      const formattedMessages: Message[] = conv.messages.map((msg: MessageResponse) => ({
+        id: msg.id.toString(),
+        content: msg.content,
+        sender: msg.sender,
+        timestamp: new Date(msg.created_at)
+      }));
+      
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Failed to load conversation:', error);
+    }
   };
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isTyping || !currentConversationId) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: input,
+    const userMessageContent = input.trim();
+    setInput('');
+    
+    // Add user message to UI immediately
+    const tempUserMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content: userMessageContent,
       sender: 'user',
       timestamp: new Date()
     };
-
-    addMessage(userMessage);
-
-    setInput('');
+    setMessages(prev => [...prev, tempUserMessage]);
     setIsTyping(true);
 
     try {
-      const response = await getResponseForQuery(input);
+      // Save user message to backend
+      await addMessage(currentConversationId, userMessageContent, 'user');
 
+      // Get AI response
+      const request = createQueryRequest(userMessageContent);
+      const response = await chatRequest(request);
+
+      // Save agent message to backend
+      await addMessage(currentConversationId, response.answer, 'agent');
+
+      // Add agent message to UI
       const agentMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: response,
+        id: `agent-${Date.now()}`,
+        content: response.answer,
         sender: 'agent',
         timestamp: new Date()
       };
+      setMessages(prev => [...prev, agentMessage]);
 
-      addMessage(agentMessage);
+      // Update conversation title if it's the first user message
+      const currentConv = conversations.find(c => c.id === currentConversationId);
+      if (currentConv && currentConv.title === 'Yeni Sohbet') {
+        const newTitle = userMessageContent.slice(0, 30) + (userMessageContent.length > 30 ? '...' : '');
+        await updateConversationTitle(currentConversationId, newTitle);
+        setConversations(prev => 
+          prev.map(c => c.id === currentConversationId ? { ...c, title: newTitle } : c)
+        );
+      }
+
+      // Refresh conversations list to update last_message and message_count
+      const updatedConvs = await getConversations();
+      setConversations(updatedConvs);
+
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      // Add error message
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        content: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
+        sender: 'agent',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
-  const handleNewConversation = () => {
-    const newId = Date.now().toString();
-    const newConversation: ConversationData = {
-      id: newId,
-      messages: [{ ...initialMessage, id: `${newId}-1`, timestamp: new Date() }]
-    };
-    setConversations(prev => [newConversation, ...prev]);
-    setCurrentConversationId(newId);
+  const handleNewConversation = async () => {
+    try {
+      const newConvId = await createConversation();
+      const updatedConvs = await getConversations();
+      setConversations(updatedConvs);
+      await loadConversation(newConvId);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+    }
   };
 
-  const handleSelectConversation = (id: string) => {
-    setCurrentConversationId(id);
+  const handleSelectConversation = async (id: string) => {
+    await loadConversation(parseInt(id));
   };
 
   const handleDeleteConversation = (id: string) => {
-    if (conversations.length === 1) {
-      // Don't delete the last conversation, just reset it
-      setConversations([{ id: '1', messages: [initialMessage] }]);
-      setCurrentConversationId('1');
-      return;
-    }
+    setDeletingConversationId(parseInt(id));
+    setDeleteDialogOpen(true);
+  };
 
-    setConversations(prev => prev.filter(c => c.id !== id));
-    if (currentConversationId === id) {
-      const remainingConversations = conversations.filter(c => c.id !== id);
-      setCurrentConversationId(remainingConversations[0]?.id || '1');
+  const handleDeleteConfirm = async () => {
+    if (!deletingConversationId) return;
+
+    try {
+      await deleteConversationApi(deletingConversationId);
+      
+      const updatedConvs = await getConversations();
+      setConversations(updatedConvs);
+      
+      // If we deleted the current conversation, load another one
+      if (currentConversationId === deletingConversationId) {
+        if (updatedConvs.length > 0) {
+          await loadConversation(updatedConvs[0].id);
+        } else {
+          await handleNewConversation();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    } finally {
+      setDeletingConversationId(null);
+      setDeleteDialogOpen(false);
     }
   };
 
   const handleRenameConversation = (id: string) => {
-    setRenamingConversationId(id);
+    setRenamingConversationId(parseInt(id));
     setRenameDialogOpen(true);
   };
 
-  const handleRenameSubmit = (newTitle: string) => {
-    if (renamingConversationId) {
+  const handleRenameSubmit = async (newTitle: string) => {
+    if (!renamingConversationId || !newTitle.trim()) return;
+
+    try {
+      await updateConversationTitle(renamingConversationId, newTitle.trim());
       setConversations(prev =>
         prev.map(conv =>
           conv.id === renamingConversationId
-            ? { ...conv, customTitle: newTitle }
+            ? { ...conv, title: newTitle.trim() }
             : conv
         )
       );
+    } catch (error) {
+      console.error('Failed to rename conversation:', error);
+    } finally {
+      setRenamingConversationId(null);
     }
-    setRenamingConversationId(null);
   };
 
-  const conversationsList: Conversation[] = conversations.map(conv => {
-    const userMessages = conv.messages.filter(m => m.sender === 'user');
-    const lastUserMessage = userMessages[userMessages.length - 1];
-    const firstUserMessage = userMessages[0];
-
-    const defaultTitle = firstUserMessage?.content.slice(0, 50) + (firstUserMessage?.content.length > 50 ? '...' : '') || 'New Conversation';
-
-    return {
-      id: conv.id,
-      title: conv.customTitle || defaultTitle,
-      lastMessage: lastUserMessage?.content.slice(0, 60) + (lastUserMessage?.content.length > 60 ? '...' : '') || 'No messages yet',
-      timestamp: conv.messages[conv.messages.length - 1]?.timestamp || new Date(),
-      messageCount: conv.messages.length
-    };
-  });
+  // Convert backend conversations to frontend format
+  const conversationsList: Conversation[] = conversations.map(conv => ({
+    id: conv.id.toString(),
+    title: conv.title,
+    lastMessage: conv.last_message || 'Henüz mesaj yok',
+    timestamp: new Date(conv.updated_at),
+    messageCount: conv.message_count
+  }));
 
   const renamingConversation = renamingConversationId
-    ? conversationsList.find(c => c.id === renamingConversationId)
+    ? conversationsList.find(c => c.id === renamingConversationId.toString())
     : null;
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      {sidebarOpen && (
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      {/* Fixed Sidebar */}
+      <div style={{ width: '280px', flexShrink: 0, borderRight: '1px solid #e5e7eb', backgroundColor: 'white' }}>
         <ChatHistory
           conversations={conversationsList}
-          currentConversationId={currentConversationId}
+          currentConversationId={currentConversationId?.toString() || null}
           onSelectConversation={handleSelectConversation}
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
           onRenameConversation={handleRenameConversation}
         />
-      )}
+      </div>
 
       {/* Rename Dialog */}
       <RenameDialog
@@ -202,86 +279,80 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
         onRename={handleRenameSubmit}
       />
 
+      {/* Delete Dialog */}
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+      />
+
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: '#f9fafb' }}>
         {/* Header */}
-        <div className="bg-white border-b px-6 py-4">
+        <header style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 24px', flexShrink: 0 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="mr-2"
-              >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
               <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
                 <HeartPulse className="h-6 w-6 text-white" />
               </div>
-              <div>
-                <h1>Healthcare Insurance Support</h1>
-                <p className="text-sm text-gray-500">Multi-Agent Assistance</p>
-              </div>
+              <h1 className="text-lg font-semibold">Sağlık Sigortası Asistanı</h1>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={onOpenProfile}>
                 <span className="text-sm text-gray-600">{userName}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={onLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                Çıkış Yap
               </Button>
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-hidden p-6">
-          <Card className="h-full flex flex-col max-w-5xl mx-auto">
-            <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full p-4">
-                <div className="space-y-4">
-                  {messages.map(message => (
-                    <ChatMessage key={message.id} message={message} />
-                  ))}
-                  
-                  {isTyping && (
-                    <div className="flex gap-3">
-                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                        <div className="flex gap-1">
-                          <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div ref={scrollRef} />
-                </div>
-              </ScrollArea>
+        <div style={{ flex: 1, overflow: 'hidden', padding: '24px' }}>
+          <Card className="h-full flex flex-col" style={{ maxWidth: '900px', margin: '0 auto' }}>
+            {/* Messages */}
+            <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+              <div className="space-y-4">
+                {messages.map(message => (
+                  <ChatMessage key={message.id} message={message} />
+                ))}
+                
+                {isTyping && (
+                  <ChatMessage 
+                    message={{
+                      id: 'typing',
+                      content: '',
+                      sender: 'agent',
+                      timestamp: new Date(),
+                      isLoading: true
+                    }} 
+                  />
+                )}
+              </div>
             </div>
 
             <Separator />
 
-            {/* Input Area */}
-            <div className="p-4 flex-shrink-0">
+            {/* Input */}
+            <div style={{ padding: '16px', flexShrink: 0 }}>
               <div className="flex gap-2">
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask about claims, billing, coverage, or general support..."
+                  onKeyDown={handleKeyDown}
+                  placeholder="Sağlık sigortanızla ilgili sorunuzu yazın..."
+                  disabled={isTyping}
                   className="flex-1"
                 />
-                <Button onClick={handleSend} disabled={!input.trim()}>
+                <Button onClick={handleSend} disabled={!input.trim() || isTyping}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Ask me anything about your healthcare insurance
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Sağlık asistanınızla güvenli ve gizli bir şekilde iletişim kurabilirsiniz.
               </p>
             </div>
           </Card>

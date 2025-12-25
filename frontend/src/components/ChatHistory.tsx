@@ -1,15 +1,6 @@
-import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { MessageSquarePlus, MessageSquare, Trash2, Pencil } from 'lucide-react';
-import { Separator } from './ui/separator';
-
-export interface Conversation {
-  id: string;
-  title: string;
-  lastMessage: string;
-  timestamp: Date;
-  messageCount: number;
-}
+import { Conversation } from '../models';
 
 interface ChatHistoryProps {
   conversations: Conversation[];
@@ -28,15 +19,28 @@ export function ChatHistory({
   onDeleteConversation,
   onRenameConversation
 }: ChatHistoryProps) {
-  const formatDate = (date: Date) => {
+  
+  const formatDate = (date: Date): string => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
-    return date.toLocaleDateString();
+    if (days === 0) return 'Bugün';
+    if (days === 1) return 'Dün';
+    if (days < 7) return `${days} gün önce`;
+    if (days < 30) return `${Math.floor(days / 7)} hafta önce`;
+    
+    return date.toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const formatMessageCount = (count: number): string => {
+    if (count === 0) return 'Mesaj yok';
+    if (count === 1) return '1 mesaj';
+    return `${count} mesaj`;
   };
 
   const groupedConversations = conversations.reduce((groups, conv) => {
@@ -49,81 +53,132 @@ export function ChatHistory({
   }, {} as Record<string, Conversation[]>);
 
   return (
-    <div className="w-80 bg-white border-r flex flex-col h-full">
-      <div className="p-4 border-b">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* New Chat Button */}
+      <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
         <Button onClick={onNewConversation} className="w-full">
           <MessageSquarePlus className="h-4 w-4 mr-2" />
-          New Conversation
+          Yeni Sohbet
         </Button>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-2">
-          {Object.entries(groupedConversations).map(([date, convs]) => (
-            <div key={date} className="mb-4">
-              <div className="px-3 py-2 text-xs text-gray-500">{date}</div>
-              <div className="space-y-1">
-                {convs.map((conversation) => (
-                  <div
-                    key={conversation.id}
-                    className={`group relative rounded-lg p-3 cursor-pointer transition-colors ${
-                      currentConversationId === conversation.id
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'hover:bg-gray-50'
-                    }`}
-                    onClick={() => onSelectConversation(conversation.id)}
-                  >
-                    <div className="flex items-start gap-2">
-                      <MessageSquare className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{conversation.title}</p>
-                        <p className="text-xs text-gray-500 truncate mt-1">
-                          {conversation.lastMessage}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {conversation.messageCount} messages
-                        </p>
-                      </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2">
+      {/* Chat List */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+        {Object.entries(groupedConversations).map(([date, convs]) => (
+          <div key={date} style={{ marginBottom: '16px' }}>
+            <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>
+              {date}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {convs.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  onClick={() => onSelectConversation(conversation.id)}
+                  style={{
+                    padding: '12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    backgroundColor: currentConversationId === conversation.id ? '#eff6ff' : 'transparent',
+                    border: currentConversationId === conversation.id ? '1px solid #bfdbfe' : '1px solid transparent',
+                  }}
+                  className="group hover:bg-gray-50"
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    {/* Left column: Icon + Action buttons */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                      <MessageSquare style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
+                      
+                      {/* Action Buttons - below icon */}
+                      <div 
+                        className="opacity-0 group-hover:opacity-100"
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          gap: '2px',
+                          transition: 'opacity 0.2s'
+                        }}
+                      >
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          style={{ height: '24px', width: '24px', padding: 0 }}
                           onClick={(e) => {
                             e.stopPropagation();
                             onRenameConversation(conversation.id);
                           }}
                         >
-                          <Pencil className="h-3 w-3 text-gray-400 hover:text-blue-500" />
+                          <Pencil style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
                         </Button>
+
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          style={{ height: '24px', width: '24px', padding: 0 }}
                           onClick={(e) => {
                             e.stopPropagation();
                             onDeleteConversation(conversation.id);
                           }}
                         >
-                          <Trash2 className="h-3 w-3 text-gray-400 hover:text-red-500" />
+                          <Trash2 style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
                         </Button>
                       </div>
                     </div>
+                    
+                    {/* Right column: Text content */}
+                    <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
+                      <p style={{ 
+                        fontSize: '14px', 
+                        fontWeight: 500, 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis',
+                        color: '#111827'
+                      }}>
+                        {conversation.title}
+                      </p>
+                      <p style={{ 
+                        fontSize: '12px', 
+                        color: '#6b7280', 
+                        marginTop: '4px',
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {conversation.lastMessage}
+                      </p>
+                      <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
+                        {formatMessageCount(conversation.messageCount)}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        ))}
 
-          {conversations.length === 0 && (
-            <div className="text-center py-8 px-4">
-              <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">No conversations yet</p>
-              <p className="text-xs text-gray-400 mt-1">Start a new conversation to begin</p>
+        {/* Empty State */}
+        {conversations.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '48px 16px' }}>
+            <div style={{ 
+              backgroundColor: '#f3f4f6', 
+              borderRadius: '50%', 
+              width: '64px', 
+              height: '64px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto 16px' 
+            }}>
+              <MessageSquare style={{ width: '32px', height: '32px', color: '#9ca3af' }} />
             </div>
-          )}
-        </div>
-      </ScrollArea>
+            <p style={{ fontSize: '14px', fontWeight: 500, color: '#4b5563' }}>Henüz sohbet yok</p>
+            <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px' }}>
+              Sağlık sigortası hakkında soru sormak için yukarıdaki butona tıklayın
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
