@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from google import genai
 import os
 import json
+import time
 
 
 class Triplet(BaseModel):
@@ -90,64 +91,70 @@ Triplets:
 
 Sadece triplet listesini döndür, başka açıklama ekleme."""
 
-    def extract_triplets(self, text: str) -> List[Triplet]:
+    def extract_triplets(self, text: str, retries: int = 3) -> List[Triplet]:
         """
-        Extract knowledge graph triplets from text
+        Extract knowledge graph triplets from text with retry logic.
 
         Args:
             text: Input text
+            retries: Number of retry attempts on failure
 
         Returns:
             List of Triplet objects
         """
-        try:
-            prompt = f"{self.system_prompt}\n\n---\n\nMetinden tripletleri çıkar:\n\n{text}"
+        prompt = f"{self.system_prompt}\n\n---\n\nMetinden tripletleri çıkar:\n\n{text}"
 
-            schema = {
-                'type': 'object',
-                'properties': {
-                    'triplets': {
-                        'type': 'array',
-                        'items': {
-                            'type': 'object',
-                            'properties': {
-                                'subject': {
-                                    'type': 'string',
-                                    'description': 'The primary entity (noun)'
-                                },
-                                'predicate': {
-                                    'type': 'string',
-                                    'description': 'The relationship or action in UPPER_SNAKE_CASE'
-                                },
-                                'object': {
-                                    'type': 'string',
-                                    'description': 'The target entity or value'
-                                }
+        schema = {
+            'type': 'object',
+            'properties': {
+                'triplets': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'subject': {
+                                'type': 'string',
+                                'description': 'The primary entity (noun)'
                             },
-                            'required': ['subject', 'predicate', 'object']
-                        }
+                            'predicate': {
+                                'type': 'string',
+                                'description': 'The relationship or action in UPPER_SNAKE_CASE'
+                            },
+                            'object': {
+                                'type': 'string',
+                                'description': 'The target entity or value'
+                            }
+                        },
+                        'required': ['subject', 'predicate', 'object']
                     }
-                },
-                'required': ['triplets']
-            }
-
-            # Use Gemini with structured output
-            response = self.client.models.generate_content(
-                model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
-                contents=prompt,
-                config={
-                    'response_mime_type': 'application/json',
-                    'response_schema': schema,
                 }
-            )
+            },
+            'required': ['triplets']
+        }
 
-            result = json.loads(response.text)
-            triplets = [Triplet(**t) for t in result.get('triplets', [])]
-            return triplets
+        for attempt in range(retries):
+            try:
+                # Use Gemini with structured output
+                response = self.client.models.generate_content(
+                    model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+                    contents=prompt,
+                    config={
+                        'response_mime_type': 'application/json',
+                        'response_schema': schema,
+                    }
+                )
 
-        except Exception as e:
-            print(f"      ⚠ Error extracting triplets: {e}")
-            return []
+                result = json.loads(response.text)
+                triplets = [Triplet(**t) for t in result.get('triplets', [])]
+                return triplets
+
+            except Exception as e:
+                print(f"      ⚠ Error extracting triplets (attempt {attempt+1}/{retries}): {e}")
+                if attempt < retries - 1:
+                    wait_time = 2 ** attempt
+                    time.sleep(wait_time)
+
+        return []
 
     def populate_graph(self, text: str, chunk_size: int = 3000) -> int:
         """

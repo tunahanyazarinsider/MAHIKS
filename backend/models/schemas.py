@@ -23,6 +23,7 @@ class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1, description="User's question")
     include_citations: bool = Field(True, description="Include source citations")
     top_k: int = Field(5, ge=1, le=20, description="Number of chunks to retrieve")
+    conversation_id: Optional[int] = Field(None, description="Conversation ID for context-aware responses")
 
 
 class SourceInfo(BaseModel):

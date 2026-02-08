@@ -406,6 +406,35 @@ class MySQLHandler:
             print(f"✗ Error getting messages: {e}")
             return []
 
+    def get_recent_messages(self, conversation_id: int, limit: int = 6) -> List[Dict]:
+        """
+        Get the most recent N messages for a conversation, ordered chronologically.
+        Used for feeding conversation context into RAG pipeline.
+
+        Args:
+            conversation_id: Conversation ID
+            limit: Max number of recent messages to fetch
+
+        Returns:
+            List of message dicts ordered by created_at ASC (oldest first)
+        """
+        try:
+            query = """
+                SELECT * FROM (
+                    SELECT id, conversation_id, content, sender, created_at
+                    FROM messages
+                    WHERE conversation_id = %s
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                ) AS recent
+                ORDER BY created_at ASC
+            """
+            self.cursor.execute(query, (conversation_id, limit))
+            return self.cursor.fetchall()
+        except Error as e:
+            print(f"✗ Error getting recent messages: {e}")
+            return []
+
     def close(self):
         """Close database connection"""
         if self.connection.is_connected():
