@@ -101,6 +101,9 @@ services:
       - CACHE_TTL=${CACHE_TTL:-3600}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - KG_EXTRACTION_METHOD=${KG_EXTRACTION_METHOD:-local}
+      - KG_OLLAMA_MODEL=${KG_OLLAMA_MODEL:-llama3.2:3b}
+      - KG_CHUNK_SIZE=${KG_CHUNK_SIZE:-3000}
     volumes:
       - ./backend:/app/backend
       - ./data:/app/data

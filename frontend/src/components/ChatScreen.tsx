@@ -8,7 +8,7 @@ import { RenameDialog } from './RenameDialog';
 import { DeleteDialog } from './DeleteDialog';
 import { Send, LogOut, HeartPulse, Loader2 } from 'lucide-react';
 import { Separator } from './ui/separator';
-import { chatRequest } from '../api/ChatApi';
+import { chatRequestStream } from '../api/ChatApi';
 import { 
   createConversation, 
   getConversations, 
@@ -40,6 +40,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
   const [renamingConversationId, setRenamingConversationId] = useState<number | null>(null);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const streamingStartedRef = useRef(false);
 
   // Load conversations on mount
   useEffect(() => {
@@ -97,7 +98,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
     const userMessageContent = input.trim();
     setInput('');
-    
+
     // Add user message to UI immediately
     const tempUserMessage: Message = {
       id: `temp-${Date.now()}`,
@@ -108,50 +109,96 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     setMessages(prev => [...prev, tempUserMessage]);
     setIsTyping(true);
 
+    const agentMsgId = `agent-${Date.now()}`;
+    streamingStartedRef.current = false;
+
     try {
       // Save user message to backend
       await addMessage(currentConversationId, userMessageContent, 'user');
 
-      // Get AI response
-      const request = createQueryRequest(userMessageContent);
-      const response = await chatRequest(request);
+      // Stream AI response
+      const request = createQueryRequest(userMessageContent, {
+        conversation_id: currentConversationId?.toString(),
+      });
 
-      // Save agent message to backend
-      await addMessage(currentConversationId, response.answer, 'agent');
+      await chatRequestStream(
+        request,
+        // onChunk: create agent message on first chunk, then append
+        (chunk) => {
+          if (!streamingStartedRef.current) {
+            streamingStartedRef.current = true;
+            setMessages(prev => [...prev, {
+              id: agentMsgId,
+              content: chunk,
+              sender: 'agent',
+              timestamp: new Date()
+            }]);
+          } else {
+            setMessages(prev => prev.map(m =>
+              m.id === agentMsgId
+                ? { ...m, content: m.content + chunk }
+                : m
+            ));
+          }
+        },
+        // onMetadata
+        undefined,
+        // onCitations
+        undefined,
+        // onDone: save the final answer to backend
+        async (data) => {
+          if (data.answer) {
+            await addMessage(currentConversationId, data.answer, 'agent');
+          }
 
-      // Add agent message to UI
-      const agentMessage: Message = {
-        id: `agent-${Date.now()}`,
-        content: response.answer,
-        sender: 'agent',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, agentMessage]);
+          // Update conversation title if first message
+          const currentConv = conversations.find(c => c.id === currentConversationId);
+          if (currentConv && currentConv.title === 'Yeni Sohbet') {
+            const newTitle = userMessageContent.slice(0, 30) + (userMessageContent.length > 30 ? '...' : '');
+            await updateConversationTitle(currentConversationId, newTitle);
+            setConversations(prev =>
+              prev.map(c => c.id === currentConversationId ? { ...c, title: newTitle } : c)
+            );
+          }
 
-      // Update conversation title if it's the first user message
-      const currentConv = conversations.find(c => c.id === currentConversationId);
-      if (currentConv && currentConv.title === 'Yeni Sohbet') {
-        const newTitle = userMessageContent.slice(0, 30) + (userMessageContent.length > 30 ? '...' : '');
-        await updateConversationTitle(currentConversationId, newTitle);
-        setConversations(prev => 
-          prev.map(c => c.id === currentConversationId ? { ...c, title: newTitle } : c)
-        );
-      }
-
-      // Refresh conversations list to update last_message and message_count
-      const updatedConvs = await getConversations();
-      setConversations(updatedConvs);
+          // Refresh conversations list
+          const updatedConvs = await getConversations();
+          setConversations(updatedConvs);
+        },
+        // onError
+        (errorMsg) => {
+          const errorContent = errorMsg || 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.';
+          if (!streamingStartedRef.current) {
+            streamingStartedRef.current = true;
+            setMessages(prev => [...prev, {
+              id: agentMsgId,
+              content: errorContent,
+              sender: 'agent',
+              timestamp: new Date()
+            }]);
+          } else {
+            setMessages(prev => prev.map(m =>
+              m.id === agentMsgId ? { ...m, content: errorContent } : m
+            ));
+          }
+        }
+      );
 
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Add error message
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        content: 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.',
-        sender: 'agent',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      const errorContent = 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.';
+      if (!streamingStartedRef.current) {
+        setMessages(prev => [...prev, {
+          id: agentMsgId,
+          content: errorContent,
+          sender: 'agent',
+          timestamp: new Date()
+        }]);
+      } else {
+        setMessages(prev => prev.map(m =>
+          m.id === agentMsgId ? { ...m, content: errorContent } : m
+        ));
+      }
     } finally {
       setIsTyping(false);
     }
@@ -320,15 +367,15 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
                   <ChatMessage key={message.id} message={message} />
                 ))}
                 
-                {isTyping && (
-                  <ChatMessage 
+                {isTyping && !streamingStartedRef.current && (
+                  <ChatMessage
                     message={{
                       id: 'typing',
                       content: '',
                       sender: 'agent',
                       timestamp: new Date(),
                       isLoading: true
-                    }} 
+                    }}
                   />
                 )}
               </div>

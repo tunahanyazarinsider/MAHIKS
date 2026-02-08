@@ -88,6 +88,77 @@ export const chatRequest = async (queryRequest: QueryRequest): Promise<ChatRespo
   };
 };
 
+// Streaming chat request using SSE (Server-Sent Events)
+export const chatRequestStream = async (
+  queryRequest: QueryRequest,
+  onChunk: (chunk: string) => void,
+  onMetadata?: (metadata: Record<string, unknown>) => void,
+  onCitations?: (citations: Array<{ source: string; type: string; similarity: number }>) => void,
+  onDone?: (data: { response_time_ms: number; answer: string }) => void,
+  onError?: (error: string) => void,
+): Promise<void> => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${BASE_URL}/api/ask/stream`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(queryRequest),
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+    onError?.(`HTTP ${response.status}: ${response.statusText}`);
+    return;
+  }
+
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() || "";
+
+    for (const part of parts) {
+      const line = part.trim();
+      if (!line.startsWith("data: ")) continue;
+
+      try {
+        const event = JSON.parse(line.slice(6));
+        switch (event.type) {
+          case "chunk":
+            onChunk(event.data);
+            break;
+          case "metadata":
+            onMetadata?.(event.data);
+            break;
+          case "citations":
+            onCitations?.(event.data);
+            break;
+          case "done":
+            onDone?.(event.data);
+            break;
+          case "error":
+            onError?.(event.data?.message || "Unknown error");
+            break;
+        }
+      } catch {
+        // Skip malformed JSON
+      }
+    }
+  }
+};
+
 // Optional: Batch query endpoint
 export const batchChatRequest = async (queries: QueryRequest[]): Promise<ChatResponse[]> => {
   const response = await chatApi.post<{ results: BackendQueryResponse[] }>("/batch-ask", { queries });
