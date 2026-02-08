@@ -32,10 +32,10 @@ echo "Step 2: Checking model configuration..."
 if [ -f .env ]; then
     MODEL=$(grep OLLAMA_MODEL .env | cut -d'=' -f2)
     if [ -z "$MODEL" ]; then
-        MODEL="llama3.2:1b"
+        MODEL="llama3.2:3b"
     fi
 else
-    MODEL="llama3.2:1b"
+    MODEL="llama3.2:3b"
 fi
 
 echo "Configured model: $MODEL"

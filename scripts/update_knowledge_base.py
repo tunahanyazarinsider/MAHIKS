@@ -17,7 +17,7 @@ from database.neo4j_handler import Neo4jHandler
 from database.bm25_handler import BM25Handler
 from agents.ingestion_agent import IngestionAgent
 from agents.extraction_agent import ExtractionAgent
-from agents.llm_kg_extractor import LLMKnowledgeGraphExtractor
+from agents.kg_extractor import KGExtractor
 from agents.vectorization_agent import VectorizationAgent
 from config import Config
 import argparse
@@ -109,7 +109,7 @@ def main():
 
     # Initialize agents
     print("\nInitializing agents...")
-    print("Knowledge Graph Method: LLM (Gemini)")
+    print(f"Knowledge Graph Method: {Config.KG_EXTRACTION_METHOD}")
     try:
         ingestion = IngestionAgent(data_directory=args.data_dir)
         extraction = ExtractionAgent(
@@ -118,10 +118,9 @@ def main():
         )
 
         vectorization = VectorizationAgent(chroma, mysql, bm25)
-        
-        # Initialize LLM KG extractor
-        llm_extractor = LLMKnowledgeGraphExtractor(neo4j)
 
+        # Initialize KG extractor (local Ollama by default, Gemini as option)
+        kg_extractor = KGExtractor(neo4j, method=Config.KG_EXTRACTION_METHOD)
 
     except Exception as e:
         print(f"✗ Agent initialization failed: {e}")
@@ -186,9 +185,9 @@ def main():
             print(f"  [4/4] Vectorizing and storing chunks...")
             num_chunks = vectorization.vectorize_chunks(chunks, doc_id)
 
-            # Extract knowledge graph triplets using LLM
+            # Extract knowledge graph triplets
             print(f"  [4/4] Extracting knowledge graph...")
-            kg_stats = llm_extractor.process_document(text)
+            kg_stats = kg_extractor.process_document(text)
             triplets_count = kg_stats.get('triplets_extracted', 0)
 
             # Update stats
