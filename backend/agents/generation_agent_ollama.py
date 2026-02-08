@@ -12,7 +12,7 @@ class GenerationAgentOllama:
 
     def __init__(self,
                  base_url: str = "http://localhost:11434",
-                 model: str = "llama3.2:1b"):
+                 model: str = "llama3.2:3b"):
         """
         Initialize the Generation agent with Ollama
 
@@ -98,48 +98,80 @@ class GenerationAgentOllama:
 
         return "\n".join(fact_parts)
 
-    def build_prompt(self, query: str, context: Dict) -> str:
+    def _format_conversation_history(self, messages: List[Dict]) -> str:
+        """
+        Format conversation history for prompt inclusion.
+
+        Args:
+            messages: List of message dicts with 'sender' and 'content' keys
+
+        Returns:
+            Formatted history string or empty string
+        """
+        if not messages:
+            return ""
+
+        history_parts = ["## Önceki Konuşma Bağlamı:"]
+        for msg in messages:
+            role = "Kullanıcı" if msg.get('sender') == 'user' else "Asistan"
+            content = msg.get('content', '')
+            # Truncate long messages to save context window
+            if len(content) > 200:
+                content = content[:200] + "..."
+            history_parts.append(f"**{role}**: {content}")
+
+        return "\n".join(history_parts) + "\n"
+
+    def build_prompt(self, query: str, context: Dict,
+                     conversation_history: List[Dict] = None) -> str:
         """
         Build the complete prompt for the LLM
 
         Args:
             query: User's question
             context: Retrieved context (vector + graph)
+            conversation_history: Optional list of previous messages
 
         Returns:
             Complete prompt string
         """
         vector_context = self.format_vector_context(context.get('vector_context', []))
         graph_context = self.format_graph_context(context.get('graph_facts', []))
+        history_section = self._format_conversation_history(conversation_history)
 
-        prompt = f"""Sen Türk sağlık sigortası konusunda uzman bir asistansın. Görevin kullanıcıların sorularını doğru, anlaşılır ve yardımsever bir şekilde yanıtlamaktır.
+        prompt = f"""<|system|>
+Sen Türk sağlık sigortası konusunda uzman bir asistansın. Aşağıdaki bilgileri kullanarak soruyu yanıtla.
 
-Aşağıdaki bilgileri kullanarak kullanıcının sorusunu yanıtla:
+KURALLAR:
+- Sadece verilen kaynaklara dayanarak yanıt ver
+- Bilgi yoksa "Bu konuda yeterli bilgim yok" de
+- Konuşma geçmişindeki bağlamı dikkate al
+- Kısa ve net yanıtla, gerekirse madde işaretleri kullan
+- Kaynaklara atıfta bulun
+<|end|>
 
+<|context|>
 ## İlgili Belge Parçaları:
 {vector_context}
 
 ## Bilgi Grafiğinden İlişkiler:
 {graph_context}
+<|end|>
 
-## Kullanıcı Sorusu:
+{history_section}
+<|user|>
 {query}
+<|end|>
 
-## Yanıt Kuralları:
-1. Sadece verilen bilgilere dayanarak yanıt ver
-2. Eğer bilgi yetersizse veya soruya yanıt bulunamazsa, bunu açıkça belirt
-3. Türkçe, anlaşılır ve profesyonel bir dil kullan
-4. Önemli detayları eksik bırakma
-5. Gerekirse madde madde açıkla
-6. Kaynaklara atıfta bulun
-
-Lütfen yanıtını ver:"""
+<|assistant|>
+"""
 
         return prompt
 
     def generate_answer(self, query: str, context: Dict,
                        temperature: float = 0.3,
-                       max_tokens: int = 1000) -> str:
+                       max_tokens: int = 1000,
+                       conversation_history: List[Dict] = None) -> str:
         """
         Generate answer using Ollama LLM
 
@@ -148,6 +180,7 @@ Lütfen yanıtını ver:"""
             context: Retrieved context
             temperature: Model temperature (0-1)
             max_tokens: Maximum response length
+            conversation_history: Optional previous messages for context
 
         Returns:
             Generated answer
@@ -155,7 +188,7 @@ Lütfen yanıtını ver:"""
         print(f"    Generating answer with Ollama ({self.model})...")
 
         # Build the prompt
-        prompt = self.build_prompt(query, context)
+        prompt = self.build_prompt(query, context, conversation_history)
 
         try:
             # Call Ollama API
@@ -190,18 +223,21 @@ Lütfen yanıtını ver:"""
             print(f"      ✗ Error generating answer: {e}")
             return f"Üzgünüm, yanıt oluştururken bir hata oluştu: {str(e)}"
 
-    def generate_with_citations(self, query: str, context: Dict) -> Dict:
+    def generate_with_citations(self, query: str, context: Dict,
+                                conversation_history: List[Dict] = None) -> Dict:
         """
         Generate answer with source citations
 
         Args:
             query: User's question
             context: Retrieved context
+            conversation_history: Optional previous messages for context
 
         Returns:
             Dictionary with answer and citations
         """
-        answer = self.generate_answer(query, context)
+        answer = self.generate_answer(query, context,
+                                      conversation_history=conversation_history)
 
         # Extract top sources for citations
         citations = []
@@ -212,13 +248,13 @@ Lütfen yanıtını ver:"""
                 'type': chunk.get('document_type', 'PDF'),
                 'similarity': chunk.get('similarity', 0)
             }
-            
+
             # Add ce_score if available
             if 'ce_score' in chunk:
                 citation['ce_score'] = chunk.get('ce_score')
             else:
                 citation['ce_score'] = "N/A"
-            
+
             citations.append(citation)
 
         return {
@@ -315,15 +351,18 @@ Lütfen yanıtını ver:"""
         except Exception as e:
             raise Exception(f"Chat completion failed: {str(e)}")
 
-    def generate_streaming(self, prompt: str):
+    def generate_streaming(self, prompt: str, max_tokens: int = 1000):
         """
-        Generate answer with streaming response
+        Generate answer with streaming response.
+        Each Ollama streaming line is JSON: {"response": "token", "done": false}
+        This method yields only the text tokens.
 
         Args:
             prompt: Prompt string
+            max_tokens: Maximum number of tokens to generate
 
         Yields:
-            Chunks of generated text
+            Text chunks (individual tokens/words)
         """
         try:
             response = requests.post(
@@ -334,6 +373,7 @@ Lütfen yanıtını ver:"""
                     "stream": True,
                     "options": {
                         "temperature": 0.3,
+                        "num_predict": max_tokens,
                     }
                 },
                 stream=True,
@@ -343,10 +383,16 @@ Lütfen yanıtını ver:"""
             if response.status_code == 200:
                 for line in response.iter_lines():
                     if line:
-                        chunk = line.decode('utf-8')
-                        yield chunk
+                        try:
+                            data = json.loads(line.decode('utf-8'))
+                            token = data.get('response', '')
+                            if token:
+                                yield token
+                        except json.JSONDecodeError:
+                            continue
             else:
-                yield f"Error: API returned status {response.status_code}"
+                raise Exception(f"Ollama API returned status {response.status_code}")
 
         except Exception as e:
-            yield f"Error during streaming generation: {str(e)}"
+            print(f"Error during streaming generation: {e}")
+            raise

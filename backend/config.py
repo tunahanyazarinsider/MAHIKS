@@ -65,6 +65,10 @@ class Config:
     CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'true').lower() == 'true'
     CACHE_TTL = int(os.getenv('CACHE_TTL', '3600'))  # 1 hour default
 
+    # KG Extraction Configuration
+    KG_EXTRACTION_METHOD = os.getenv("KG_EXTRACTION_METHOD", "local")  # "local", "gemini", "auto"
+    KG_OLLAMA_MODEL = os.getenv("KG_OLLAMA_MODEL", "llama3.2:3b")
+    KG_CHUNK_SIZE = int(os.getenv("KG_CHUNK_SIZE", "3000"))
 
     @classmethod
     def validate(cls):

@@ -4,8 +4,10 @@ Main FastAPI application
 """
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
 import uvicorn
+import json
 from pathlib import Path
 from backend.controller.ConversationController import conversation_router, set_mysql_handler as set_conversation_mysql_handler
 
@@ -94,7 +96,6 @@ async def lifespan(app: FastAPI):
 
         # Initialize Redis Cache
         # if redis setup fails, continue without cache functionality
-        '''
         if Config.CACHE_ENABLED:
             try:
                 init_cache_handler(
@@ -103,11 +104,10 @@ async def lifespan(app: FastAPI):
                 )
                 print(f"✓ Redis cache initialized at {Config.REDIS_HOST}:{Config.REDIS_PORT}")
             except Exception as e:
-                print(f"⚠️  Redis cache failed to initialize: {e}")
+                print(f"⚠ Redis cache failed to initialize: {e}")
                 print("   Continuing without cache...")
         else:
-            print("ℹ️  Cache disabled (CACHE_ENABLED=false)")
-        '''
+            print("Cache disabled (CACHE_ENABLED=false)")
 
         print("✓ All databases initialized")
         set_conversation_mysql_handler(mysql_handler)
@@ -135,7 +135,8 @@ async def lifespan(app: FastAPI):
 
         orchestrator = QueryOrchestratorAgent(
             retrieval_agent,
-            generation_agent
+            generation_agent,
+            mysql_handler
         )
 
         print("✓ All agents initialized")
@@ -257,7 +258,8 @@ async def ask_question(request: QueryRequest):
     try:
         result = orchestrator.process_query(
             request.question,
-            include_citations=request.include_citations
+            include_citations=request.include_citations,
+            conversation_id=request.conversation_id
         )
 
         # Log query to database
@@ -274,6 +276,46 @@ async def ask_question(request: QueryRequest):
             status_code=500,
             detail=f"Error processing query: {str(e)}"
         )
+
+
+@app.post("/api/ask/stream")
+async def ask_question_stream(request: QueryRequest):
+    """
+    Streaming version of /api/ask. Returns Server-Sent Events (SSE).
+    Events: metadata → chunk* → citations → done
+    """
+    def event_generator():
+        try:
+            for event in orchestrator.stream_process_query(
+                request.question,
+                include_citations=request.include_citations,
+                conversation_id=request.conversation_id
+            ):
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+
+                # Log query when done
+                if event.get("type") == "done":
+                    try:
+                        mysql_handler.log_query(
+                            query_text=request.question,
+                            answer_text=event["data"].get("answer", ""),
+                            response_time_ms=event["data"].get("response_time_ms", 0)
+                        )
+                    except Exception:
+                        pass
+        except Exception as e:
+            error_event = {"type": "error", "data": {"message": str(e)}}
+            yield f"data: {json.dumps(error_event, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        }
+    )
 
 
 @app.post("/api/batch-ask", response_model=BatchQueryResponse)

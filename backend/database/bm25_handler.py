@@ -148,8 +148,6 @@ class BM25Handler:
                 if scores[idx] > 0
             ]
 
-            self.save_index()
-            
             return results
             
         except Exception as e:
