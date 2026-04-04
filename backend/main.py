@@ -431,6 +431,106 @@ async def get_entity_info(entity_name: str):
         )
 
 
+# ============================================
+# RAG Debug Endpoint
+# ============================================
+
+@app.post("/api/rag/debug")
+async def rag_debug(request: QueryRequest):
+    """
+    Debug RAG pipeline: returns all retrieval details without LLM generation.
+    Shows sub-chunks, scores, threshold filtering, and pipeline stats.
+    """
+    import time
+    start = time.time()
+
+    try:
+        query = request.question
+        retrieval_agent = orchestrator.retrieval_agent
+
+        # 1. Vector search
+        vector_results = retrieval_agent.vector_search(query, top_k=10)
+
+        # 2. BM25 search
+        bm25_results = []
+        if retrieval_agent.bm25:
+            bm25_results = retrieval_agent.bm25_search(query, top_k=10)
+
+        # 3. RRF fusion
+        if bm25_results:
+            fused = retrieval_agent.fuse_results(vector_results, bm25_results)
+        else:
+            fused = vector_results
+
+        # 4. Sub-chunking
+        top_chunks = fused[:10]
+        all_sub_chunks = []
+        for chunk in top_chunks:
+            subs = retrieval_agent._split_into_sub_chunks(
+                text=chunk.get('chunk_text', ''),
+                source_name=chunk.get('source_name', 'Unknown'),
+                chunk_id=chunk.get('id', 0),
+                similarity=chunk.get('similarity', 0),
+            )
+            all_sub_chunks.extend(subs)
+
+        # 5. Reranking
+        reranked = []
+        if retrieval_agent.cross_encoder and all_sub_chunks:
+            texts = [sc['chunk_text'] for sc in all_sub_chunks]
+            pairs = [[query, t] for t in texts]
+            scores = retrieval_agent.cross_encoder.predict(pairs)
+            for i, sc in enumerate(all_sub_chunks):
+                sc['ce_score'] = float(scores[i])
+            reranked = sorted(all_sub_chunks, key=lambda x: x['ce_score'], reverse=True)
+
+        threshold = retrieval_agent.CE_SCORE_THRESHOLD
+        passed = [sc for sc in reranked if sc['ce_score'] >= threshold]
+        rejected = [sc for sc in reranked if sc['ce_score'] < threshold]
+        final = passed[:retrieval_agent.TOP_SUB_CHUNKS]
+
+        elapsed = int((time.time() - start) * 1000)
+
+        return {
+            "query": query,
+            "pipeline": {
+                "vector_results": len(vector_results),
+                "bm25_results": len(bm25_results),
+                "fused_chunks": len(fused),
+                "total_sub_chunks": len(all_sub_chunks),
+                "sub_chunk_words": retrieval_agent.SUB_CHUNK_WORDS,
+                "sub_chunk_overlap": retrieval_agent.SUB_CHUNK_OVERLAP,
+                "threshold": threshold,
+                "passed_threshold": len(passed),
+                "rejected_by_threshold": len(rejected),
+                "final_sent_to_llm": len(final),
+                "total_words_to_llm": sum(len(sc['chunk_text'].split()) for sc in final),
+                "retrieval_time_ms": elapsed,
+            },
+            "final_sub_chunks": [
+                {
+                    "rank": i + 1,
+                    "text": sc['chunk_text'],
+                    "source": sc['source_name'],
+                    "ce_score": round(sc['ce_score'], 4),
+                    "similarity": round(sc.get('similarity', 0), 4),
+                    "word_count": len(sc['chunk_text'].split()),
+                }
+                for i, sc in enumerate(final)
+            ],
+            "rejected_sub_chunks": [
+                {
+                    "text": sc['chunk_text'][:100] + "...",
+                    "source": sc['source_name'],
+                    "ce_score": round(sc['ce_score'], 4),
+                }
+                for sc in rejected[:5]  # Show top 5 rejected
+            ],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",

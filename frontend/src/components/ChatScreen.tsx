@@ -220,6 +220,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
   const handleNewConversation = async () => {
     try {
+      setShowRagInfo(false);
       const newConvId = await createConversation();
       const updatedConvs = await getConversations();
       setConversations(updatedConvs);
@@ -230,6 +231,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
   };
 
   const handleSelectConversation = async (id: string) => {
+    setShowRagInfo(false);
     await loadConversation(parseInt(id));
   };
 
