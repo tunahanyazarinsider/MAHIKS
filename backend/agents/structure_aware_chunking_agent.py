@@ -19,6 +19,7 @@ Hierarchy Levels:
 import re
 from typing import List, Dict, Optional
 from dataclasses import dataclass, field
+import PyPDF2
 
 
 # =============================================================================
@@ -67,6 +68,29 @@ class ChunkMetadata:
     chunk_index: int = 0
     is_merged: bool = False
     merged_sections: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict:
+        """Convert metadata to dictionary for storage."""
+        return {
+            'section_number': self.section_number,
+            'section_title': self.section_title,
+            'level': self.level,
+            'parent_chain': self.parent_chain,
+            'bolum': self.bolum,
+            'fikra': self.fikra,
+            'chunk_type': self.chunk_type,
+            'chunk_index': self.chunk_index,
+            'is_merged': self.is_merged,
+            'merged_sections': self.merged_sections
+        }
+    
+    def toString(self) -> str:
+        """Readable string representation for debugging."""
+        return f"ChunkMetadata(section_number={self.section_number}, " \
+                f"section_title={self.section_title}, level={self.level}, " \
+                f"bolum={self.bolum}, fikra={self.fikra}, " \
+                f"chunk_type={self.chunk_type}, chunk_index={self.chunk_index}, " \
+                f"is_merged={self.is_merged}, merged_sections={self.merged_sections})"
 
 
 @dataclass 
@@ -228,6 +252,19 @@ class SUTChunker:
         # Internal state (reset on each chunk_document call)
         self._section_titles: Dict[str, str] = {}
         self._current_bolum: Optional[str] = None
+
+    def convert_pdf_to_text(self, pdf_path: str) -> str:
+        """Utility method to convert PDF to text using PyPDF2."""
+        text = ""
+        try:
+            with open(pdf_path, 'rb') as f:
+                reader: PyPDF2.PdfReader = PyPDF2.PdfReader(f)
+                for page in reader.pages:
+                    text += page.extract_text() + "\n"
+        except Exception as e:
+            print(f"Error reading PDF {pdf_path}: {e}")
+        
+        return text.strip()
     
     # -------------------------------------------------------------------------
     # LEVEL DETECTION
@@ -349,6 +386,7 @@ class SUTChunker:
         # Reset state
         self._section_titles = {}
         self._current_bolum = None
+        print("Starting chunking process...")
         
         # Find all section headers
         matches = list(self.SECTION_PATTERN.finditer(text))
@@ -422,7 +460,7 @@ class SUTChunker:
             if self.preserve_all or chunk.word_count >= self.min_words:
                 chunk.order = len(final_chunks)
                 final_chunks.append(chunk)
-        
+        print(f"Chunking complete: {len(final_chunks)} chunks created (preserved {len(chunks)})")
         return final_chunks
     
     # -------------------------------------------------------------------------

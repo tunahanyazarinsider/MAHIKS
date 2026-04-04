@@ -13,7 +13,7 @@ class GenerationAgentOllama:
 
     def __init__(self,
                  base_url: str = "http://localhost:11434",
-                 model: str = "qwen2.5:14b"):
+                 model: str = "qwen2.5:7b"):
         """
         Initialize the Generation agent with Ollama
 
@@ -115,6 +115,7 @@ class GenerationAgentOllama:
 
 KURALLAR:
 - Sadece verilen kaynaklara dayanarak yanıt ver
+- Sana verilen bilgileri kullanarak soruyu yanıtla, dışarıdan bilgi ekleme
 - Bilgi yoksa "Bu konuda yeterli bilgim yok" de
 - Konuşma geçmişindeki bağlamı dikkate al
 - Kısa ve net yanıtla, gerekirse madde işaretleri kullan
