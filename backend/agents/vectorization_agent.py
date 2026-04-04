@@ -4,6 +4,8 @@ Responsible for creating and storing vector embeddings
 """
 from typing import List, Dict
 
+from backend.agents.structure_aware_chunking_agent import Chunk
+
 
 class VectorizationAgent:
     """Agent for vectorizing text chunks"""
@@ -22,12 +24,12 @@ class VectorizationAgent:
         self.bm25 = bm25_handler
         print("✓ Vectorization agent initialized")
 
-    def vectorize_chunks(self, chunks: List[Dict], document_id: int) -> int:
+    def vectorize_chunks(self, chunks: List[Chunk], document_id: int) -> int:
         """
         Vectorize a list of chunks and store in ChromaDB
 
         Args:
-            chunks: List of chunk dictionaries with 'text' field
+            chunks: List of chunk objects with 'text' field
             document_id: ID of the parent document
 
         Returns:
@@ -47,20 +49,20 @@ class VectorizationAgent:
         for idx, chunk in enumerate(chunks):
             chunk_id = self.mysql.insert_chunk(
                 document_id=document_id,
-                chunk_text=chunk['text'],
+                chunk_text=chunk.text,
                 chunk_order=idx,
-                metadata=chunk.get('metadata')
+                metadata=chunk.metadata.to_dict() if chunk.metadata else None
             )
             chunk_ids.append(chunk_id)
-            texts.append(chunk['text'])
+            texts.append(chunk.text)
 
             # Prepare metadata for ChromaDB
             metadata = {
                 'document_id': document_id,
                 'chunk_order': idx
             }
-            if 'metadata' in chunk and chunk['metadata']:
-                metadata.update(chunk['metadata'])
+            if chunk.metadata:
+                metadata.update(chunk.metadata.to_dict())
 
             metadatas.append(metadata)
 

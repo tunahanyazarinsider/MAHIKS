@@ -25,7 +25,7 @@ class ChromaDBHandler:
         """
         print(f"Initializing ChromaDB at {persist_directory}...")
 
-        self.client = chromadb.Client(Settings(
+        self.client: chromadb.Client = chromadb.Client(Settings(
             persist_directory=persist_directory,
             anonymized_telemetry=False,
             allow_reset=True,
@@ -33,7 +33,7 @@ class ChromaDBHandler:
         ))
 
         # Get or create collection
-        self.collection = self.client.get_or_create_collection(
+        self.collection: chromadb.Collection = self.client.get_or_create_collection(
             name=collection_name,
             metadata={"hnsw:space": "cosine"}
         )
@@ -41,7 +41,7 @@ class ChromaDBHandler:
         # Use multilingual model for Turkish support
         print(f"Loading embedding model ({embedding_model_name})...")
         try:
-            self.embedding_model = SentenceTransformer(embedding_model_name)
+            self.embedding_model: SentenceTransformer = SentenceTransformer(embedding_model_name)
         except Exception as e:
             print(f"⚠ Warning: Failed to download model with SSL verification: {e}")
             print("  Attempting to load without SSL verification...")
@@ -80,9 +80,12 @@ class ChromaDBHandler:
             if metadatas is None:
                 metadatas = [{"chunk_id": cid} for cid in chunk_ids]
             else:
-                # Ensure chunk_id is in metadata
+                # Ensure chunk_id is in metadata and sanitize values for ChromaDB
                 for i, meta in enumerate(metadatas):
                     meta["chunk_id"] = chunk_ids[i]
+                    for k, v in meta.items():
+                        if not isinstance(v, (str, int, float, bool)) or v is None:
+                            meta[k] = str(v) if v is not None else ""
 
             # Add to ChromaDB
             self.collection.add(

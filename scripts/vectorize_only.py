@@ -13,9 +13,11 @@ from database.chroma_handler import ChromaDBHandler
 from database.bm25_handler import BM25Handler
 from agents.ingestion_agent import IngestionAgent
 from agents.extraction_agent import ExtractionAgent
+from agents.structure_aware_chunking_agent import SUTChunker, Chunk
 from agents.vectorization_agent import VectorizationAgent
 from config import Config
 from datetime import datetime
+from typing import List
 
 
 def main():
@@ -62,6 +64,7 @@ def main():
         chunk_size=Config.CHUNK_SIZE,
         chunk_overlap=Config.CHUNK_OVERLAP
     )
+    chunking = SUTChunker()
     vectorization = VectorizationAgent(chroma, mysql, bm25)
 
     # Scan documents
@@ -104,7 +107,9 @@ def main():
                 continue
 
             # Chunk and vectorize
-            chunks = extraction.chunk_text(text, metadata={'source': doc['name']})
+            print("  Chunking document with SUT...")
+            chunks: List[Chunk] = chunking.chunk_document(text)
+            print(f"  {len(chunks)} chunks created")
             num_chunks = vectorization.vectorize_chunks(chunks, doc_id)
 
             stats['docs'] += 1
