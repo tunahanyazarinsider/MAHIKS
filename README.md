@@ -1,376 +1,222 @@
-# MAHIKS-TR: Multi-Agent Health Insurance Knowledge System for Turkish Healthcare
+# MAHIKS-TR: Multi-Agent Health Insurance Knowledge System
 
-A sophisticated multi-agent system that integrates advanced Retrieval-Augmented Generation (RAG) techniques with dynamic medical knowledge graphs to automatically extract, organize, and reason over Turkish health insurance sources.
+A RAG system combining vector search, BM25 lexical search, and knowledge graphs to answer Turkish health insurance questions using local LLMs.
 
-## 🎯 Project Overview
+## Architecture
 
-MAHIKS-TR addresses the complex challenge of intelligent health insurance knowledge management in the Turkish healthcare system. The system uses:
+```
+Query → Vector Search (BGE-M3 / ChromaDB) ─┐
+                                             ├→ RRF Fusion → Sub-chunk → Cross-Encoder Rerank → Top 10
+        BM25 Search (TurkishStemmer)       ─┘                (~120 words)   (mmarco-mMiniLMv2)
+                                                                                    │
+                                                                              Qwen 2.5 (7B)
+                                                                              via Ollama
+                                                                                    │
+                                                                                 Answer
+```
 
-- **Hybrid RAG Architecture**: Combines vector search (ChromaDB) with knowledge graph reasoning (Neo4j)
-- **Multi-Agent System**: Specialized agents for ingestion, extraction, knowledge graph building, vectorization, retrieval, and generation
-- **Turkish Language Support**: Full support for Turkish medical and insurance terminology
-- **Multi-Database Architecture**: MySQL for documents, ChromaDB for embeddings, Neo4j for knowledge graphs
-- **100% Local & Private**: Uses Ollama for LLM, SentenceTransformers for embeddings - no external API calls!
+### Pipeline
 
-## 🏗️ Architecture
+| Step | Component | Detail |
+|------|-----------|--------|
+| Embedding | BAAI/bge-m3 | 1024d multilingual vectors |
+| Vector DB | ChromaDB | Cosine similarity search |
+| Lexical Search | BM25 | Turkish stemming, k1=1.5, b=0.75 |
+| Fusion | RRF | Reciprocal Rank Fusion, k=60 |
+| Sub-chunking | Custom | 500w chunks → 120w overlapping sub-chunks |
+| Reranking | mmarco-mMiniLMv2-L12-H384-v1 | Cross-encoder scoring with threshold filtering |
+| LLM | Qwen 2.5 7B (Q4) | Local via Ollama, ~42 tok/s on M4 Pro |
+| Knowledge Graph | Neo4j | Entity-relationship triplets (optional) |
+| Cache | Redis | Query + embedding cache with LRU eviction |
 
-### Offline Processing Pipeline
-1. **Ingestion Agent**: Discovers and monitors source documents
-2. **Extraction Agent**: Extracts and chunks text from PDFs, HTML, and TXT files
-3. **Knowledge Graph Agent**: Builds triplets (Subject-Predicate-Object) using NLP
-4. **Vectorization Agent**: Creates embeddings and stores in ChromaDB
+### Tech Stack
 
-### Online Query Pipeline
-1. **Query Orchestrator**: Coordinates the entire workflow
-2. **Retrieval Agent**: Performs hybrid search (vector + graph)
-3. **Generation Agent**: Uses LLM to generate answers with citations
+**Backend**: FastAPI, Python 3.11, sentence-transformers, spaCy (tr_core_news_lg)
+**Frontend**: React 18, TypeScript, Vite, Tailwind CSS v4, Radix UI, react-markdown
+**Databases**: MySQL 8.0, ChromaDB, Neo4j 5.13, Redis 7
+**LLM**: Ollama (runs on host, not in Docker)
 
-## 📁 Project Structure
+## Quick Start
+
+### Prerequisites
+
+- Docker Desktop (32GB+ memory recommended)
+- Ollama (`brew install ollama`)
+- macOS with Apple Silicon (M1/M2/M3/M4)
+
+### Setup
+
+```bash
+# 1. Clone and configure
+cd MAHIKS
+cp .env.example .env
+# Edit .env: set MYSQL_PASSWORD, NEO4J_PASSWORD, JWT_SECRET
+
+# 2. Generate JWT secret
+openssl rand -hex 32  # paste into .env JWT_SECRET=
+
+# 3. Install and start Ollama
+brew install ollama
+brew services start ollama
+
+# 4. Pull models
+ollama pull qwen2.5:7b    # Generation (4.7 GB)
+ollama pull qwen2.5:14b   # Optional: higher quality generation (9 GB)
+
+# 5. Start all services
+docker compose up -d
+
+# 6. Process documents (first time only)
+# Place PDFs in data/raw_documents/ then:
+docker compose run --rm backend python -m scripts.vectorize_only
+
+# 7. Access
+# Frontend: http://localhost:3000
+# API:      http://localhost:8000
+# API Docs: http://localhost:8000/docs
+# Neo4j:    http://localhost:7474
+```
+
+### Docker Memory
+
+Set Docker Desktop memory to **32GB** (Settings > Resources > Memory). The BGE-M3 embedding model (~2.3GB) + cross-encoder + PyTorch need significant memory.
+
+## Project Structure
 
 ```
 MAHIKS/
 ├── backend/
 │   ├── agents/
-│   │   ├── ingestion_agent.py
-│   │   ├── extraction_agent.py
-│   │   ├── kg_agent.py
-│   │   ├── vectorization_agent.py
-│   │   ├── retrieval_agent.py
-│   │   ├── generation_agent.py
-│   │   └── orchestrator_agent.py
+│   │   ├── orchestrator_agent.py      # Query pipeline coordinator
+│   │   ├── retrieval_agent.py         # Hybrid retrieval + sub-chunk reranking
+│   │   ├── generation_agent_ollama.py # LLM generation via /api/chat
+│   │   ├── local_kg_extractor.py      # Knowledge graph extraction
+│   │   ├── vectorization_agent.py     # Embedding generation
+│   │   ├── extraction_agent.py        # PDF/HTML text extraction
+│   │   ├── ingestion_agent.py         # Document discovery
+│   │   └── query_preprocessor.py      # Query normalization
 │   ├── database/
-│   │   ├── mysql_handler.py
-│   │   ├── chroma_handler.py
-│   │   └── neo4j_handler.py
-│   ├── models/
-│   │   └── schemas.py
-│   ├── main.py
-│   └── config.py
+│   │   ├── mysql_handler.py           # Document & chunk storage
+│   │   ├── chroma_handler.py          # Vector DB (BGE-M3)
+│   │   ├── neo4j_handler.py           # Knowledge graph
+│   │   ├── bm25_handler.py            # Lexical search index
+│   │   └── cache_handler.py           # Redis cache
+│   ├── main.py                        # FastAPI app + endpoints
+│   └── config.py                      # Configuration
+├── frontend/
+│   └── src/
+│       ├── components/
+│       │   ├── ChatScreen.tsx         # Main chat interface
+│       │   ├── ChatMessage.tsx        # Message bubbles + markdown + citations
+│       │   ├── ChatHistory.tsx        # Conversation sidebar
+│       │   ├── RagInfoScreen.tsx      # RAG pipeline debugger
+│       │   ├── LoginScreen.tsx        # Authentication
+│       │   └── SignUpScreen.tsx       # Registration
+│       ├── api/                       # API clients (axios + SSE streaming)
+│       └── styles/globals.css         # Theme (DM Sans + Source Serif 4)
 ├── scripts/
-│   └── update_knowledge_base.py
-├── data/
-│   └── raw_documents/
+│   ├── update_knowledge_base.py       # Full pipeline (chunks + KG)
+│   └── vectorize_only.py             # Chunks only (no KG)
 ├── docker-compose.yml
 ├── Dockerfile
-├── requirements.txt
-└── .env
+└── .env.example
 ```
 
-## 🚀 Getting Started
+## API Endpoints
 
-### Prerequisites
+### Query
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/ask` | POST | Single query with answer + citations |
+| `/api/ask/stream` | POST | Streaming response (SSE) |
+| `/api/batch-ask` | POST | Batch queries (max 10) |
+| `/api/rag/debug` | POST | RAG pipeline debugger (no LLM, returns sub-chunks + scores) |
 
-- Docker and Docker Compose (recommended)
-- **Ollama** installed on your Mac (runs on host, not in Docker)
-- Or, for local setup:
-  - Python 3.11+
-  - MySQL 8.0+
-  - Neo4j 5.13+
-  - Ollama (for local LLM)
+### Documents & Knowledge Graph
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/upload` | POST | Upload document |
+| `/api/documents` | GET | List documents |
+| `/api/graph/stats` | GET | Graph statistics |
+| `/api/graph/entity/{name}` | GET | Entity relationships |
 
-### Installation
+### Conversations
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/conversations` | GET/POST | List/create conversations |
+| `/api/conversations/{id}` | GET/PATCH/DELETE | Manage conversation |
+| `/api/conversations/{id}/messages` | GET/POST | Messages |
 
-#### Option 1: Using Docker with Host Ollama (Recommended for Low Memory)
+### System
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/status` | GET | System status |
+| `/api/cache/stats` | GET | Cache statistics |
+| `/api/cache/clear` | POST | Clear cache |
 
-**Why Host Ollama?** Running Ollama in Docker can consume excessive memory. By running it on your Mac, you save ~3-4 GB RAM and get better performance.
+## Configuration
 
-**🚀 Quick Start:**
+Key environment variables (`.env`):
 
 ```bash
-# Step 1: Install Ollama on your Mac (if not already installed)
-brew install ollama
-# Or download from: https://ollama.com/download
+# LLM
+OLLAMA_MODEL=qwen2.5:7b          # Generation model
+KG_OLLAMA_MODEL=qwen2.5:7b       # KG extraction model
+EMBEDDING_MODEL=BAAI/bge-m3      # Embedding model (change = re-index)
 
-# Step 2: Start Ollama on your Mac
-ollama serve
+# Auth
+JWT_SECRET=<openssl rand -hex 32>
+ACCESS_TOKEN_EXPIRE_MINUTES=60
 
-# Step 3: Pull a small, fast model (in a new terminal)
-ollama pull llama3.2:1b
-# OR for better quality: ollama pull qwen2.5:0.5b
+# Retrieval
+CHUNK_SIZE=500                    # Words per chunk
+CHUNK_OVERLAP=50                  # Overlap words
+VECTOR_TOP_K=5                    # Vector search results
 
-# Step 4: Use the automated startup script
-./start_demo.sh
+# Generation
+MAX_GENERATION_TOKENS=2000
+CONVERSATION_HISTORY_LIMIT=6
 ```
 
-The `start_demo.sh` script automatically:
-- Checks if Ollama is running on your Mac
-- Verifies the model is installed
-- Starts Docker services (MySQL, Neo4j, Backend only)
-- Tests connectivity
-- Shows you system status
+## Frontend Features
 
-**Manual Setup:**
+- Streaming chat with markdown rendering (react-markdown + remark-gfm)
+- Collapsible citation panel with source names + relevance scores
+- Welcome screen with suggestion chips
+- Conversation management (create, rename, delete)
+- RAG Pipeline Debugger (interactive sub-chunk inspection)
+- Responsive design (sidebar hidden on mobile)
+- Medical-themed UI (DM Sans + Source Serif 4, emerald green palette)
 
-1. **Start Ollama on your Mac:**
-```bash
-# Terminal 1: Start Ollama (keep running)
-ollama serve
+## Retrieval Pipeline Detail
 
-# Terminal 2: Pull a model
-ollama pull llama3.2:1b
+```
+1. Vector Search (BGE-M3 → ChromaDB)     → 10 results
+2. BM25 Search (TurkishStemmer)           → 10 results
+3. Reciprocal Rank Fusion (k=60)          → Top 10 merged
+4. Sub-chunking (120 words, 30 overlap)   → ~60 sub-chunks
+5. Cross-Encoder Reranking                → Score each sub-chunk
+6. Threshold Filter (CE ≥ 0.1)            → Remove irrelevant
+7. Top 10 sub-chunks (~1200 words)        → Send to LLM
 ```
 
-2. **Setup project:**
-```bash
-cd MAHIKS
-cp .env.example .env
-```
+This two-stage approach uses large chunks (500 words) for better recall during vector search, then splits into small sub-chunks (120 words) for precise reranking. The result is focused, relevant context sent to the LLM.
 
-3. **Edit `.env` file** with your credentials:
-```bash
-MYSQL_PASSWORD=your_secure_password
-NEO4J_PASSWORD=your_neo4j_password
-OLLAMA_MODEL=llama3.2:1b  # or qwen2.5:0.5b
-```
-
-4. **Start Docker services** (Ollama runs on host, not in Docker):
-```bash
-docker-compose up -d
-```
-
-**Note:** The docker-compose.yml is configured to use `host.docker.internal:11434` to connect to your Mac's Ollama instance.
-
-See [HOST_OLLAMA_SETUP.md](docs/HOST_OLLAMA_SETUP.md) for detailed explanation and troubleshooting.
-
-5. **Add documents** to `data/raw_documents/`
-   - Supported: PDF, HTML, TXT files
-   - Just placing files here is NOT enough!
-
-6. **Process documents into RAG** (CRITICAL STEP):
-```bash
-docker exec -it mahiks-backend python scripts/update_knowledge_base.py
-```
-
-This script:
-- Extracts text from your documents
-- Generates embeddings (local, no API)
-- Builds knowledge graph
-- Stores everything in databases
-
-7. **Access the system**:
-- API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-- Neo4j Browser: http://localhost:7474
-
-**📖 Detailed Guides:**
-- See `RAG_SETUP_GUIDE.md` for complete RAG setup instructions
-- See `OLLAMA_SETUP.md` for Ollama configuration and models
-
-#### Option 2: Local Installation
-
-1. **Install dependencies**:
-```bash
-pip install -r requirements.txt
-python -m spacy download tr_core_news_lg
-```
-
-2. **Setup databases**:
-```bash
-# Start MySQL
-mysql -u root -p
-CREATE DATABASE mahiks_db;
-
-# Start Neo4j
-# Download from neo4j.com and start
-```
-
-3. **Configure environment**:
-```bash
-cp .env.example .env
-# Edit .env with your settings
-```
-
-4. **Run the application**:
-```bash
-# Update knowledge base first
-python scripts/update_knowledge_base.py
-
-# Start the API server
-uvicorn backend.main:app --reload
-```
-
-## 📚 Usage
-
-### Adding Documents
-
-Place your Turkish health insurance documents in `data/raw_documents/`:
-- Supported formats: PDF, HTML, TXT, MD
-- Examples: SUT documents, SGK regulations, insurance policies
-
-### Updating Knowledge Base
+## Development
 
 ```bash
-# Process all documents
-python scripts/update_knowledge_base.py
+# Frontend dev (hot reload)
+cd frontend && npm run dev
 
-# Reset and rebuild everything
-python scripts/update_knowledge_base.py --reset
+# Backend logs
+docker compose logs -f backend
 
-# Use custom data directory
-python scripts/update_knowledge_base.py --data-dir /path/to/documents
+# Rebuild after code changes
+docker compose up -d --build backend
+docker compose build --no-cache frontend && docker compose up -d frontend
 ```
-
-### Making Queries
-
-#### Using the API
-
-```bash
-curl -X POST "http://localhost:8000/api/ask" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "SGK hangi ilaçları karşılar?",
-    "include_citations": true,
-    "top_k": 5
-  }'
-```
-
-#### Using Python
-
-```python
-import requests
-
-response = requests.post(
-    "http://localhost:8000/api/ask",
-    json={
-        "question": "Diyabet tedavisi için SGK kapsamı nedir?",
-        "include_citations": True
-    }
-)
-
-result = response.json()
-print(result['answer'])
-print(result['citations'])
-```
-
-### API Endpoints
-
-- `GET /` - Root endpoint
-- `GET /health` - Health check
-- `GET /status` - System status and statistics
-- `POST /api/ask` - Ask a question
-- `POST /api/batch-ask` - Batch query processing
-- `POST /api/upload` - Upload a document
-- `GET /api/documents` - List all documents
-- `GET /api/graph/stats` - Knowledge graph statistics
-- `GET /api/graph/entity/{name}` - Get entity information
-
-## 🔧 Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MYSQL_HOST` | MySQL server host | `localhost` |
-| `MYSQL_PASSWORD` | MySQL password | - |
-| `NEO4J_URI` | Neo4j connection URI | `bolt://localhost:7687` |
-| `NEO4J_PASSWORD` | Neo4j password | - |
-| `OLLAMA_BASE_URL` | Ollama API endpoint | `http://localhost:11434` |
-| `OLLAMA_MODEL` | Ollama model name | `llama2` |
-| `CHUNK_SIZE` | Characters per chunk | `500` |
-| `CHUNK_OVERLAP` | Overlapping characters | `50` |
-| `VECTOR_TOP_K` | Results to retrieve | `5` |
-
-## 🧪 Testing
-
-```bash
-# Run tests
-pytest
-
-# Run specific test
-pytest tests/test_retrieval.py
-
-# With coverage
-pytest --cov=backend tests/
-```
-
-## 📊 Monitoring
-
-### Database Statistics
-
-```bash
-# Check system status
-curl http://localhost:8000/status
-
-# View knowledge graph stats
-curl http://localhost:8000/api/graph/stats
-```
-
-### Logs
-
-```bash
-# View backend logs
-docker-compose logs -f backend
-
-# View all service logs
-docker-compose logs -f
-```
-
-## 🛠️ Development
-
-### Project Components
-
-1. **Database Handlers**: Abstract database operations
-2. **Agents**: Specialized components for specific tasks
-3. **API**: FastAPI-based REST API
-4. **Scripts**: Maintenance and update utilities
-
-### Adding a New Agent
-
-1. Create agent file in `backend/agents/`
-2. Implement agent class with required methods
-3. Register agent in orchestrator or main.py
-4. Update documentation
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Database connection errors**:
-```bash
-# Check if services are running
-docker-compose ps
-
-# Restart services
-docker-compose restart
-```
-
-**Memory issues with large documents**:
-- Increase Docker memory limit
-- Reduce `CHUNK_SIZE` in .env
-- Process documents in smaller batches
-
-**spaCy model not found**:
-```bash
-python -m spacy download tr_core_news_lg
-```
-
-## 📖 Documentation
-
-- [Project Definition](bitirme_rag/project_def.txt)
-- [Architecture Details](bitirme_rag/multi_agent_architecture.md)
-- [Database Schema](bitirme_rag/mysql_schema_and_workflow.md)
-- [API Documentation](http://localhost:8000/docs) (when running)
-
-## 🤝 Contributing
-
-This is an academic project for FENS. Contributions are welcome!
-
-## 📄 License
-
-This project is developed as part of an academic assignment.
-
-## 🙏 Acknowledgments
-
-- Turkish healthcare data from SGK
-- spaCy for Turkish NLP
-- Ollama for local LLM inference
-- SentenceTransformers for multilingual embeddings
-- Neo4j, ChromaDB, and MySQL communities
-
-## 📧 Contact
-
-For questions and support, please refer to the project documentation or create an issue.
 
 ---
 
-**Built with ❤️ for Turkish Healthcare**
+Built for Turkish healthcare knowledge management. Sabanci University FENS.
