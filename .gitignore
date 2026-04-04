@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# ChromaDB
+chroma_data/
+
+# Logs
+*.log
+logs/
+
+# Data files (add actual data to .gitignore but keep structure)
+data/raw_documents/*.txt
+data/raw_documents/*.html
+data/raw_documents/*.htm
+
+# Keep data directory structure
+!data/raw_documents/.gitkeep
+
+# Docker
+*.env.docker
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation build
+docs/_build/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Tunahan specific ignores - Melih, Faruk eklemelerinizi buraya yapabilirsiniz.
+# tunahan
+bitirme_rag/
+docs/
+# melih
+
+# faruk
