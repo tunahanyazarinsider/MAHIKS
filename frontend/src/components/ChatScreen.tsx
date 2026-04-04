@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ChatMessage } from './ChatMessage';
 import { ChatHistory } from './ChatHistory';
+import { RagInfoScreen } from './RagInfoScreen';
 import { RenameDialog } from './RenameDialog';
 import { DeleteDialog } from './DeleteDialog';
 import { Send, LogOut, HeartPulse, Loader2, ArrowUp } from 'lucide-react';
@@ -44,6 +45,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [renamingConversationId, setRenamingConversationId] = useState<number | null>(null);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
+  const [showRagInfo, setShowRagInfo] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamingStartedRef = useRef(false);
 
@@ -134,7 +136,14 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
             ));
           }
         },
-        undefined,
+        // onMetadata — attach RAG details to agent message
+        (metadata) => {
+          setMessages(prev => prev.map(m =>
+            m.id === agentMsgId
+              ? { ...m, ragMetadata: metadata as any }
+              : m
+          ));
+        },
         (citations) => {
           setMessages(prev => prev.map(m =>
             m.id === agentMsgId
@@ -310,6 +319,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
           onRenameConversation={handleRenameConversation}
+          onShowRagInfo={() => setShowRagInfo(true)}
         />
       </div>
 
@@ -325,7 +335,10 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
         onConfirm={handleDeleteConfirm}
       />
 
-      {/* Main Chat Area */}
+      {/* Main Content Area */}
+      {showRagInfo ? (
+        <RagInfoScreen onBack={() => setShowRagInfo(false)} />
+      ) : (
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="bg-white/80 backdrop-blur-sm border-b border-[#e2e8e5] px-6 py-3 shrink-0">
@@ -436,6 +449,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

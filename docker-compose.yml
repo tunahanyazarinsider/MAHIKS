@@ -111,6 +111,7 @@ services:
       - ./backend:/app/backend
       - ./data:/app/data
       - chroma_data:/app/chroma_data
+      - hf_cache:/root/.cache/huggingface
     depends_on:
       mysql:
         condition: service_healthy
@@ -147,6 +148,8 @@ volumes:
   chroma_data:
     driver: local
   redis_data:
+    driver: local
+  hf_cache:
     driver: local
 
 networks:

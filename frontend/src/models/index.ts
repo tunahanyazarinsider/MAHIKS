@@ -57,6 +57,21 @@ export type AuthResponse = LoginResponse;
 // Conversation Models
 // ============================================
 
+export interface SubChunk {
+    text: string;
+    source: string;
+    ce_score: number;
+    similarity: number;
+}
+
+export interface RagMetadata {
+    chunks_retrieved: number;
+    facts_retrieved: number;
+    retrieval_time_ms: number;
+    sub_chunks: SubChunk[];
+    model: string;
+}
+
 export interface Message {
     id: string;
     content: string;
@@ -64,6 +79,7 @@ export interface Message {
     timestamp: Date;
     isLoading?: boolean;
     citations?: Citation[];
+    ragMetadata?: RagMetadata;
 }
 
 export interface Conversation {
