@@ -1,3 +1,4 @@
+
 services:
   # MySQL Database
   mysql:
@@ -92,7 +93,8 @@ services:
       - NEO4J_USER=${NEO4J_USER:-neo4j}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-mahiks_neo4j_password}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:1b}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:7b}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-m3}
       - CHROMA_PERSIST_DIR=/app/chroma_data
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
@@ -102,8 +104,9 @@ services:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
       - KG_EXTRACTION_METHOD=${KG_EXTRACTION_METHOD:-local}
-      - KG_OLLAMA_MODEL=${KG_OLLAMA_MODEL:-llama3.2:3b}
+      - KG_OLLAMA_MODEL=${KG_OLLAMA_MODEL:-qwen2.5:7b}
       - KG_CHUNK_SIZE=${KG_CHUNK_SIZE:-3000}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./backend:/app/backend
       - ./data:/app/data

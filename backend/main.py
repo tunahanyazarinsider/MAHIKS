@@ -77,7 +77,8 @@ async def lifespan(app: FastAPI):
 
         chroma_handler = ChromaDBHandler(
             persist_directory=Config.CHROMA_PERSIST_DIR,
-            collection_name=Config.CHROMA_COLLECTION_NAME
+            collection_name=Config.CHROMA_COLLECTION_NAME,
+            embedding_model_name=Config.EMBEDDING_MODEL
         )
 
         neo4j_handler = Neo4jHandler(

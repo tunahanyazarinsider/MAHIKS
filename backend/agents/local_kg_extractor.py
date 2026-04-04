@@ -95,7 +95,7 @@ JSON formatı: {"triplets": [{"subject": "...", "predicate": "...", "object": ".
 
     def extract_triplets(self, text: str, retries: int = 3) -> List[Triplet]:
         """
-        Extract knowledge graph triplets from text using local Ollama.
+        Extract knowledge graph triplets from text using local Ollama /api/chat.
 
         Args:
             text: Input text chunk
@@ -104,15 +104,18 @@ JSON formatı: {"triplets": [{"subject": "...", "predicate": "...", "object": ".
         Returns:
             List of Triplet objects
         """
-        prompt = f"{self.system_prompt}\n\n---\n\nMetinden tripletleri çıkar:\n\n{text}"
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": f"Metinden tripletleri çıkar:\n\n{text}"}
+        ]
 
         for attempt in range(retries):
             try:
                 response = requests.post(
-                    f"{self.base_url}/api/generate",
+                    f"{self.base_url}/api/chat",
                     json={
                         "model": self.model,
-                        "prompt": prompt,
+                        "messages": messages,
                         "stream": False,
                         "format": "json",
                         "options": {
@@ -124,7 +127,7 @@ JSON formatı: {"triplets": [{"subject": "...", "predicate": "...", "object": ".
                 )
 
                 if response.status_code == 200:
-                    result_text = response.json().get('response', '')
+                    result_text = response.json().get('message', {}).get('content', '')
                     try:
                         result = json.loads(result_text)
                         triplets = [

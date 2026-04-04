@@ -29,7 +29,10 @@ class Config:
 
     # Ollama Configuration (Local LLM)
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
+
+    # Embedding Model Configuration
+    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
 
     # Application Settings
     APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
@@ -44,7 +47,7 @@ class Config:
     VECTOR_TOP_K = int(os.getenv("VECTOR_TOP_K", "5"))
     GRAPH_MAX_DEPTH = int(os.getenv("GRAPH_MAX_DEPTH", "2"))
 
-    # Data Directory
+    # Data Directory to processde the docs for the chunking and embedding creation
     DATA_DIR = os.getenv("DATA_DIR", "./data/raw_documents")
 
     # BM25 Configuration (Lexical Search)
@@ -53,9 +56,10 @@ class Config:
     BM25_B = float(os.getenv("BM25_B", "0.75"))   # Length normalization
     BM25_WEIGHT = float(os.getenv("BM25_WEIGHT", "0.3"))  # Fusion weight for hybrid search
 
-    JWT_SECRET: str = "CHANGE_THIS"
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "")
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+    REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 
     # Redis Cache Configuration
@@ -67,15 +71,23 @@ class Config:
 
     # KG Extraction Configuration
     KG_EXTRACTION_METHOD = os.getenv("KG_EXTRACTION_METHOD", "local")  # "local", "gemini", "auto"
-    KG_OLLAMA_MODEL = os.getenv("KG_OLLAMA_MODEL", "llama3.2:3b")
+    KG_OLLAMA_MODEL = os.getenv("KG_OLLAMA_MODEL", "qwen2.5:7b")
     KG_CHUNK_SIZE = int(os.getenv("KG_CHUNK_SIZE", "3000"))
+
+    # CORS Configuration
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
+
+    # Conversation Settings
+    CONVERSATION_HISTORY_LIMIT = int(os.getenv("CONVERSATION_HISTORY_LIMIT", "6"))
+    MAX_GENERATION_TOKENS = int(os.getenv("MAX_GENERATION_TOKENS", "2000"))
 
     @classmethod
     def validate(cls):
         """Validate required configuration"""
         required = [
             ("MYSQL_PASSWORD", cls.MYSQL_PASSWORD),
-            ("NEO4J_PASSWORD", cls.NEO4J_PASSWORD)
+            ("NEO4J_PASSWORD", cls.NEO4J_PASSWORD),
+            ("JWT_SECRET", cls.JWT_SECRET)
         ]
 
         missing = [name for name, value in required if not value]

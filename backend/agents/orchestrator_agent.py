@@ -66,7 +66,7 @@ class QueryOrchestratorAgent:
             conversation_history = []
             if conversation_id and self.mysql:
                 conversation_history = self.mysql.get_recent_messages(
-                    conversation_id, limit=6
+                    conversation_id, limit=Config.CONVERSATION_HISTORY_LIMIT
                 )
 
             # Build enhanced query for retrieval using conversation context
@@ -167,7 +167,7 @@ class QueryOrchestratorAgent:
             conversation_history = []
             if conversation_id and self.mysql:
                 conversation_history = self.mysql.get_recent_messages(
-                    conversation_id, limit=6
+                    conversation_id, limit=Config.CONVERSATION_HISTORY_LIMIT
                 )
 
             # Build enhanced query for retrieval
@@ -199,13 +199,13 @@ class QueryOrchestratorAgent:
                 }
             }
 
-            # Step 2: Build prompt and stream generation
-            prompt = self.generation_agent.build_prompt(
+            # Step 2: Build messages and stream generation
+            messages = self.generation_agent.build_messages(
                 user_query, context, conversation_history
             )
 
             full_answer = ""
-            for token in self.generation_agent.generate_streaming(prompt):
+            for token in self.generation_agent.generate_streaming(messages):
                 full_answer += token
                 yield {"type": "chunk", "data": token}
 

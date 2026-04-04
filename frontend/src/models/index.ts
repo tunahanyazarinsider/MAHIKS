@@ -63,6 +63,7 @@ export interface Message {
     sender: 'user' | 'agent';
     timestamp: Date;
     isLoading?: boolean;
+    citations?: Citation[];
 }
 
 export interface Conversation {

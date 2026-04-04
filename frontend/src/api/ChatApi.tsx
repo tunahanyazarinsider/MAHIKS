@@ -41,7 +41,7 @@ const chatApi: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000, // 30 seconds timeout for LLM responses
+  timeout: 120000, // 2 minutes timeout for LLM responses
 });
 
 // Request interceptor to add auth token

@@ -2,15 +2,15 @@
 # Multi-stage build for optimized production image
 
 # Stage 1: Build
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (clean install for correct platform binaries)
+RUN rm -f package-lock.json && npm install
 
 # Copy source code
 COPY . .
