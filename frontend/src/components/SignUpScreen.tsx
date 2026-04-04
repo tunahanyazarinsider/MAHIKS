@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent } from './ui/card';
 import { Input } from './ui/input';
-import { Button } from './ui/button';
 import { Label } from './ui/label';
-import { HeartPulse, Eye, EyeOff } from 'lucide-react';
+import { HeartPulse, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { register } from '../api/UserApi';
 
 interface SignUpScreenProps {
@@ -71,7 +70,7 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
   const getErrorMessage = (err: any): string => {
     const message = err.response?.data?.message;
     const errorCode = err.response?.data?.data?.errorCode;
-    
+
     if (message) {
       const errorMap: Record<string, string> = {
         'Email already registered': 'Bu e-posta adresi zaten kayıtlı',
@@ -89,17 +88,16 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
       };
       return codeMap[errorCode] || 'Bir hata oluştu';
     }
-    
+
     if (err.message === 'Network Error') {
       return 'Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.';
     }
-    
+
     return 'Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -111,7 +109,6 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
       onSignUp(response.user.email, response.user.display_name);
     } catch (error: any) {
       const message = getErrorMessage(error);
-      
       if (message.includes('e-posta') && message.includes('kayıtlı')) {
         setErrors(prev => ({ ...prev, email: message }));
       } else {
@@ -124,7 +121,6 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -134,142 +130,155 @@ export function SignUpScreen({ onSignUp, onSwitchToSignIn }: SignUpScreenProps) 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4">
-          <div className="flex justify-center">
-            <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
-              <HeartPulse className="h-8 w-8 text-white" />
-            </div>
+    <div className="min-h-screen flex items-center justify-center auth-bg p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="h-16 w-16 bg-gradient-to-br from-[#047857] to-[#065f46] rounded-2xl flex items-center justify-center shadow-lg mb-4">
+            <HeartPulse className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl text-center">Hesap Oluştur</CardTitle>
-          <CardDescription className="text-center">
+          <h1 className="text-2xl font-semibold text-[#1a2e28]" style={{ fontFamily: 'var(--font-serif)' }}>
+            Hesap Oluştur
+          </h1>
+          <p className="text-[#5f7068] text-sm mt-1">
             Sağlık sigortası asistanınıza erişmek için kayıt olun
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {errors.general && (
-              <div 
-                role="alert"
-                aria-live="polite"
-                className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md"
-              >
-                {errors.general}
+          </p>
+        </div>
+
+        <Card className="border-[#e2e8e5] shadow-lg shadow-[#047857]/5">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {errors.general && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl"
+                >
+                  {errors.general}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Ad Soyad</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Adınızı ve soyadınızı girin"
+                  value={formData.fullName}
+                  onChange={(e) => handleChange('fullName', e.target.value)}
+                  disabled={isLoading}
+                  autoComplete="name"
+                  required
+                />
+                {errors.fullName && (
+                  <p className="text-xs text-red-500" role="alert">{errors.fullName}</p>
+                )}
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Ad Soyad</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Adınızı ve soyadınızı girin"
-                value={formData.fullName}
-                onChange={(e) => handleChange('fullName', e.target.value)}
-                disabled={isLoading}
-                autoComplete="name"
-                required
-              />
-              {errors.fullName && (
-                <p className="text-sm text-red-500" role="alert">{errors.fullName}</p>
-              )}
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">E-posta</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="ornek@email.com"
+                  value={formData.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  disabled={isLoading}
+                  autoComplete="email"
+                  required
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500" role="alert">{errors.email}</p>
+                )}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">E-posta</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="ornek@email.com"
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                disabled={isLoading}
-                autoComplete="email"
-                required
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500" role="alert">{errors.email}</p>
-              )}
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Şifre</Label>
+                <Input
+                  id="password"
+                  type={showPasswords.password ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => handleChange('password', e.target.value)}
+                  disabled={isLoading}
+                  required
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, password: !prev.password }))}
+                      className="text-[#9aada2] hover:text-[#5f7068] transition-colors"
+                      aria-label={showPasswords.password ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                      tabIndex={-1}
+                    >
+                      {showPasswords.password ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                />
+                {errors.password ? (
+                  <p className="text-xs text-red-500" role="alert">{errors.password}</p>
+                ) : (
+                  <p className="text-[11px] text-[#9aada2]">En az 8 karakter</p>
+                )}
+              </div>
 
-            {/* Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Şifre</Label>
-              <Input
-                id="password"
-                type={showPasswords.password ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) => handleChange('password', e.target.value)}
-                disabled={isLoading}
-                required
-                rightIcon={
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(prev => ({ ...prev, password: !prev.password }))}
-                    className="text-gray-400 hover:text-gray-600"
-                    aria-label={showPasswords.password ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                    tabIndex={-1}
-                  >
-                    {showPasswords.password ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                }
-              />
-              {errors.password ? (
-                <p className="text-sm text-red-500" role="alert">{errors.password}</p>
-              ) : (
-                <p className="text-xs text-gray-500">En az 8 karakter</p>
-              )}
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Şifre (Tekrar)</Label>
+                <Input
+                  id="confirmPassword"
+                  type={showPasswords.confirmPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                  disabled={isLoading}
+                  required
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
+                      className="text-[#9aada2] hover:text-[#5f7068] transition-colors"
+                      aria-label={showPasswords.confirmPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                      tabIndex={-1}
+                    >
+                      {showPasswords.confirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                />
+                {errors.confirmPassword && (
+                  <p className="text-xs text-red-500" role="alert">{errors.confirmPassword}</p>
+                )}
+              </div>
 
-            {/* Confirm Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Şifre (Tekrar)</Label>
-              <Input
-                id="confirmPassword"
-                type={showPasswords.confirmPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                disabled={isLoading}
-                required
-                rightIcon={
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(prev => ({ ...prev, confirmPassword: !prev.confirmPassword }))}
-                    className="text-gray-400 hover:text-gray-600"
-                    aria-label={showPasswords.confirmPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                    tabIndex={-1}
-                  >
-                    {showPasswords.confirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                }
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-red-500" role="alert">{errors.confirmPassword}</p>
-              )}
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Kayıt yapılıyor...' : 'Kayıt Ol'}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Zaten hesabınız var mı?{' '}
               <button
-                type="button"
-                onClick={onSwitchToSignIn}
-                className="text-blue-600 hover:underline font-medium"
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-11 rounded-xl bg-[#047857] hover:bg-[#065f46] disabled:opacity-50 text-white font-medium text-sm transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 mt-2"
               >
-                Giriş Yap
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Kayıt yapılıyor...
+                  </>
+                ) : (
+                  'Kayıt Ol'
+                )}
               </button>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-[#e2e8e5] text-center">
+              <p className="text-sm text-[#5f7068]">
+                Zaten hesabınız var mı?{' '}
+                <button
+                  type="button"
+                  onClick={onSwitchToSignIn}
+                  className="text-[#047857] hover:text-[#065f46] font-semibold"
+                >
+                  Giriş Yap
+                </button>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -13,13 +13,15 @@ class ChromaDBHandler:
     """Handler for ChromaDB vector database operations"""
 
     def __init__(self, persist_directory: str = "./chroma_data",
-                 collection_name: str = "medical_chunks"):
+                 collection_name: str = "medical_chunks",
+                 embedding_model_name: str = "BAAI/bge-m3"):
         """
         Initialize ChromaDB client and embedding model
 
         Args:
             persist_directory: Directory to persist ChromaDB data
             collection_name: Name of the collection
+            embedding_model_name: SentenceTransformer model name for embeddings
         """
         print(f"Initializing ChromaDB at {persist_directory}...")
 
@@ -37,22 +39,15 @@ class ChromaDBHandler:
         )
 
         # Use multilingual model for Turkish support
-        print("Loading embedding model (paraphrase-multilingual-mpnet-base-v2)...")
+        print(f"Loading embedding model ({embedding_model_name})...")
         try:
-            # Try to load model with SSL verification
-            self.embedding_model = SentenceTransformer(
-                'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
-            )
+            self.embedding_model = SentenceTransformer(embedding_model_name)
         except Exception as e:
             print(f"⚠ Warning: Failed to download model with SSL verification: {e}")
             print("  Attempting to load without SSL verification...")
-            # Disable SSL verification temporarily for model download
             import ssl
-            import certifi
             ssl._create_default_https_context = ssl._create_unverified_context
-            self.embedding_model = SentenceTransformer(
-                'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
-            )
+            self.embedding_model = SentenceTransformer(embedding_model_name)
         print("✓ ChromaDB initialized successfully")
 
     def add_chunks(self, chunk_ids: List[int], texts: List[str],

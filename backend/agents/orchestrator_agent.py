@@ -66,7 +66,7 @@ class QueryOrchestratorAgent:
             conversation_history = []
             if conversation_id and self.mysql:
                 conversation_history = self.mysql.get_recent_messages(
-                    conversation_id, limit=6
+                    conversation_id, limit=Config.CONVERSATION_HISTORY_LIMIT
                 )
 
             # Build enhanced query for retrieval using conversation context
@@ -167,7 +167,7 @@ class QueryOrchestratorAgent:
             conversation_history = []
             if conversation_id and self.mysql:
                 conversation_history = self.mysql.get_recent_messages(
-                    conversation_id, limit=6
+                    conversation_id, limit=Config.CONVERSATION_HISTORY_LIMIT
                 )
 
             # Build enhanced query for retrieval
@@ -179,14 +179,15 @@ class QueryOrchestratorAgent:
 
             retrieval_time_ms = int((time.time() - start_time) * 1000)
 
-            # Yield metadata event (sources info)
-            sources = [
+            # Yield metadata event with sub-chunk details for RAG transparency
+            sub_chunks = [
                 {
-                    'name': chunk.get('source_name', 'Unknown'),
-                    'type': chunk.get('document_type', 'Unknown'),
-                    'relevance': chunk.get('similarity', 0),
+                    'text': chunk.get('chunk_text', '')[:200],  # First 200 chars for preview
+                    'source': chunk.get('source_name', 'Unknown'),
+                    'ce_score': round(chunk.get('ce_score', 0), 4),
+                    'similarity': round(chunk.get('similarity', 0), 4),
                 }
-                for chunk in context.get('vector_context', [])[:10]
+                for chunk in context.get('vector_context', [])
             ]
             yield {
                 "type": "metadata",
@@ -194,18 +195,18 @@ class QueryOrchestratorAgent:
                     "chunks_retrieved": len(context.get('vector_context', [])),
                     "facts_retrieved": len(context.get('graph_facts', [])),
                     "retrieval_time_ms": retrieval_time_ms,
-                    "sources": sources,
+                    "sub_chunks": sub_chunks,
                     "model": self.generation_agent.model
                 }
             }
 
-            # Step 2: Build prompt and stream generation
-            prompt = self.generation_agent.build_prompt(
+            # Step 2: Build messages and stream generation
+            messages = self.generation_agent.build_messages(
                 user_query, context, conversation_history
             )
 
             full_answer = ""
-            for token in self.generation_agent.generate_streaming(prompt):
+            for token in self.generation_agent.generate_streaming(messages):
                 full_answer += token
                 yield {"type": "chunk", "data": token}
 

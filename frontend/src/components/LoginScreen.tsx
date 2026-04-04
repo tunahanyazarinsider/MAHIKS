@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
-import { Button } from './ui/button';
 import { Label } from './ui/label';
-import { HeartPulse, Eye, EyeOff } from 'lucide-react';
+import { HeartPulse, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { login } from '../api/UserApi';
 
 interface LoginScreenProps {
@@ -22,7 +21,7 @@ export function LoginScreen({ onLogin, onSwitchToSignUp, onForgotPassword }: Log
   const getErrorMessage = (err: any): string => {
     const message = err.response?.data?.message;
     const errorCode = err.response?.data?.data?.errorCode;
-    
+
     if (message) {
       const errorMap: Record<string, string> = {
         'Invalid credentials': 'E-posta veya şifre hatalı',
@@ -41,17 +40,17 @@ export function LoginScreen({ onLogin, onSwitchToSignUp, onForgotPassword }: Log
       };
       return codeMap[errorCode] || 'Bir hata oluştu';
     }
-    
+
     if (err.message === 'Network Error') {
       return 'Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.';
     }
-    
+
     return 'Giriş sırasında bir hata oluştu. Lütfen tekrar deneyin.';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       setError('Lütfen tüm alanları doldurun.');
       return;
@@ -72,99 +71,114 @@ export function LoginScreen({ onLogin, onSwitchToSignUp, onForgotPassword }: Log
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4">
-          <div className="flex justify-center">
-            <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
-              <HeartPulse className="h-8 w-8 text-white" />
-            </div>
+    <div className="min-h-screen flex items-center justify-center auth-bg p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="h-16 w-16 bg-gradient-to-br from-[#047857] to-[#065f46] rounded-2xl flex items-center justify-center shadow-lg mb-4">
+            <HeartPulse className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl text-center">Hoş Geldiniz</CardTitle>
-          <CardDescription className="text-center">
+          <h1 className="text-2xl font-semibold text-[#1a2e28]" style={{ fontFamily: 'var(--font-serif)' }}>
+            Hoş Geldiniz
+          </h1>
+          <p className="text-[#5f7068] text-sm mt-1">
             Sağlık sigortası asistanınıza erişmek için giriş yapın
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div 
-                role="alert"
-                aria-live="polite"
-                className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md"
-              >
-                {error}
-              </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">E-posta</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="ornek@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-                autoComplete="email"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Şifre</Label>
-                {onForgotPassword && (
-                  <button
-                    type="button"
-                    onClick={onForgotPassword}
-                    className="text-sm text-blue-600 hover:underline"
-                  >
-                    Şifremi unuttum
-                  </button>
-                )}
-              </div>
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                autoComplete="current-password"
-                rightIcon={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-gray-400 hover:text-gray-600"
-                    aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                }
-              />
-            </div>
-            
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
-            </Button>
-          </form>
+          </p>
+        </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Henüz hesabınız yok mu?{' '}
+        <Card className="border-[#e2e8e5] shadow-lg shadow-[#047857]/5">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl"
+                >
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email">E-posta</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="ornek@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Şifre</Label>
+                  {onForgotPassword && (
+                    <button
+                      type="button"
+                      onClick={onForgotPassword}
+                      className="text-xs text-[#047857] hover:text-[#065f46] font-medium"
+                    >
+                      Şifremi unuttum
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  autoComplete="current-password"
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-[#9aada2] hover:text-[#5f7068] transition-colors"
+                      aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
+                />
+              </div>
+
               <button
-                type="button"
-                onClick={onSwitchToSignUp}
-                className="text-blue-600 hover:underline font-medium"
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-11 rounded-xl bg-[#047857] hover:bg-[#065f46] disabled:opacity-50 text-white font-medium text-sm transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
               >
-                Kayıt Ol
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Giriş yapılıyor...
+                  </>
+                ) : (
+                  'Giriş Yap'
+                )}
               </button>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-[#e2e8e5] text-center">
+              <p className="text-sm text-[#5f7068]">
+                Henüz hesabınız yok mu?{' '}
+                <button
+                  type="button"
+                  onClick={onSwitchToSignUp}
+                  className="text-[#047857] hover:text-[#065f46] font-semibold"
+                >
+                  Kayıt Ol
+                </button>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

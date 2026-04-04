@@ -1,6 +1,7 @@
 """
 Generation Agent for MAHIKS-TR using Ollama
-Responsible for generating answers using local LLM with retrieved context
+Responsible for generating answers using local LLM with retrieved context.
+Uses Ollama's /api/chat endpoint for proper chat template handling.
 """
 from typing import Dict, List, Optional
 import requests
@@ -12,13 +13,13 @@ class GenerationAgentOllama:
 
     def __init__(self,
                  base_url: str = "http://localhost:11434",
-                 model: str = "llama3.2:3b"):
+                 model: str = "qwen2.5:14b"):
         """
         Initialize the Generation agent with Ollama
 
         Args:
             base_url: Ollama API base URL
-            model: Model to use (llama2, mistral, etc.)
+            model: Model to use
         """
         self.base_url = base_url.rstrip('/')
         self.model = model
@@ -40,92 +41,64 @@ class GenerationAgentOllama:
             print(f"⚠ Warning: Ollama connection test failed: {e}")
             print(f"  Make sure Ollama is running: ollama serve")
 
-    def format_vector_context(self, chunks: List[Dict], max_chunks: int = 5) -> str:
-        """
-        Format vector search results into context string
-
-        Args:
-            chunks: List of chunk dictionaries
-            max_chunks: Maximum number of chunks to include
-
-        Returns:
-            Formatted context string
-        """
+    def format_vector_context(self, chunks: List[Dict], max_chunks: int = 10) -> str:
+        """Format vector search results into context string"""
         if not chunks:
             return "İlgili belge parçası bulunamadı."
 
         context_parts = []
-
         for i, chunk in enumerate(chunks[:max_chunks], 1):
             source = chunk.get('source_name', 'Bilinmeyen Kaynak')
             text = chunk['chunk_text']
             similarity = chunk.get('similarity', 0)
-
             context_parts.append(
                 f"**Kaynak {i}** ({source}, Benzerlik: {similarity:.2%}):\n{text}\n"
             )
-
         return "\n".join(context_parts)
 
     def format_graph_context(self, facts: List[Dict], max_facts: int = 10) -> str:
-        """
-        Format knowledge graph results into context string
-
-        Args:
-            facts: List of graph fact dictionaries
-            max_facts: Maximum number of facts to include
-
-        Returns:
-            Formatted facts string
-        """
+        """Format knowledge graph results into context string"""
         if not facts:
             return "İlişkili bilgi bulunamadı."
 
         fact_parts = []
-
         for fact in facts[:max_facts]:
             if fact.get('type') == 'path':
-                # Format path
                 path_info = f"• {fact['from']} ile {fact['to']} arasında bağlantı bulundu"
                 fact_parts.append(path_info)
             else:
-                # Format relationship
                 source = fact.get('source_entity', '')
                 target = fact.get('target_entity', '')
                 rel = fact.get('relationship', '')
-
                 fact_parts.append(f"• {source} → [{rel}] → {target}")
-
         return "\n".join(fact_parts)
 
-    def _format_conversation_history(self, messages: List[Dict]) -> str:
+    def _build_history_messages(self, messages: List[Dict]) -> List[Dict]:
         """
-        Format conversation history for prompt inclusion.
+        Convert conversation history to Ollama chat message format.
 
         Args:
             messages: List of message dicts with 'sender' and 'content' keys
 
         Returns:
-            Formatted history string or empty string
+            List of {"role": "user"|"assistant", "content": ...} dicts
         """
         if not messages:
-            return ""
+            return []
 
-        history_parts = ["## Önceki Konuşma Bağlamı:"]
+        history = []
         for msg in messages:
-            role = "Kullanıcı" if msg.get('sender') == 'user' else "Asistan"
+            role = "user" if msg.get('sender') == 'user' else "assistant"
             content = msg.get('content', '')
-            # Truncate long messages to save context window
-            if len(content) > 200:
-                content = content[:200] + "..."
-            history_parts.append(f"**{role}**: {content}")
+            if len(content) > 1000:
+                content = content[:1000] + "..."
+            history.append({"role": role, "content": content})
+        return history
 
-        return "\n".join(history_parts) + "\n"
-
-    def build_prompt(self, query: str, context: Dict,
-                     conversation_history: List[Dict] = None) -> str:
+    def build_messages(self, query: str, context: Dict,
+                       conversation_history: List[Dict] = None) -> List[Dict]:
         """
-        Build the complete prompt for the LLM
+        Build the chat messages array for Ollama /api/chat.
 
         Args:
             query: User's question
@@ -133,14 +106,12 @@ class GenerationAgentOllama:
             conversation_history: Optional list of previous messages
 
         Returns:
-            Complete prompt string
+            List of message dicts for /api/chat
         """
         vector_context = self.format_vector_context(context.get('vector_context', []))
         graph_context = self.format_graph_context(context.get('graph_facts', []))
-        history_section = self._format_conversation_history(conversation_history)
 
-        prompt = f"""<|system|>
-Sen Türk sağlık sigortası konusunda uzman bir asistansın. Aşağıdaki bilgileri kullanarak soruyu yanıtla.
+        system_content = f"""Sen Türk sağlık sigortası konusunda uzman bir asistansın. Aşağıdaki bilgileri kullanarak soruyu yanıtla.
 
 KURALLAR:
 - Sadece verilen kaynaklara dayanarak yanıt ver
@@ -148,32 +119,29 @@ KURALLAR:
 - Konuşma geçmişindeki bağlamı dikkate al
 - Kısa ve net yanıtla, gerekirse madde işaretleri kullan
 - Kaynaklara atıfta bulun
-<|end|>
+- Yanıtını Markdown formatında ver (başlıklar, maddeler, kalın yazı)
 
-<|context|>
 ## İlgili Belge Parçaları:
 {vector_context}
 
 ## Bilgi Grafiğinden İlişkiler:
-{graph_context}
-<|end|>
+{graph_context}"""
 
-{history_section}
-<|user|>
-{query}
-<|end|>
+        messages = [{"role": "system", "content": system_content}]
 
-<|assistant|>
-"""
+        # Add conversation history as prior turns
+        if conversation_history:
+            messages.extend(self._build_history_messages(conversation_history))
 
-        return prompt
+        messages.append({"role": "user", "content": query})
+        return messages
 
     def generate_answer(self, query: str, context: Dict,
                        temperature: float = 0.3,
-                       max_tokens: int = 1000,
+                       max_tokens: int = 2000,
                        conversation_history: List[Dict] = None) -> str:
         """
-        Generate answer using Ollama LLM
+        Generate answer using Ollama /api/chat endpoint.
 
         Args:
             query: User's question
@@ -187,28 +155,26 @@ KURALLAR:
         """
         print(f"    Generating answer with Ollama ({self.model})...")
 
-        # Build the prompt
-        prompt = self.build_prompt(query, context, conversation_history)
+        messages = self.build_messages(query, context, conversation_history)
 
         try:
-            # Call Ollama API
             response = requests.post(
-                f"{self.base_url}/api/generate",
+                f"{self.base_url}/api/chat",
                 json={
                     "model": self.model,
-                    "prompt": prompt,
+                    "messages": messages,
                     "stream": False,
                     "options": {
                         "temperature": temperature,
                         "num_predict": max_tokens,
                     }
                 },
-                timeout=120  # 2 minutes timeout for generation
+                timeout=180
             )
 
             if response.status_code == 200:
                 result = response.json()
-                answer = result.get('response', '')
+                answer = result.get('message', {}).get('content', '')
                 print(f"      ✓ Answer generated ({len(answer)} chars)")
                 return answer
             else:
@@ -226,7 +192,7 @@ KURALLAR:
     def generate_with_citations(self, query: str, context: Dict,
                                 conversation_history: List[Dict] = None) -> Dict:
         """
-        Generate answer with source citations
+        Generate answer with source citations.
 
         Args:
             query: User's question
@@ -239,22 +205,15 @@ KURALLAR:
         answer = self.generate_answer(query, context,
                                       conversation_history=conversation_history)
 
-        # Extract top sources for citations
         citations = []
         for chunk in context.get('vector_context', [])[:3]:
             citation = {
                 'source': chunk.get('source_name', 'Bilinmeyen'),
                 'text': chunk.get('chunk_text', ''),
                 'type': chunk.get('document_type', 'PDF'),
-                'similarity': chunk.get('similarity', 0)
+                'similarity': chunk.get('similarity', 0),
+                'ce_score': chunk.get('ce_score', 'N/A'),
             }
-
-            # Add ce_score if available
-            if 'ce_score' in chunk:
-                citation['ce_score'] = chunk.get('ce_score')
-            else:
-                citation['ce_score'] = "N/A"
-
             citations.append(citation)
 
         return {
@@ -264,22 +223,16 @@ KURALLAR:
         }
 
     def generate_summary(self, text: str, max_length: int = 200) -> str:
-        """
-        Generate a summary of a text
-
-        Args:
-            text: Text to summarize
-            max_length: Maximum summary length in words
-
-        Returns:
-            Summary
-        """
+        """Generate a summary of a text using /api/chat."""
         try:
             response = requests.post(
-                f"{self.base_url}/api/generate",
+                f"{self.base_url}/api/chat",
                 json={
                     "model": self.model,
-                    "prompt": f"Aşağıdaki metni {max_length} kelime ile özetle:\n\n{text}",
+                    "messages": [
+                        {"role": "system", "content": "Sen metinleri özetleyen bir asistansın."},
+                        {"role": "user", "content": f"Aşağıdaki metni {max_length} kelime ile özetle:\n\n{text}"}
+                    ],
                     "stream": False,
                     "options": {
                         "temperature": 0.3,
@@ -290,20 +243,20 @@ KURALLAR:
 
             if response.status_code == 200:
                 result = response.json()
-                return result.get('response', text[:500] + "...")
+                return result.get('message', {}).get('content', text[:500] + "...")
             else:
                 print(f"Error generating summary: API returned {response.status_code}")
-                return text[:500] + "..."  # Fallback to truncation
+                return text[:500] + "..."
 
         except Exception as e:
             print(f"Error generating summary: {e}")
-            return text[:500] + "..."  # Fallback to truncation
+            return text[:500] + "..."
 
     def chat_completion(self, messages: List[Dict],
                        temperature: float = 0.3,
-                       max_tokens: int = 1000) -> str:
+                       max_tokens: int = 2000) -> str:
         """
-        Chat completion interface compatible with OpenAI-style messages
+        Chat completion interface using Ollama /api/chat.
 
         Args:
             messages: List of message dicts with 'role' and 'content'
@@ -313,52 +266,37 @@ KURALLAR:
         Returns:
             Generated response
         """
-        # Convert messages to a single prompt
-        prompt_parts = []
-        for msg in messages:
-            role = msg.get('role', 'user')
-            content = msg.get('content', '')
-            if role == 'system':
-                prompt_parts.append(f"System: {content}")
-            elif role == 'user':
-                prompt_parts.append(f"User: {content}")
-            elif role == 'assistant':
-                prompt_parts.append(f"Assistant: {content}")
-
-        prompt = "\n\n".join(prompt_parts) + "\n\nAssistant:"
-
         try:
             response = requests.post(
-                f"{self.base_url}/api/generate",
+                f"{self.base_url}/api/chat",
                 json={
                     "model": self.model,
-                    "prompt": prompt,
+                    "messages": messages,
                     "stream": False,
                     "options": {
                         "temperature": temperature,
                         "num_predict": max_tokens,
                     }
                 },
-                timeout=120
+                timeout=180
             )
 
             if response.status_code == 200:
                 result = response.json()
-                return result.get('response', '')
+                return result.get('message', {}).get('content', '')
             else:
                 raise Exception(f"API returned status {response.status_code}")
 
         except Exception as e:
             raise Exception(f"Chat completion failed: {str(e)}")
 
-    def generate_streaming(self, prompt: str, max_tokens: int = 1000):
+    def generate_streaming(self, messages: List[Dict], max_tokens: int = 2000):
         """
-        Generate answer with streaming response.
-        Each Ollama streaming line is JSON: {"response": "token", "done": false}
-        This method yields only the text tokens.
+        Generate answer with streaming response using /api/chat.
+        Each Ollama streaming line is JSON: {"message": {"content": "token"}, "done": false}
 
         Args:
-            prompt: Prompt string
+            messages: Chat messages array
             max_tokens: Maximum number of tokens to generate
 
         Yields:
@@ -366,10 +304,10 @@ KURALLAR:
         """
         try:
             response = requests.post(
-                f"{self.base_url}/api/generate",
+                f"{self.base_url}/api/chat",
                 json={
                     "model": self.model,
-                    "prompt": prompt,
+                    "messages": messages,
                     "stream": True,
                     "options": {
                         "temperature": 0.3,
@@ -377,7 +315,7 @@ KURALLAR:
                     }
                 },
                 stream=True,
-                timeout=120
+                timeout=180
             )
 
             if response.status_code == 200:
@@ -385,7 +323,7 @@ KURALLAR:
                     if line:
                         try:
                             data = json.loads(line.decode('utf-8'))
-                            token = data.get('response', '')
+                            token = data.get('message', {}).get('content', '')
                             if token:
                                 yield token
                         except json.JSONDecodeError:

@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Card } from './ui/card';
 import { ChatMessage } from './ChatMessage';
 import { ChatHistory } from './ChatHistory';
+import { RagInfoScreen } from './RagInfoScreen';
 import { RenameDialog } from './RenameDialog';
 import { DeleteDialog } from './DeleteDialog';
-import { Send, LogOut, HeartPulse, Loader2 } from 'lucide-react';
-import { Separator } from './ui/separator';
+import { Send, LogOut, HeartPulse, Loader2, ArrowUp } from 'lucide-react';
 import { chatRequestStream } from '../api/ChatApi';
-import { 
-  createConversation, 
-  getConversations, 
+import {
+  createConversation,
+  getConversations,
   getConversation,
   updateConversationTitle,
   deleteConversation as deleteConversationApi,
@@ -28,6 +27,13 @@ interface ChatScreenProps {
   onOpenProfile: () => void;
 }
 
+const SUGGESTION_CHIPS = [
+  "Sağlık sigortası kapsamında neler var?",
+  "Ameliyat masrafları nasıl karşılanır?",
+  "Reçete ilaçları için ne kadar ödenir?",
+  "Özel hastane farkı nedir?",
+];
+
 export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: ChatScreenProps) {
   const [conversations, setConversations] = useState<ConversationResponse[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
@@ -39,15 +45,14 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [renamingConversationId, setRenamingConversationId] = useState<number | null>(null);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
+  const [showRagInfo, setShowRagInfo] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamingStartedRef = useRef(false);
 
-  // Load conversations on mount
   useEffect(() => {
     loadConversations();
   }, []);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -59,12 +64,9 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
       setIsLoading(true);
       const convs = await getConversations();
       setConversations(convs);
-      
-      // If there are conversations, load the first one
       if (convs.length > 0) {
         await loadConversation(convs[0].id);
       } else {
-        // Create a new conversation if none exist
         await handleNewConversation();
       }
     } catch (error) {
@@ -78,31 +80,29 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     try {
       const conv = await getConversation(conversationId);
       setCurrentConversationId(conversationId);
-      
-      // Convert backend messages to frontend format
+      setIsTyping(false);
+      streamingStartedRef.current = false;
       const formattedMessages: Message[] = conv.messages.map((msg: MessageResponse) => ({
         id: msg.id.toString(),
         content: msg.content,
         sender: msg.sender,
         timestamp: new Date(msg.created_at)
       }));
-      
       setMessages(formattedMessages);
     } catch (error) {
       console.error('Failed to load conversation:', error);
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isTyping || !currentConversationId) return;
+  const handleSend = async (overrideInput?: string) => {
+    const messageContent = (overrideInput || input).trim();
+    if (!messageContent || isTyping || !currentConversationId) return;
 
-    const userMessageContent = input.trim();
     setInput('');
 
-    // Add user message to UI immediately
     const tempUserMessage: Message = {
       id: `temp-${Date.now()}`,
-      content: userMessageContent,
+      content: messageContent,
       sender: 'user',
       timestamp: new Date()
     };
@@ -113,17 +113,14 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     streamingStartedRef.current = false;
 
     try {
-      // Save user message to backend
-      await addMessage(currentConversationId, userMessageContent, 'user');
+      await addMessage(currentConversationId, messageContent, 'user');
 
-      // Stream AI response
-      const request = createQueryRequest(userMessageContent, {
+      const request = createQueryRequest(messageContent, {
         conversation_id: currentConversationId?.toString(),
       });
 
       await chatRequestStream(
         request,
-        // onChunk: create agent message on first chunk, then append
         (chunk) => {
           if (!streamingStartedRef.current) {
             streamingStartedRef.current = true;
@@ -135,37 +132,47 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
             }]);
           } else {
             setMessages(prev => prev.map(m =>
-              m.id === agentMsgId
-                ? { ...m, content: m.content + chunk }
-                : m
+              m.id === agentMsgId ? { ...m, content: m.content + chunk } : m
             ));
           }
         },
-        // onMetadata
-        undefined,
-        // onCitations
-        undefined,
-        // onDone: save the final answer to backend
+        // onMetadata — attach RAG details to agent message
+        (metadata) => {
+          setMessages(prev => prev.map(m =>
+            m.id === agentMsgId
+              ? { ...m, ragMetadata: metadata as any }
+              : m
+          ));
+        },
+        (citations) => {
+          setMessages(prev => prev.map(m =>
+            m.id === agentMsgId
+              ? {
+                  ...m,
+                  citations: citations.map(c => ({
+                    source: c.source,
+                    content: c.type || '',
+                    relevance_score: c.similarity
+                  }))
+                }
+              : m
+          ));
+        },
         async (data) => {
           if (data.answer) {
             await addMessage(currentConversationId, data.answer, 'agent');
           }
-
-          // Update conversation title if first message
           const currentConv = conversations.find(c => c.id === currentConversationId);
           if (currentConv && currentConv.title === 'Yeni Sohbet') {
-            const newTitle = userMessageContent.slice(0, 30) + (userMessageContent.length > 30 ? '...' : '');
+            const newTitle = messageContent.slice(0, 30) + (messageContent.length > 30 ? '...' : '');
             await updateConversationTitle(currentConversationId, newTitle);
             setConversations(prev =>
               prev.map(c => c.id === currentConversationId ? { ...c, title: newTitle } : c)
             );
           }
-
-          // Refresh conversations list
           const updatedConvs = await getConversations();
           setConversations(updatedConvs);
         },
-        // onError
         (errorMsg) => {
           const errorContent = errorMsg || 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.';
           if (!streamingStartedRef.current) {
@@ -213,6 +220,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
   const handleNewConversation = async () => {
     try {
+      setShowRagInfo(false);
       const newConvId = await createConversation();
       const updatedConvs = await getConversations();
       setConversations(updatedConvs);
@@ -223,6 +231,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
   };
 
   const handleSelectConversation = async (id: string) => {
+    setShowRagInfo(false);
     await loadConversation(parseInt(id));
   };
 
@@ -233,14 +242,10 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
   const handleDeleteConfirm = async () => {
     if (!deletingConversationId) return;
-
     try {
       await deleteConversationApi(deletingConversationId);
-      
       const updatedConvs = await getConversations();
       setConversations(updatedConvs);
-      
-      // If we deleted the current conversation, load another one
       if (currentConversationId === deletingConversationId) {
         if (updatedConvs.length > 0) {
           await loadConversation(updatedConvs[0].id);
@@ -263,14 +268,11 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
   const handleRenameSubmit = async (newTitle: string) => {
     if (!renamingConversationId || !newTitle.trim()) return;
-
     try {
       await updateConversationTitle(renamingConversationId, newTitle.trim());
       setConversations(prev =>
         prev.map(conv =>
-          conv.id === renamingConversationId
-            ? { ...conv, title: newTitle.trim() }
-            : conv
+          conv.id === renamingConversationId ? { ...conv, title: newTitle.trim() } : conv
         )
       );
     } catch (error) {
@@ -280,7 +282,6 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     }
   };
 
-  // Convert backend conversations to frontend format
   const conversationsList: Conversation[] = conversations.map(conv => ({
     id: conv.id.toString(),
     title: conv.title,
@@ -295,19 +296,24 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
   if (isLoading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-gray-50">
+      <div className="flex h-screen w-screen items-center justify-center bg-[#f8faf9]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-gray-600">Yükleniyor...</p>
+          <div className="relative">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#047857] to-[#065f46] flex items-center justify-center">
+              <HeartPulse className="h-6 w-6 text-white" />
+            </div>
+            <Loader2 className="h-14 w-14 animate-spin text-[#047857]/30 absolute -top-1 -left-1" />
+          </div>
+          <p className="text-[#5f7068] text-sm">Yükleniyor...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
-      {/* Fixed Sidebar */}
-      <div style={{ width: '280px', flexShrink: 0, borderRight: '1px solid #e5e7eb', backgroundColor: 'white' }}>
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f8faf9]">
+      {/* Sidebar */}
+      <div className="w-[280px] shrink-0 border-r border-[#e2e8e5] bg-[#fafcfb] hidden md:block">
         <ChatHistory
           conversations={conversationsList}
           currentConversationId={currentConversationId?.toString() || null}
@@ -315,58 +321,92 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
           onRenameConversation={handleRenameConversation}
+          onShowRagInfo={() => setShowRagInfo(true)}
         />
       </div>
 
-      {/* Rename Dialog */}
       <RenameDialog
         open={renameDialogOpen}
         currentTitle={renamingConversation?.title || ''}
         onOpenChange={setRenameDialogOpen}
         onRename={handleRenameSubmit}
       />
-
-      {/* Delete Dialog */}
       <DeleteDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
       />
 
-      {/* Main Chat Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: '#f9fafb' }}>
+      {/* Main Content Area */}
+      {showRagInfo ? (
+        <RagInfoScreen onBack={() => setShowRagInfo(false)} />
+      ) : (
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 24px', flexShrink: 0 }}>
-          <div className="flex items-center justify-between">
+        <header className="bg-white/80 backdrop-blur-sm border-b border-[#e2e8e5] px-6 py-3 shrink-0">
+          <div className="flex items-center justify-between max-w-[900px] mx-auto w-full">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
-                <HeartPulse className="h-6 w-6 text-white" />
+              <div className="h-9 w-9 bg-gradient-to-br from-[#047857] to-[#065f46] rounded-xl flex items-center justify-center shadow-sm">
+                <HeartPulse className="h-5 w-5 text-white" />
               </div>
-              <h1 className="text-lg font-semibold">Sağlık Sigortası Asistanı</h1>
+              <div>
+                <h1 className="text-[15px] font-semibold text-[#1a2e28] leading-tight" style={{ fontFamily: 'var(--font-serif)' }}>
+                  Sağlık Sigortası Asistanı
+                </h1>
+                <p className="text-[11px] text-[#9aada2]">Yapay zeka destekli</p>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={onOpenProfile}>
-                <span className="text-sm text-gray-600">{userName}</span>
-              </Button>
-              <Button variant="outline" size="sm" onClick={onLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Çıkış Yap
-              </Button>
+              <button
+                onClick={onOpenProfile}
+                className="text-[13px] text-[#5f7068] hover:text-[#1a2e28] transition-colors px-2 py-1 rounded-lg hover:bg-[#f1f5f3]"
+              >
+                {userName}
+              </button>
+              <button
+                onClick={onLogout}
+                className="flex items-center gap-1.5 text-[13px] text-[#5f7068] hover:text-[#1a2e28] transition-colors px-2.5 py-1.5 rounded-lg hover:bg-[#f1f5f3] border border-[#e2e8e5]"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Çıkış
+              </button>
             </div>
           </div>
         </header>
 
-        {/* Chat Area */}
-        <div style={{ flex: 1, overflow: 'hidden', padding: '24px' }}>
-          <Card className="h-full flex flex-col" style={{ maxWidth: '900px', margin: '0 auto' }}>
-            {/* Messages */}
-            <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-              <div className="space-y-4">
+        {/* Messages Area */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+          <div className="max-w-[800px] mx-auto px-6 py-6">
+            {messages.length === 0 && !isTyping ? (
+              /* Welcome State */
+              <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-[#ecfdf5] to-[#d1fae5] rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                  <HeartPulse className="h-10 w-10 text-[#047857]" />
+                </div>
+                <h2 className="text-2xl font-semibold text-[#1a2e28] mb-2" style={{ fontFamily: 'var(--font-serif)' }}>
+                  Hoş Geldiniz
+                </h2>
+                <p className="text-[#5f7068] mb-8 max-w-md leading-relaxed">
+                  Sağlık sigortanız hakkında sorularınızı sorabilirsiniz. Size en doğru bilgiyi kaynaklardan bularak yanıtlayacağım.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
+                  {SUGGESTION_CHIPS.map((suggestion, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSend(suggestion)}
+                      className="text-[13px] text-left p-4 rounded-xl bg-white border border-[#e2e8e5] hover:border-[#a7f3d0] hover:bg-[#f0fdf4] transition-all shadow-sm hover:shadow group"
+                    >
+                      <span className="text-[#1a2e28] group-hover:text-[#047857] transition-colors">{suggestion}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-5">
                 {messages.map(message => (
                   <ChatMessage key={message.id} message={message} />
                 ))}
-                
                 {isTyping && !streamingStartedRef.current && (
                   <ChatMessage
                     message={{
@@ -379,32 +419,39 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
                   />
                 )}
               </div>
-            </div>
+            )}
+          </div>
+        </div>
 
-            <Separator />
-
-            {/* Input */}
-            <div style={{ padding: '16px', flexShrink: 0 }}>
-              <div className="flex gap-2">
-                <Input
+        {/* Input Area */}
+        <div className="shrink-0 border-t border-[#e2e8e5] bg-white/80 backdrop-blur-sm">
+          <div className="max-w-[800px] mx-auto px-6 py-4">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1 relative">
+                <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Sağlık sigortanızla ilgili sorunuzu yazın..."
                   disabled={isTyping}
-                  className="flex-1"
+                  className="w-full px-4 py-3 rounded-xl bg-[#f1f5f3] border border-[#e2e8e5] focus:border-[#047857] focus:ring-2 focus:ring-[#047857]/10 outline-none transition-all text-[15px] text-[#1a2e28] placeholder:text-[#9aada2] disabled:opacity-50"
                 />
-                <Button onClick={handleSend} disabled={!input.trim() || isTyping}>
-                  <Send className="h-4 w-4" />
-                </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                Sağlık asistanınızla güvenli ve gizli bir şekilde iletişim kurabilirsiniz.
-              </p>
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isTyping}
+                className="h-[46px] w-[46px] rounded-xl bg-[#047857] hover:bg-[#065f46] disabled:bg-[#d4ddd8] disabled:cursor-not-allowed text-white flex items-center justify-center transition-all shadow-sm hover:shadow"
+              >
+                <ArrowUp className="h-5 w-5" />
+              </button>
             </div>
-          </Card>
+            <p className="text-[11px] text-[#9aada2] mt-2 text-center">
+              Yanıtlar kaynaklara dayanmaktadır. Kesin bilgi için sigortacınıza danışın.
+            </p>
+          </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

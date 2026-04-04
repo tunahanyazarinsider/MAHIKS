@@ -1,5 +1,5 @@
 import { Button } from './ui/button';
-import { MessageSquarePlus, MessageSquare, Trash2, Pencil } from 'lucide-react';
+import { MessageSquarePlus, MessageSquare, Trash2, Pencil, BrainCircuit } from 'lucide-react';
 import { Conversation } from '../models';
 
 interface ChatHistoryProps {
@@ -9,6 +9,7 @@ interface ChatHistoryProps {
   onNewConversation: () => void;
   onDeleteConversation: (id: string) => void;
   onRenameConversation: (id: string) => void;
+  onShowRagInfo?: () => void;
 }
 
 export function ChatHistory({
@@ -17,9 +18,10 @@ export function ChatHistory({
   onSelectConversation,
   onNewConversation,
   onDeleteConversation,
-  onRenameConversation
+  onRenameConversation,
+  onShowRagInfo
 }: ChatHistoryProps) {
-  
+
   const formatDate = (date: Date): string => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -29,7 +31,7 @@ export function ChatHistory({
     if (days === 1) return 'Dün';
     if (days < 7) return `${days} gün önce`;
     if (days < 30) return `${Math.floor(days / 7)} hafta önce`;
-    
+
     return date.toLocaleDateString('tr-TR', {
       day: 'numeric',
       month: 'long',
@@ -53,132 +55,117 @@ export function ChatHistory({
   }, {} as Record<string, Conversation[]>);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div className="flex flex-col h-full overflow-hidden">
       {/* New Chat Button */}
-      <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
-        <Button onClick={onNewConversation} className="w-full">
+      <div className="p-4 border-b border-[#e2e8e5] shrink-0">
+        <Button
+          onClick={onNewConversation}
+          className="w-full bg-[#047857] hover:bg-[#065f46] text-white"
+        >
           <MessageSquarePlus className="h-4 w-4 mr-2" />
           Yeni Sohbet
         </Button>
       </div>
 
       {/* Chat List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+      <div className="flex-1 overflow-y-auto px-2 py-2">
         {Object.entries(groupedConversations).map(([date, convs]) => (
-          <div key={date} style={{ marginBottom: '16px' }}>
-            <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>
+          <div key={date} className="mb-4">
+            <div className="px-3 py-1.5 text-[11px] font-semibold text-[#5f7068] uppercase tracking-wider">
               {date}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {convs.map((conversation) => (
-                <div
-                  key={conversation.id}
-                  onClick={() => onSelectConversation(conversation.id)}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    backgroundColor: currentConversationId === conversation.id ? '#eff6ff' : 'transparent',
-                    border: currentConversationId === conversation.id ? '1px solid #bfdbfe' : '1px solid transparent',
-                  }}
-                  className="group hover:bg-gray-50"
-                >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    {/* Left column: Icon + Action buttons */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                      <MessageSquare style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
-                      
-                      {/* Action Buttons - below icon */}
-                      <div 
-                        className="opacity-0 group-hover:opacity-100"
-                        style={{ 
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          gap: '2px',
-                          transition: 'opacity 0.2s'
-                        }}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          style={{ height: '24px', width: '24px', padding: 0 }}
+            <div className="flex flex-col gap-0.5">
+              {convs.map((conversation) => {
+                const isActive = currentConversationId === conversation.id;
+                return (
+                  <div
+                    key={conversation.id}
+                    onClick={() => onSelectConversation(conversation.id)}
+                    className={`
+                      group relative px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150
+                      ${isActive
+                        ? 'bg-[#ecfdf5] border border-[#a7f3d0] shadow-sm'
+                        : 'border border-transparent hover:bg-[#f1f5f3]'
+                      }
+                    `}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <MessageSquare className={`w-4 h-4 mt-0.5 shrink-0 ${isActive ? 'text-[#047857]' : 'text-[#9aada2]'}`} />
+
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[13px] font-medium truncate ${isActive ? 'text-[#047857]' : 'text-[#1a2e28]'}`}>
+                          {conversation.title}
+                        </p>
+                        <p className="text-[12px] text-[#5f7068] mt-0.5 truncate">
+                          {conversation.lastMessage}
+                        </p>
+                        <p className="text-[11px] text-[#9aada2] mt-1">
+                          {formatMessageCount(conversation.messageCount)}
+                        </p>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        <button
+                          className="p-1 rounded hover:bg-[#d4ddd8]/50 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             onRenameConversation(conversation.id);
                           }}
+                          aria-label="Yeniden adlandır"
                         >
-                          <Pencil style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          style={{ height: '24px', width: '24px', padding: 0 }}
+                          <Pencil className="w-3 h-3 text-[#5f7068]" />
+                        </button>
+                        <button
+                          className="p-1 rounded hover:bg-red-50 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             onDeleteConversation(conversation.id);
                           }}
+                          aria-label="Sil"
                         >
-                          <Trash2 style={{ width: '12px', height: '12px', color: '#9ca3af' }} />
-                        </Button>
+                          <Trash2 className="w-3 h-3 text-[#5f7068] hover:text-red-500" />
+                        </button>
                       </div>
                     </div>
-                    
-                    {/* Right column: Text content */}
-                    <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
-                      <p style={{ 
-                        fontSize: '14px', 
-                        fontWeight: 500, 
-                        whiteSpace: 'nowrap', 
-                        overflow: 'hidden', 
-                        textOverflow: 'ellipsis',
-                        color: '#111827'
-                      }}>
-                        {conversation.title}
-                      </p>
-                      <p style={{ 
-                        fontSize: '12px', 
-                        color: '#6b7280', 
-                        marginTop: '4px',
-                        whiteSpace: 'nowrap', 
-                        overflow: 'hidden', 
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {conversation.lastMessage}
-                      </p>
-                      <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>
-                        {formatMessageCount(conversation.messageCount)}
-                      </p>
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
 
         {/* Empty State */}
         {conversations.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '48px 16px' }}>
-            <div style={{ 
-              backgroundColor: '#f3f4f6', 
-              borderRadius: '50%', 
-              width: '64px', 
-              height: '64px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              margin: '0 auto 16px' 
-            }}>
-              <MessageSquare style={{ width: '32px', height: '32px', color: '#9ca3af' }} />
+          <div className="text-center py-12 px-4">
+            <div className="w-14 h-14 bg-[#ecfdf5] rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="w-6 h-6 text-[#047857]" />
             </div>
-            <p style={{ fontSize: '14px', fontWeight: 500, color: '#4b5563' }}>Henüz sohbet yok</p>
-            <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '8px' }}>
+            <p className="text-sm font-medium text-[#1a2e28]">Henüz sohbet yok</p>
+            <p className="text-xs text-[#9aada2] mt-2 leading-relaxed">
               Sağlık sigortası hakkında soru sormak için yukarıdaki butona tıklayın
             </p>
           </div>
         )}
       </div>
+
+      {/* RAG Info Button */}
+      {onShowRagInfo && (
+        <div className="p-3 border-t border-[#e2e8e5] shrink-0">
+          <button
+            onClick={onShowRagInfo}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#f1f5f3] hover:bg-[#ecfdf5] border border-[#e2e8e5] hover:border-[#a7f3d0] transition-all group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-[#ecfdf5] group-hover:bg-[#d1fae5] flex items-center justify-center shrink-0 transition-colors">
+              <BrainCircuit className="w-4 h-4 text-[#047857]" />
+            </div>
+            <div className="text-left">
+              <p className="text-[12px] font-semibold text-[#1a2e28]">RAG Pipeline</p>
+              <p className="text-[10px] text-[#9aada2]">Sistem nasıl çalışır?</p>
+            </div>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
