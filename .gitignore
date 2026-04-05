@@ -26,6 +26,7 @@ env/
 ENV/
 .venv/
 
+output.txt
 # Environment variables
 .env
 .env.local
