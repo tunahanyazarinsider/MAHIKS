@@ -43,6 +43,11 @@ class Config:
     CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "500"))
     CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "50"))
 
+    # SUT Chunker Settings
+    SUT_MAX_WORDS = int(os.getenv("SUT_MAX_WORDS", "350"))
+    SUT_MIN_WORDS = int(os.getenv("SUT_MIN_WORDS", "100"))
+    SUT_MERGE_THRESHOLD = int(os.getenv("SUT_MERGE_THRESHOLD", "75"))
+
     # Retrieval Settings
     VECTOR_TOP_K = int(os.getenv("VECTOR_TOP_K", "5"))
     GRAPH_MAX_DEPTH = int(os.getenv("GRAPH_MAX_DEPTH", "2"))

@@ -20,15 +20,16 @@ import re
 from typing import List, Dict, Optional
 from dataclasses import dataclass, field
 import PyPDF2
+from config import Config
 
 
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
 
-DEFAULT_MAX_WORDS = 350      # Maximum words per chunk
-DEFAULT_MIN_WORDS = 50       # Minimum words (lowered to keep small sections)
-DEFAULT_MERGE_THRESHOLD = 40 # Sections smaller than this MAY be merged
+DEFAULT_MAX_WORDS = Config.SUT_MAX_WORDS
+DEFAULT_MIN_WORDS = Config.SUT_MIN_WORDS
+DEFAULT_MERGE_THRESHOLD = Config.SUT_MERGE_THRESHOLD
 
 
 # =============================================================================
@@ -93,28 +94,38 @@ class ChunkMetadata:
                 f"is_merged={self.is_merged}, merged_sections={self.merged_sections})"
 
 
-@dataclass 
+@dataclass
 class Chunk:
     """
     Complete chunk with text and metadata.
-    
+
     This is the main output of the chunker.
-    
+
     Attributes:
-        text: The actual chunk text (with context header if enabled)
+        text: Content-only text, used for embedding (no context header)
+        context_header: Breadcrumb header for LLM context at query time
         word_count: Number of words in the chunk
         order: Global order in document (0, 1, 2, ...)
         metadata: ChunkMetadata object with all details
     """
     text: str
+    context_header: str
     word_count: int
     order: int
     metadata: ChunkMetadata
-    
+
+    @property
+    def text_for_llm(self) -> str:
+        """Full text with context header, used when sending to the LLM."""
+        if self.context_header:
+            return f"{self.context_header}\n\n{self.text}"
+        return self.text
+
     def to_dict(self) -> Dict:
         """Convert to dictionary for database storage or JSON serialization."""
         result = {
             'text': self.text,
+            'context_header': self.context_header,
             'word_count': self.word_count,
             'order': self.order,
             # Flatten metadata into the dict
@@ -144,6 +155,7 @@ class RawSection:
     word_count: int
     level: int
     index: int
+    char_start: int = 0
     is_merged: bool = False
     merged_sections: List[str] = field(default_factory=list)
 
@@ -264,7 +276,63 @@ class SUTChunker:
         except Exception as e:
             print(f"Error reading PDF {pdf_path}: {e}")
         
+        return self.clean_text(text)
+    
+    def clean_text(self, text: str) -> str:
+        """
+        Cleans the text by removing amendment notes and footnote references.
+
+        Args:
+            text: str -> All text extracted from the document
+
+        Returns:
+            str -> Cleaned text with amendment notes and footnote references removed
+        """
+        text = re.sub(
+          r'\((?:Değişik|Değişik ibare|Ek|Ek ibare|Mülga|Mülga ibare)[^)]+\)\s*(?:\(\d+\))?',
+          '',
+          text
+        )
+        # Pattern 2: Standalone footnote reference numbers like "(94)" or "(128)"
+        # Only if they appear mid-sentence (not fıkra numbers at line start)
+        text = re.sub(r'(?<!\n)\(\d{2,3}\)', '', text)
+        # Pattern 3: Collapse multiple spaces left behind
+        text = re.sub(r'  +', ' ', text)
         return text.strip()
+    
+    @staticmethod
+    def clean_content(text: str) -> str:
+        # Pattern 1: Full amendment block with footnote number
+        # e.g. "(Değişik:RG-25/8/2022-31934 Mükerrer)(94)"
+        text = re.sub(
+            r'\((?:Değişik|Değişik ibare|Ek|Ek ibare|Mülga|Mülga ibare)[^)]+\)\s*(?:\(\d+\))?',
+            '',
+            text
+        )
+        # Pattern 2: Standalone footnote reference numbers like "(94)" or "(128)"
+        # Only if they appear mid-sentence (not fıkra numbers at line start)
+        text = re.sub(r'(?<!\n)\(\d{2,3}\)', '', text)
+        # Pattern 3: Collapse multiple spaces left behind
+        text = re.sub(r'  +', ' ', text)
+        return text.strip()
+    
+    def _get_bolum_for_position(self, pos: int) -> Optional[str]:
+        current = None
+        for start, name in self._bolum_positions:
+            if start <= pos:
+                current = name
+            else:
+                break
+        return current
+    
+    def _is_repealed(self, section: RawSection) -> bool:
+        """Returns True if the entire section content is just a mülga annotation."""
+        # Remove mülga annotation; if only the section header line remains → repealed
+        mülga_only = re.sub(
+            r'\((?:Mülga)[^)]+\)\s*(?:\(\d+\))?', '', section.content
+        ).strip()
+        return len(mülga_only.split()) < 5
+
     
     # -------------------------------------------------------------------------
     # LEVEL DETECTION
@@ -400,6 +468,7 @@ class SUTChunker:
             )
             return [Chunk(
                 text=text,
+                context_header="",
                 word_count=len(text.split()),
                 order=0,
                 metadata=metadata
@@ -413,12 +482,14 @@ class SUTChunker:
             title = re.sub(r'\(Değişik:.*?\)', '', title).strip()
             title = re.sub(r'\(Ek:.*?\)', '', title).strip()
             title = re.sub(r'\(Mülga:.*?\)', '', title).strip()
+            title = re.sub(r'\(\d+\)', '', title).strip()  # strip footnote refs e.g. (94)
             self._section_titles[section_num] = title
         
         # Detect BÖLÜM
-        bolum_match = self.BOLUM_PATTERN.search(text[:3000])
-        if bolum_match:
-            self._current_bolum = bolum_match.group(0)
+        self._bolum_positions = [
+            (m.start(), m.group(0))
+            for m in self.BOLUM_PATTERN.finditer(text)
+        ]
         
         # STEP 1: Extract all raw sections
         raw_sections: List[RawSection] = []
@@ -430,6 +501,7 @@ class SUTChunker:
             start = match.start()
             end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
             content = text[start:end].strip()
+            content = self.clean_content(content)
             
             raw_sections.append(RawSection(
                 section_number=section_num,
@@ -437,7 +509,8 @@ class SUTChunker:
                 content=content,
                 word_count=len(content.split()),
                 level=self.detect_level(section_num),
-                index=i
+                index=i,
+                char_start=start
             ))
         
         # STEP 2: Merge small sections if enabled
@@ -450,6 +523,8 @@ class SUTChunker:
         chunks: List[Chunk] = []
         
         for section in processed_sections:
+            if self._is_repealed(section):
+                continue
             section_chunks = self._chunk_section(section)
             chunks.extend(section_chunks)
         
@@ -512,11 +587,11 @@ class SUTChunker:
                 self._is_parent_of(section.section_number, sections[i + 1].section_number)
             )
             
-            if is_header:
-                # Skip header sections - context preserved via parent_chain
+            if is_header or self._is_repealed(section):
+                # Skip header and fully-repealed sections
                 i += 1
                 continue
-            
+
             # Collect consecutive small sections to merge together
             sections_to_merge = [section]
             j = i + 1
@@ -531,22 +606,25 @@ class SUTChunker:
                     self._is_parent_of(next_section.section_number, sections[j + 1].section_number)
                 )
                 
-                if next_is_header:
-                    # Skip header, but stop merging chain here
+                if next_is_header or self._is_repealed(next_section):
+                    # Skip header/repealed sections and stop merging chain here
+                    j += 1
                     break
                 
                 # Check if we should merge next section
                 current_total = sum(s.word_count for s in sections_to_merge)
-                
-                # Merge if:
-                # 1. Current section(s) are still small, OR
-                # 2. Next section is small
-                # AND combined size is reasonable
-                should_merge = (
-                    (current_total < self.merge_threshold or next_section.word_count < self.merge_threshold) and
-                    current_total + next_section.word_count <= self.max_words
+
+                fits_in_limit = current_total + next_section.word_count <= self.max_words
+                either_is_small = (
+                    current_total < self.merge_threshold
+                    or next_section.word_count < self.merge_threshold
                 )
-                
+                # Force-merge if current group is below merge_threshold and can't fit otherwise —
+                # the oversized result will be split by fıkra/sentences in _chunk_section.
+                force_merge = current_total < self.merge_threshold and not fits_in_limit
+
+                should_merge = (either_is_small and fits_in_limit) or force_merge
+
                 if should_merge:
                     sections_to_merge.append(next_section)
                     j += 1
@@ -590,6 +668,8 @@ class SUTChunker:
     def _chunk_section(self, section: RawSection) -> List[Chunk]:
         """Chunk a single section, splitting if necessary."""
         chunks: List[Chunk] = []
+
+        self._current_bolum = self._get_bolum_for_position(section.char_start)
         
         context_header = self.build_context_header(
             section.section_number, 
@@ -600,8 +680,6 @@ class SUTChunker:
         
         # Section fits in one chunk
         if section.word_count <= effective_max:
-            full_text = f"{context_header}\n\n{section.content}" if context_header else section.content
-            
             metadata = ChunkMetadata(
                 section_number=section.section_number,
                 section_title=section.section_title,
@@ -614,10 +692,11 @@ class SUTChunker:
                 is_merged=section.is_merged,
                 merged_sections=section.merged_sections
             )
-            
+
             chunks.append(Chunk(
-                text=full_text,
-                word_count=len(full_text.split()),
+                text=section.content,
+                context_header=context_header,
+                word_count=len(section.content.split()),
                 order=0,  # Will be set later
                 metadata=metadata
             ))
@@ -666,8 +745,6 @@ class SUTChunker:
         fikra_words = len(fikra_content.split())
         
         if fikra_words <= effective_max:
-            full_text = f"{fikra_context}\n\n{fikra_content}" if fikra_context else fikra_content
-            
             metadata = ChunkMetadata(
                 section_number=section.section_number,
                 section_title=section.section_title,
@@ -678,10 +755,11 @@ class SUTChunker:
                 chunk_type='fikra',
                 chunk_index=0
             )
-            
+
             chunks.append(Chunk(
-                text=full_text,
-                word_count=len(full_text.split()),
+                text=fikra_content,
+                context_header=fikra_context,
+                word_count=len(fikra_content.split()),
                 order=0,
                 metadata=metadata
             ))
@@ -719,8 +797,7 @@ class SUTChunker:
             if current_words + sentence_words > effective_max and current_sentences:
                 # Save current chunk
                 chunk_text = ' '.join(current_sentences)
-                full_text = f"{context_header}\n\n{chunk_text}" if context_header else chunk_text
-                
+
                 metadata = ChunkMetadata(
                     section_number=section.section_number,
                     section_title=section.section_title,
@@ -731,10 +808,11 @@ class SUTChunker:
                     chunk_type='sentence_split',
                     chunk_index=chunk_index
                 )
-                
+
                 chunks.append(Chunk(
-                    text=full_text,
-                    word_count=len(full_text.split()),
+                    text=chunk_text,
+                    context_header=context_header,
+                    word_count=len(chunk_text.split()),
                     order=0,
                     metadata=metadata
                 ))
@@ -749,8 +827,7 @@ class SUTChunker:
         # Last chunk
         if current_sentences:
             chunk_text = ' '.join(current_sentences)
-            full_text = f"{context_header}\n\n{chunk_text}" if context_header else chunk_text
-            
+
             metadata = ChunkMetadata(
                 section_number=section.section_number,
                 section_title=section.section_title,
@@ -761,10 +838,11 @@ class SUTChunker:
                 chunk_type='sentence_split',
                 chunk_index=chunk_index
             )
-            
+
             chunks.append(Chunk(
-                text=full_text,
-                word_count=len(full_text.split()),
+                text=chunk_text,
+                context_header=context_header,
+                word_count=len(chunk_text.split()),
                 order=0,
                 metadata=metadata
             ))

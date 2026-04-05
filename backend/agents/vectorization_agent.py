@@ -59,7 +59,8 @@ class VectorizationAgent:
             # Prepare metadata for ChromaDB
             metadata = {
                 'document_id': document_id,
-                'chunk_order': idx
+                'chunk_order': idx,
+                'context_header': getattr(chunk, 'context_header', '')
             }
             if chunk.metadata:
                 metadata.update(chunk.metadata.to_dict())
