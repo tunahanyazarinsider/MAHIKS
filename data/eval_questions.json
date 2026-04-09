@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "question": "Fizik tedavi ve rehabilitasyon uygulamaları için sağlık kurulu kararı hangi durumlarda gereklidir?",
+    "ground_truth": "30 seans sonrası devam edilecek tedaviler için sağlık kurulu kararı gereklidir. 31-60 seansa kadar olan uygulamalar için en az bir fiziksel tıp ve rehabilitasyon uzman hekiminin yer aldığı sağlık kurumu sağlık kurulunca, 60 seans üzeri olan uygulamalar için ise üçüncü basamak sağlık kurumu sağlık kurulunca karar verilmesi gerekir.",
+    "source_chunk_id": 1565,
+    "source_name": "25.01.2025-Değişiklik Tebliği İşlenmiş Güncel 2013 SUT"
+  },
+  {
+    "id": 2,
+    "question": "Tedavinin devamı gerekli ise topikal antifungaller için reçetelerin kimler tarafından düzenlenmesi halinde bedeli Kurumca karşılanır?",
+    "ground_truth": "Dermatoloji uzman hekimi tarafından düzenlenmesi halinde bedeli Kurumca karşılanır.",
+    "source_chunk_id": 2193,
+    "source_name": "25.01.2025-Değişiklik Tebliği İşlenmiş Güncel 2013 SUT"
+  },
+  {
+    "id": 3,
+    "question": "Ismarlama tıbbi cihaz kapsamındaki nihai ürünlerin bedellerinin karşılanmasında hangi şart aranmaz?",
+    "ground_truth": "TİTUBB kayıtbildirim işleminin tamamlanmış olması şartı aranmaz, ancak nihai ısmarlama cihazın üretiminde kullanılan Tıbbi Cihaz Yönetmelikleri kapsamında olan malzemelerin ayrı ayrı TİTUBB kayıt bildirim işlemi tamamlanmış olma şartı aranacaktır.",
+    "source_chunk_id": 1108,
+    "source_name": "25.01.2025-Değişiklik Tebliği İşlenmiş Güncel 2013 SUT"
+  },
+  {
+    "id": 4,
+    "question": "Niasin için reçete düzenleme koşulları nelerdir?",
+    "ground_truth": "Niasin, en az 6 ay süreyle statin aldığı halde LDL düzeyinin 100 mg/dL'nin üstünde olduğu veya belirli hastalıkları olanlarda, iç hastalıkları veya kardiyoloji uzman hekimleri tarafından düzenlenen uzman hekim raporuna dayanılarak tüm hekimlerce reçete edilebilir.",
+    "source_chunk_id": 2365,
+    "source_name": "25.01.2025-Değişiklik Tebliği İşlenmiş Güncel 2013 SUT"
+  },
+  {
+    "id": 5,
+    "question": "Obinutuzumab için bedellerin Kurumca karşılanabilmesi için hangi koşullar gerekli?",
+    "ground_truth": "Obinutuzumab için bedellerin Kurumca karşılanabilmesi için 70 yaş ve üzerinde olup Cumulative Illness Rating Scale (CIRS) 6 veveya kreatinin klirensi 30-69 mldk olan kronik lenfositik lösemi hastalarında klorambusil ile kombine olarak ilk seri tedavide kullanılması, 70 yaş altında olup CIRS 6 veveya kreatinin klirensi 30-69 mldk olan ve fludarabinli veya bendamustinli kombinasyon tedavisine uygun olmayan ve önceden rituksimab kullanmış kronik lenfositik lösemi hastalarında ikinci sıra tedavide olması veya üçüncü basamak sağlık kurumlarında düzenlenen en az bir hematoloji uzmanının yer aldığı en fazla 3 ay süreli sağlık kurulu raporuna istinaden hematoloji uzman hekimleri tarafından reçete edilmesi gerekli.",
+    "source_chunk_id": 1831,
+    "source_name": "25.01.2025-Değişiklik Tebliği İşlenmiş Güncel 2013 SUT"
+  },
+  {
+    "id": 6,
+    "question": "İmmunoglobulin M (IgM) ile zenginleştirilmiş intravenöz immünglobulinlerin kullanım koşulları nelerdir?",
+    "ground_truth": "İmmunoglobulin M (IgM) ile zenginleştirilmiş intravenöz immünglobulinler, üçüncü basamak yoğun bakım ünitesinde yatan ciddi bakteriyel enfeksiyon kaynaklı septik şokta olan hastaların, uygun antibiyotik, sıvı, vazopressör tedavilerine rağmen devam eden ciddi hipotansiyon tedavisinde uzman hekim tarafından kullanılması halinde bedelleri karşılanır.",
+    "source_chunk_id": 5236,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 7,
+    "question": "Spesifik olmayan gammapolivalan immünglobulinlerin ödenmesi için hangi uzman hekimlerden rapor alınması gerekir?",
+    "ground_truth": "Spesifik olmayan gammapolivalan immünglobulinlerin ödenmesi için hematoloji, tıbbi onkoloji, enfeksiyon hastalıkları ve klinik mikrobiyoloji, göğüs hastalıkları, romatoloji, nefroloji, immünoloji veya immünoloji ve alerji uzman hekimlerinden birinin rapor alınması gerekir.",
+    "source_chunk_id": 3600,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 8,
+    "question": "Kronik Hepatit C tedavisi için genotip tayini hangi durumda yapılır?",
+    "ground_truth": "HCV RNAsı pozitif hastalarda genotip tayini yapılır.",
+    "source_chunk_id": 1277,
+    "source_name": "25.01.2025-Değişiklik Tebliği İşlenmiş Güncel 2013 SUT"
+  },
+  {
+    "id": 9,
+    "question": "Uzman hekim raporlarının kimler tarafından düzenleneceği belirlenmiştir?",
+    "ground_truth": "Uzman hekim raporları, ilgili tek uzman hekim tarafından düzenlenecektir.",
+    "source_chunk_id": 4321,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 10,
+    "question": "Yatarak tedavilerde kullanılacak ilaçların temini için hangi kurumların sorumluluğu vardır?",
+    "ground_truth": "Kurumla sözleşmeli ve protokollü sağlık kurum ve kuruluşları, yatarak tedavilerde kullanılacak ilaçların temini sorumluluğunu taşır.",
+    "source_chunk_id": 2687,
+    "source_name": "25.01.2025-Değişiklik Tebliği İşlenmiş Güncel 2013 SUT"
+  }
+]
