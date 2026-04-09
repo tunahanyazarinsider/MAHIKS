@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 RAG Evaluation Script for MAHIKS-TR
-Uses LLM-as-a-judge (Gemini) to evaluate the RAG pipeline on:
+Uses LLM-as-a-judge (Gemini or Groq) to evaluate the RAG pipeline on:
   - Faithfulness:       Is the answer grounded in retrieved context?
   - Answer Relevancy:   Does the answer address the question?
   - Context Relevancy:  Did retrieval fetch relevant chunks?
@@ -9,14 +9,16 @@ Uses LLM-as-a-judge (Gemini) to evaluate the RAG pipeline on:
 
 Usage:
   docker compose run --rm backend python -m scripts.evaluate_rag
+  docker compose run --rm backend python -m scripts.evaluate_rag --judge groq
   docker compose run --rm backend python -m scripts.evaluate_rag --questions data/eval_questions.json
-  docker compose run --rm backend python -m scripts.evaluate_rag --output reports/eval_result.json
+  docker compose run --rm backend python -m scripts.evaluate_rag --output data/eval_report.json
 """
 import os
 import sys
 import json
 import argparse
 import re
+import time
 from pathlib import Path
 from datetime import datetime
 
@@ -37,9 +39,15 @@ try:
 except ImportError:
     GEMINI_AVAILABLE = False
 
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+
 
 # ---------------------------------------------------------------------------
-# Gemini judge
+# Judge prompt
 # ---------------------------------------------------------------------------
 
 JUDGE_PROMPT_TEMPLATE = """You are an expert evaluator for a Turkish health insurance Q&A system (RAG pipeline).
@@ -134,19 +142,29 @@ def format_context_for_judge(rag_response: dict, max_chunks: int = 5) -> str:
     return "\n\n".join(parts)
 
 
-def call_gemini_judge(client, model: str, prompt: str) -> dict:
-    response = client.models.generate_content(model=model, contents=prompt)
-    raw = response.text.strip()
-
-    # Strip markdown code fences if present
+def parse_judge_response(raw: str) -> dict:
+    raw = raw.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
-
     return json.loads(raw)
 
 
+def call_gemini_judge(client, model: str, prompt: str) -> dict:
+    response = client.models.generate_content(model=model, contents=prompt)
+    return parse_judge_response(response.text)
+
+
+def call_groq_judge(client, model: str, prompt: str) -> dict:
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+    )
+    return parse_judge_response(response.choices[0].message.content)
+
+
 # ---------------------------------------------------------------------------
-# Pipeline initialisation (mirrors vectorize_only.py)
+# Pipeline initialisation
 # ---------------------------------------------------------------------------
 
 def init_pipeline():
@@ -193,16 +211,12 @@ def init_pipeline():
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate MAHIKS-TR RAG pipeline")
-    parser.add_argument(
-        "--questions",
-        default="data/eval_questions.json",
-        help="Path to eval questions JSON (default: data/eval_questions.json)"
-    )
-    parser.add_argument(
-        "--output",
-        default=None,
-        help="Path to write the JSON report (default: reports/eval_<timestamp>.json)"
-    )
+    parser.add_argument("--questions", default="data/eval_questions.json",
+                        help="Path to eval questions JSON (default: data/eval_questions.json)")
+    parser.add_argument("--output", default=None,
+                        help="Path to write the JSON report (default: data/eval_<timestamp>.json)")
+    parser.add_argument("--judge", choices=["gemini", "groq"], default="groq",
+                        help="LLM provider to use as judge (default: groq)")
     args = parser.parse_args()
 
     print("\n" + "=" * 70)
@@ -210,21 +224,38 @@ def main():
     print("=" * 70)
     print(f"Start:     {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Questions: {args.questions}")
-    judge_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-    print(f"Judge:     {judge_model}")
+    print(f"Judge:     {args.judge}")
     print("=" * 70 + "\n")
 
-    # Validate config
     Config.validate()
 
-    if not GEMINI_AVAILABLE:
-        print("✗ google-genai not installed. Run: pip install google-genai")
-        sys.exit(1)
+    # Init judge
+    if args.judge == "groq":
+        if not OPENAI_AVAILABLE:
+            print("✗ openai package not installed.")
+            sys.exit(1)
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if not groq_api_key:
+            print("✗ GROQ_API_KEY not set in .env")
+            sys.exit(1)
+        judge_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+        judge_client = OpenAI(api_key=groq_api_key, base_url="https://api.groq.com/openai/v1")
+        call_judge = call_groq_judge
+        sleep_seconds = 2  # Groq free tier: 30 req/min
+    else:
+        if not GEMINI_AVAILABLE:
+            print("✗ google-genai not installed.")
+            sys.exit(1)
+        google_api_key = os.getenv("GOOGLE_API_KEY")
+        if not google_api_key:
+            print("✗ GOOGLE_API_KEY not set.")
+            sys.exit(1)
+        judge_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        judge_client = google_genai.Client(api_key=google_api_key)
+        call_judge = call_gemini_judge
+        sleep_seconds = 13  # Gemini free tier: 5 req/min
 
-    google_api_key = os.getenv("GOOGLE_API_KEY")
-    if not google_api_key:
-        print("✗ GOOGLE_API_KEY not set.")
-        sys.exit(1)
+    print(f"Judge model: {judge_model}\n")
 
     # Load questions
     questions_path = Path(args.questions)
@@ -234,10 +265,7 @@ def main():
 
     with open(questions_path, "r", encoding="utf-8") as f:
         questions = json.load(f)
-    print(f"Loaded {len(questions)} questions from {questions_path}\n")
-
-    # Init Gemini judge
-    gemini_client = google_genai.Client(api_key=google_api_key)
+    print(f"Loaded {len(questions)} questions\n")
 
     # Init RAG pipeline
     orchestrator, mysql = init_pipeline()
@@ -246,9 +274,8 @@ def main():
     if args.output:
         output_path = Path(args.output)
     else:
-        Path("reports").mkdir(exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_path = Path(f"reports/eval_{timestamp}.json")
+        output_path = Path(f"data/eval_{timestamp}.json")
 
     # Evaluate
     results = []
@@ -271,32 +298,22 @@ def main():
             response_time_ms = rag_response.get("metadata", {}).get("response_time_ms", 0)
         except Exception as e:
             print(f"  ✗ RAG pipeline error: {e}\n")
-            results.append({
-                "id": q_id,
-                "question": question,
-                "error": str(e),
-                "scores": None
-            })
+            results.append({"id": q_id, "question": question, "error": str(e), "scores": None})
             continue
 
-        print(f"  Retrieved {chunks_retrieved} chunks, answered in {response_time_ms}ms")
+        print(f"  Retrieved {chunks_retrieved} chunks in {response_time_ms}ms")
 
-        # Step 2: Judge with Gemini
+        # Step 2: Judge
         try:
+            time.sleep(sleep_seconds)
             prompt = build_judge_prompt(question, context_str, answer, ground_truth)
-            scores = call_gemini_judge(gemini_client, judge_model, prompt)
+            scores = call_judge(judge_client, judge_model, prompt)
         except Exception as e:
             print(f"  ✗ Judge error: {e}\n")
-            results.append({
-                "id": q_id,
-                "question": question,
-                "answer": answer,
-                "error_judge": str(e),
-                "scores": None
-            })
+            results.append({"id": q_id, "question": question, "answer": answer,
+                            "error_judge": str(e), "scores": None})
             continue
 
-        # Accumulate metrics
         for metric in ("faithfulness", "answer_relevancy", "context_relevancy"):
             metric_totals[metric] += scores.get(metric, 0)
         if "correctness" in scores:
@@ -328,13 +345,12 @@ def main():
         avg_faith = metric_totals["faithfulness"] / n
         avg_rel = metric_totals["answer_relevancy"] / n
         avg_ctx = metric_totals["context_relevancy"] / n
-        print(f"Questions evaluated:  {n}/{len(questions)}")
-        print(f"Avg Faithfulness:     {avg_faith:.2f}/5")
-        print(f"Avg Answer Relevancy: {avg_rel:.2f}/5")
-        print(f"Avg Context Relevancy:{avg_ctx:.2f}/5")
+        print(f"Questions evaluated:   {n}/{len(questions)}")
+        print(f"Avg Faithfulness:      {avg_faith:.2f}/5")
+        print(f"Avg Answer Relevancy:  {avg_rel:.2f}/5")
+        print(f"Avg Context Relevancy: {avg_ctx:.2f}/5")
         if correctness_scores:
-            print(f"Avg Correctness:      {sum(correctness_scores)/len(correctness_scores):.2f}/5")
-
+            print(f"Avg Correctness:       {sum(correctness_scores)/len(correctness_scores):.2f}/5")
         summary = {
             "evaluated": n,
             "total": len(questions),
@@ -350,9 +366,9 @@ def main():
 
     print("=" * 70)
 
-    # Write report
     report = {
         "timestamp": datetime.now().isoformat(),
+        "judge": args.judge,
         "judge_model": judge_model,
         "questions_file": str(questions_path),
         "summary": summary,
