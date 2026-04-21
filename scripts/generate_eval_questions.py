@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """
 Auto-generate evaluation questions from indexed document chunks.
-Uses Gemini or Groq to create question + ground_truth pairs from random MySQL chunks,
+Uses local Ollama to create question + ground_truth pairs from random MySQL chunks,
 then saves them to data/eval_questions.json.
 
 Usage:
   docker compose run --rm backend python -m scripts.generate_eval_questions
-  docker compose run --rm backend python -m scripts.generate_eval_questions --judge groq
   docker compose run --rm backend python -m scripts.generate_eval_questions --count 20
   docker compose run --rm backend python -m scripts.generate_eval_questions --output data/my_questions.json
+  docker compose run --rm backend python -m scripts.generate_eval_questions --model qwen2.5:14b
+  docker compose run --rm backend python -m scripts.generate_eval_questions --ollama-url http://host.docker.internal:11434
 """
-import os
 import sys
 import json
 import argparse
 import random
 import re
 import time
+import requests
 from pathlib import Path
 from datetime import datetime
 
@@ -24,18 +25,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
 
 from database.mysql_handler import MySQLHandler
 from config import Config
-
-try:
-    from google import genai as google_genai
-    GEMINI_AVAILABLE = True
-except ImportError:
-    GEMINI_AVAILABLE = False
-
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
 
 
 GENERATION_PROMPT = """Aşağıda bir Türk sağlık sigortası belgesinden alınmış bir metin parçası verilmiştir.
@@ -61,7 +50,6 @@ Kurallar:
 
 
 def get_random_chunks(mysql: MySQLHandler, count: int, min_length: int = 200) -> list:
-    """Fetch random chunks from MySQL with minimum text length."""
     try:
         mysql.cursor.execute(
             """
@@ -72,7 +60,7 @@ def get_random_chunks(mysql: MySQLHandler, count: int, min_length: int = 200) ->
             ORDER BY RAND()
             LIMIT %s
             """,
-            (min_length, count * 3)  # fetch extra to account for failures
+            (min_length, count * 3)
         )
         rows = mysql.cursor.fetchall()
         random.shuffle(rows)
@@ -86,78 +74,73 @@ def parse_json_response(raw: str) -> dict:
     raw = raw.strip()
     raw = re.sub(r"^```(?:json)?\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
-    parsed = json.loads(raw)
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        match = re.search(r'\{[^{}]*\}', raw, re.DOTALL)
+        if match:
+            parsed = json.loads(match.group())
+        else:
+            raise ValueError(f"No valid JSON found in response: {raw[:300]}")
     if "question" not in parsed or "ground_truth" not in parsed:
         raise ValueError(f"Unexpected response format: {parsed}")
     return parsed
 
 
-def generate_with_gemini(client, model: str, chunk_text: str) -> dict:
+def generate_with_ollama(ollama_url: str, model: str, chunk_text: str,
+                         retries: int = 2) -> dict:
     prompt = GENERATION_PROMPT.format(chunk_text=chunk_text[:1500])
-    response = client.models.generate_content(model=model, contents=prompt)
-    return parse_json_response(response.text)
-
-
-def generate_with_groq(client, model: str, chunk_text: str) -> dict:
-    prompt = GENERATION_PROMPT.format(chunk_text=chunk_text[:1500])
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-    )
-    return parse_json_response(response.choices[0].message.content)
+    last_error = None
+    for attempt in range(retries + 1):
+        try:
+            response = requests.post(
+                f"{ollama_url}/api/chat",
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "stream": False,
+                    "options": {"temperature": 0.3},
+                },
+                timeout=180,
+            )
+            if response.status_code != 200:
+                raise Exception(f"Ollama returned HTTP {response.status_code}")
+            content = response.json().get('message', {}).get('content', '')
+            return parse_json_response(content)
+        except Exception as e:
+            last_error = e
+            if attempt < retries:
+                time.sleep(2)
+    raise last_error
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate eval questions from indexed chunks")
+    parser = argparse.ArgumentParser(description="Generate eval questions from indexed chunks using local Ollama")
     parser.add_argument("--count", type=int, default=10,
                         help="Number of questions to generate (default: 10)")
     parser.add_argument("--output", default="data/eval_questions.json",
                         help="Output path (default: data/eval_questions.json)")
-    parser.add_argument("--judge", choices=["gemini", "groq"], default="groq",
-                        help="LLM provider to use (default: groq)")
+    parser.add_argument("--model", default=None,
+                        help="Ollama model to use (default: OLLAMA_MODEL from config)")
+    parser.add_argument("--ollama-url", default=None,
+                        help="Ollama base URL (default: OLLAMA_BASE_URL from config)")
     args = parser.parse_args()
+
+    Config.validate()
+
+    ollama_url = args.ollama_url or Config.OLLAMA_BASE_URL
+    model = args.model or Config.OLLAMA_MODEL
 
     print("\n" + "=" * 70)
     print("MAHIKS-TR: Eval Question Generator")
     print("=" * 70)
-    print(f"Start:    {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Judge:    {args.judge}")
-    print(f"Target:   {args.count} questions")
-    print(f"Output:   {args.output}")
+    print(f"Start:      {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Model:      {model} (local Ollama)")
+    print(f"Ollama URL: {ollama_url}")
+    print(f"Target:     {args.count} questions")
+    print(f"Output:     {args.output}")
     print("=" * 70 + "\n")
 
-    Config.validate()
-
-    # Init judge client
-    if args.judge == "groq":
-        if not OPENAI_AVAILABLE:
-            print("✗ openai package not installed.")
-            sys.exit(1)
-        groq_api_key = os.getenv("GROQ_API_KEY")
-        if not groq_api_key:
-            print("✗ GROQ_API_KEY not set in .env")
-            sys.exit(1)
-        judge_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-        client = OpenAI(api_key=groq_api_key, base_url="https://api.groq.com/openai/v1")
-        generate_fn = generate_with_groq
-        sleep_seconds = 2  # Groq free tier: 30 req/min
-        print(f"Model:    {judge_model}")
-    else:
-        if not GEMINI_AVAILABLE:
-            print("✗ google-genai not installed.")
-            sys.exit(1)
-        google_api_key = os.getenv("GOOGLE_API_KEY")
-        if not google_api_key:
-            print("✗ GOOGLE_API_KEY not set in .env")
-            sys.exit(1)
-        judge_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-        client = google_genai.Client(api_key=google_api_key)
-        generate_fn = generate_with_gemini
-        sleep_seconds = 13  # Gemini free tier: 5 req/min
-        print(f"Model:    {judge_model}")
-
-    # Connect to MySQL
     mysql = MySQLHandler(
         host=Config.MYSQL_HOST,
         user=Config.MYSQL_USER,
@@ -166,7 +149,7 @@ def main():
     )
 
     total_chunks = mysql.get_chunk_count()
-    print(f"\nTotal chunks in DB: {total_chunks}")
+    print(f"Total chunks in DB: {total_chunks}")
     if total_chunks == 0:
         print("✗ No chunks found. Run vectorize_only first.")
         mysql.close()
@@ -192,8 +175,7 @@ def main():
         print(f"[{len(questions)+1}/{args.count}] Chunk {chunk['id']} — \"{chunk_preview}...\"")
 
         try:
-            time.sleep(sleep_seconds)
-            result = generate_fn(client, judge_model, chunk['chunk_text'])
+            result = generate_with_ollama(ollama_url, model, chunk['chunk_text'])
             questions.append({
                 "id": len(questions) + 1,
                 "question": result["question"],
@@ -216,7 +198,7 @@ def main():
         json.dump(questions, f, ensure_ascii=False, indent=2)
 
     print(f"\n✓ Saved to {output_path}")
-    print("  Review the questions before running evaluate_rag.py")
+    print("  Review the questions before running scripts.evaluate")
 
     mysql.close()
 

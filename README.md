@@ -203,6 +203,50 @@ CONVERSATION_HISTORY_LIMIT=6
 
 This two-stage approach uses large chunks (500 words) for better recall during vector search, then splits into small sub-chunks (120 words) for precise reranking. The result is focused, relevant context sent to the LLM.
 
+## Evaluation
+
+### Generate Evaluation Questions
+
+Generates question + ground truth pairs from random indexed chunks using local Ollama.
+
+```bash
+# Generate 10 questions (default)
+docker compose run --rm backend python -m scripts.generate_eval_questions
+
+# Generate 20 questions
+docker compose run --rm backend python -m scripts.generate_eval_questions --count 20
+
+# Use a different model or custom output path
+docker compose run --rm backend python -m scripts.generate_eval_questions --model qwen2.5:14b
+docker compose run --rm backend python -m scripts.generate_eval_questions --output data/my_questions.json
+```
+
+Output is saved to `data/eval_questions.json`. Review the questions before running evaluation.
+
+### Run Evaluation
+
+Evaluates retrieval quality (IR metrics across 3 pipeline stages) and generation quality (LLM-as-a-judge) using local Ollama — no external API required.
+
+```bash
+# Run with defaults (reads data/eval_questions.json, saves timestamped report)
+docker compose run --rm backend python -m scripts.evaluate
+
+# Save to a specific output file
+docker compose run --rm backend python -m scripts.evaluate --output data/eval_report.json
+
+# Use a stronger judge model or custom top-k
+docker compose run --rm backend python -m scripts.evaluate --judge-model qwen2.5:14b
+docker compose run --rm backend python -m scripts.evaluate --top-k 10 --questions data/my_questions.json
+```
+
+**Retrieval metrics** (3 stages: Vector-only → Hybrid RRF → Full pipeline with reranking):
+Hit@1, Hit@3, Hit@5, Hit@10, MRR, MAP, nDCG@5, nDCG@10
+
+**Generation metrics** (LLM-as-a-judge, 1–5 scale):
+Faithfulness, Answer Relevance, Context Precision, Context Recall (when ground truth present)
+
+Report is saved as JSON to `data/`.
+
 ## Development
 
 ```bash
