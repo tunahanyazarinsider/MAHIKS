@@ -5,21 +5,23 @@ Run this script to process documents and update all databases
 """
 import sys
 from pathlib import Path
+from typing import List
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
 # with the above, now this script will be callable like:
 # python3 -m backend.scripts.update_knowledge_base
 
-from database.mysql_handler import MySQLHandler
-from database.chroma_handler import ChromaDBHandler
-from database.neo4j_handler import Neo4jHandler
-from database.bm25_handler import BM25Handler
-from agents.ingestion_agent import IngestionAgent
-from agents.extraction_agent import ExtractionAgent
-from agents.kg_extractor import KGExtractor
-from agents.vectorization_agent import VectorizationAgent
-from config import Config
+from backend.database.mysql_handler import MySQLHandler
+from backend.database.chroma_handler import ChromaDBHandler
+from backend.database.neo4j_handler import Neo4jHandler
+from backend.database.bm25_handler import BM25Handler
+from backend.agents.ingestion_agent import IngestionAgent
+from backend.agents.extraction_agent import ExtractionAgent
+from backend.agents.kg_extractor import KGExtractor
+from backend.agents.structure_aware_chunking_agent import SUTChunker, Chunk
+from backend.agents.vectorization_agent import VectorizationAgent
+from backend.config import Config
 import argparse
 from datetime import datetime
 
@@ -118,6 +120,8 @@ def main():
             chunk_overlap=Config.CHUNK_OVERLAP
         )
 
+        chunking = SUTChunker()
+
         vectorization = VectorizationAgent(chroma, mysql, bm25)
 
         # Initialize KG extractor (local Ollama by default, Gemini as option)
@@ -180,7 +184,7 @@ def main():
 
             # Create chunks
             print(f"  [3/4] Creating text chunks...")
-            chunks = extraction.chunk_text(text, metadata={'source': doc['name']})
+            chunks: List[Chunk] = chunking.chunk_document(text)
 
             # Vectorize chunks
             print(f"  [4/4] Vectorizing and storing chunks...")
