@@ -75,9 +75,21 @@ class Config:
     CACHE_TTL = int(os.getenv('CACHE_TTL', '3600'))  # 1 hour default
 
     # KG Extraction Configuration
-    KG_EXTRACTION_METHOD = os.getenv("KG_EXTRACTION_METHOD", "local")  # "local", "gemini", "auto"
+    KG_EXTRACTION_METHOD = os.getenv("KG_EXTRACTION_METHOD", "ollama")  # "ollama" (alias "local"), "gemini", "vertex", "openrouter"
     KG_OLLAMA_MODEL = os.getenv("KG_OLLAMA_MODEL", "qwen2.5:7b")
     KG_CHUNK_SIZE = int(os.getenv("KG_CHUNK_SIZE", "3000"))
+
+    # Gemini (Developer API)
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
+    # Vertex AI (Google Cloud — uses ADC, no API key)
+    GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+    GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+    VERTEX_MODEL = os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
+
+    # OpenRouter
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+    KG_OPENROUTER_MODEL = os.getenv("KG_OPENROUTER_MODEL")  # required when method=openrouter
 
     # CORS Configuration
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")

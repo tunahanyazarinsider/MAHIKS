@@ -12,13 +12,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
 # with the above, now this script will be callable like:
 # python3 -m backend.scripts.update_knowledge_base
 
+from backend.agents.kg.KGExtractor import BaseKGExtractor
+from backend.agents.kg.KGFactory import KGFactory
 from backend.database.mysql_handler import MySQLHandler
 from backend.database.chroma_handler import ChromaDBHandler
 from backend.database.neo4j_handler import Neo4jHandler
 from backend.database.bm25_handler import BM25Handler
 from backend.agents.ingestion_agent import IngestionAgent
 from backend.agents.extraction_agent import ExtractionAgent
-from backend.agents.kg_extractor import KGExtractor
 from backend.agents.structure_aware_chunking_agent import SUTChunker, Chunk
 from backend.agents.vectorization_agent import VectorizationAgent
 from backend.config import Config
@@ -125,7 +126,7 @@ def main():
         vectorization = VectorizationAgent(chroma, mysql, bm25)
 
         # Initialize KG extractor (local Ollama by default, Gemini as option)
-        kg_extractor = KGExtractor(neo4j, method=Config.KG_EXTRACTION_METHOD)
+        kg_extractor : BaseKGExtractor = KGFactory.create_kg_extractor(method=Config.KG_EXTRACTION_METHOD, neo4j_handler=neo4j)
 
     except Exception as e:
         print(f"✗ Agent initialization failed: {e}")
