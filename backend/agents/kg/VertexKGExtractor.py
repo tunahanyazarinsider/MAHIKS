@@ -12,7 +12,7 @@ from typing import Optional
 
 from google import genai
 
-from backend.agents.kg import KGExtractorTypeEnum
+from backend.agents.kg.KGExtractorTypeEnum import KGExtractorTypeEnum
 from backend.agents.kg.GeminiKGExtractor import GeminiKGExtractor
 from backend.agents.kg.KGExtractor import BaseKGExtractor
 from backend.database.neo4j_handler import Neo4jHandler

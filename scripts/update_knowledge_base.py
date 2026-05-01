@@ -123,12 +123,21 @@ def main():
 
         vectorization = VectorizationAgent(vector, mysql)
 
+        models = {
+            "ollama": Config.KG_OLLAMA_MODEL,
+            "gemini": Config.KG_GEMINI_MODEL,
+            "vertex": Config.KG_VERTEX_MODEL,
+            "openrouter": Config.KG_OPENROUTER_MODEL,
+        }
+
         # Initialize KG extractor (local Ollama by default, Gemini as option)
-        kg_extractor : BaseKGExtractor = KGFactory.create_kg_extractor(method=Config.KG_EXTRACTION_METHOD, neo4j_handler=neo4j)
+        kg_extractor : BaseKGExtractor = KGFactory.create_kg_extractor(method=Config.KG_EXTRACTION_METHOD, neo4j_handler=neo4j, models = models)
 
     except Exception as e:
         print(f"✗ Agent initialization failed: {e}")
         sys.exit(1)
+
+    print("✓ Agents initialized successfully\n")
 
     # Scan for documents
     print("\n" + "="*70)
