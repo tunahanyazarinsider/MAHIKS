@@ -13,6 +13,7 @@ from typing import Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from backend.agents.kg.KGExtractorTypeEnum import KGExtractorTypeEnum
 from backend.database.neo4j_handler import Neo4jHandler
 
 
@@ -92,7 +93,7 @@ KG_JSON_SCHEMA = {
 class BaseKGExtractor(ABC):
     """Abstract base for KG extractors. Subclasses override `_generate_triplets_json`."""
 
-    method_name: str = "base"
+    method_name: KGExtractorTypeEnum = KGExtractorTypeEnum.BASE  # overridden by subclasses
 
     def __init__(self, neo4j_handler: Neo4jHandler, model: Optional[str] = None):
         self.neo4j: Neo4jHandler = neo4j_handler

@@ -5,6 +5,7 @@ from typing import Optional
 from backend.config import Config
 from backend.agents.kg.KGExtractor import BaseKGExtractor
 from backend.database.neo4j_handler import Neo4jHandler
+from backend.agents.kg.KGExtractorTypeEnum import KGExtractorTypeEnum
 
 
 class KGFactory:
@@ -23,6 +24,11 @@ class KGFactory:
         """
         extractor_type: str = (method or os.getenv("KG_EXTRACTION_METHOD", "ollama")).lower()
 
+        try:
+            extractor_type : KGExtractorTypeEnum = KGExtractorTypeEnum(extractor_type)  # Validate against enum, fail fast if invalid
+        except ValueError as e:
+            raise ValueError(f"Invalid KG Extractor type: {extractor_type!r}. {e}")
+
         if neo4j_handler is None:
             neo4j_handler = Neo4jHandler(
                 Config.NEO4J_URI,
@@ -30,16 +36,16 @@ class KGFactory:
                 Config.NEO4J_PASSWORD,
             )
 
-        if extractor_type in ("ollama", "local"):
+        if extractor_type == KGExtractorTypeEnum.OLLAMA or extractor_type == KGExtractorTypeEnum.LOCAL:
             from backend.agents.kg.OllamaKGExtractor import OllamaKGExtractor
             return OllamaKGExtractor(neo4j_handler, **kwargs)
-        if extractor_type == "gemini":
+        if extractor_type == KGExtractorTypeEnum.GEMINI:
             from backend.agents.kg.GeminiKGExtractor import GeminiKGExtractor
             return GeminiKGExtractor(neo4j_handler, **kwargs)
-        if extractor_type == "vertex":
+        if extractor_type == KGExtractorTypeEnum.VERTEX:
             from backend.agents.kg.VertexKGExtractor import VertexKGExtractor
             return VertexKGExtractor(neo4j_handler, **kwargs)
-        if extractor_type == "openrouter":
+        if extractor_type == KGExtractorTypeEnum.OPENROUTER:
             from backend.agents.kg.OpenRouterKGExtractor import OpenRouterKGExtractor
             return OpenRouterKGExtractor(neo4j_handler, **kwargs)
 

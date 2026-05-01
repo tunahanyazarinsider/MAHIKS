@@ -14,6 +14,7 @@ from typing import Optional
 
 from openai import OpenAI
 
+from backend.agents.kg import KGExtractorTypeEnum
 from backend.agents.kg.KGExtractor import BaseKGExtractor
 from backend.database.neo4j_handler import Neo4jHandler
 
@@ -22,7 +23,7 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 class OpenRouterKGExtractor(BaseKGExtractor):
-    method_name = "OpenRouter"
+    method_name: KGExtractorTypeEnum = KGExtractorTypeEnum.OPENROUTER
 
     def __init__(self, neo4j_handler: Neo4jHandler,
                  api_key: Optional[str] = None,
@@ -64,10 +65,14 @@ class OpenRouterKGExtractor(BaseKGExtractor):
             model=self.model,
             messages=[
                 {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": f"Metinden tripletleri çıkar:\n\n{text}"},
+                {"role": "user", "content": f"Metinden tripletleri json_object olarak çıkar:\n\n{text}"},
             ],
             temperature=0.1,
             response_format={"type": "json_object"},
             timeout=120,
         )
-        return response.choices[0].message.content
+
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("OpenRouter response missing content")
+        return content
