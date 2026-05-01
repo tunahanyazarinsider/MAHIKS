@@ -113,8 +113,6 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:7b}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-m3}
-      - CHROMA_PERSIST_DIR=/app/chroma_data
-      - VECTOR_BACKEND=${VECTOR_BACKEND:-chroma}
       - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
       - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME:-sut_documents}
@@ -136,7 +134,6 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./data:/app/data
-      - chroma_data:/app/chroma_data
       - hf_cache:/root/.cache/huggingface
     depends_on:
       mysql:
@@ -172,8 +169,6 @@ volumes:
   neo4j_data:
     driver: local
   neo4j_logs:
-    driver: local
-  chroma_data:
     driver: local
   qdrant_data:
     driver: local

@@ -19,10 +19,8 @@ from backend.models.schemas import (
 
 # Database handlers
 from backend.database.mysql_handler import MySQLHandler
-from backend.database.chroma_handler import ChromaDBHandler
+from backend.database.qdrant_handler import QdrantHandler
 from backend.database.neo4j_handler import Neo4jHandler
-from backend.database.bm25_handler import BM25Handler
-from backend.database.vector_factory import build_vector_handler, is_hybrid_backend
 from backend.database.cache_handler import (
     init_cache_handler,
     get_cache_handler
@@ -41,16 +39,15 @@ from backend.core.error_handlers import register_exception_handlers
 
 # Global variables for handlers
 mysql_handler = None
-chroma_handler = None
+vector_handler = None
 neo4j_handler = None
-bm25_handler = None
 orchestrator = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan (startup and shutdown)"""
-    global mysql_handler, chroma_handler, neo4j_handler, orchestrator
+    global mysql_handler, vector_handler, neo4j_handler, orchestrator
 
     print("\n" + "="*70)
     print("MAHIKS-TR Backend Starting...")
@@ -76,8 +73,17 @@ async def lifespan(app: FastAPI):
         )
         mysql_handler.create_tables()
 
-        # Vector store handler — Chroma or Qdrant based on VECTOR_BACKEND
-        chroma_handler = build_vector_handler()
+        vector_handler = QdrantHandler(
+            url=Config.QDRANT_URL,
+            api_key=Config.QDRANT_API_KEY,
+            collection_name=Config.QDRANT_COLLECTION_NAME,
+            embedding_model_name=Config.EMBEDDING_MODEL,
+            dense_vector_name=Config.QDRANT_DENSE_VECTOR_NAME,
+            sparse_vector_name=Config.QDRANT_SPARSE_VECTOR_NAME,
+            sparse_model_name=Config.QDRANT_SPARSE_MODEL,
+            sparse_language=Config.QDRANT_SPARSE_LANGUAGE,
+            dense_dim=Config.QDRANT_DENSE_DIM,
+        )
 
         neo4j_handler = Neo4jHandler(
             uri=Config.NEO4J_URI,
@@ -85,18 +91,6 @@ async def lifespan(app: FastAPI):
             password=Config.NEO4J_PASSWORD
         )
         neo4j_handler.create_indexes()
-
-        # BM25 only needed when vector backend is not hybrid (Chroma case).
-        # Qdrant stores BM25 sparse vectors natively.
-        if is_hybrid_backend():
-            bm25_handler = None
-            print("ℹ Hybrid vector backend active — external BM25 handler disabled")
-        else:
-            bm25_handler = BM25Handler(
-                persist_directory=Config.BM25_PERSIST_DIR,
-                k1=Config.BM25_K1,
-                b=Config.BM25_B
-            )
 
         # Initialize Redis Cache
         # if redis setup fails, continue without cache functionality
@@ -125,10 +119,9 @@ async def lifespan(app: FastAPI):
         print("\nInitializing agents...")
 
         retrieval_agent = RetrievalAgent(
-            chroma_handler,
+            vector_handler,
             neo4j_handler,
             mysql_handler,
-            bm25_handler
         )
 
         # Use Ollama for local LLM generation
@@ -157,8 +150,6 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     print("\nShutting down MAHIKS-TR Backend...")
-    if bm25_handler:
-        bm25_handler.save_index()
     if mysql_handler:
         mysql_handler.close()
     if neo4j_handler:
@@ -451,21 +442,11 @@ async def rag_debug(request: QueryRequest):
         query = request.question
         retrieval_agent = orchestrator.retrieval_agent
 
-        # 1. Vector search
+        # 1. Vector search (Qdrant hybrid: dense + sparse_bm25, RRF fused server-side)
         vector_results = retrieval_agent.vector_search(query, top_k=10)
+        fused = vector_results
 
-        # 2. BM25 search
-        bm25_results = []
-        if retrieval_agent.bm25:
-            bm25_results = retrieval_agent.bm25_search(query, top_k=10)
-
-        # 3. RRF fusion
-        if bm25_results:
-            fused = retrieval_agent.fuse_results(vector_results, bm25_results)
-        else:
-            fused = vector_results
-
-        # 4. Sub-chunking
+        # 2. Sub-chunking
         top_chunks = fused[:10]
         all_sub_chunks = []
         for chunk in top_chunks:
@@ -498,7 +479,6 @@ async def rag_debug(request: QueryRequest):
             "query": query,
             "pipeline": {
                 "vector_results": len(vector_results),
-                "bm25_results": len(bm25_results),
                 "fused_chunks": len(fused),
                 "total_sub_chunks": len(all_sub_chunks),
                 "sub_chunk_words": retrieval_agent.SUB_CHUNK_WORDS,

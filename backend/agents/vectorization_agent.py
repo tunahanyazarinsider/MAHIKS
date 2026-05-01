@@ -10,23 +10,21 @@ from backend.agents.structure_aware_chunking_agent import Chunk
 class VectorizationAgent:
     """Agent for vectorizing text chunks"""
 
-    def __init__(self, chroma_handler, mysql_handler, bm25_handler=None):
+    def __init__(self, vector_handler, mysql_handler):
         """
         Initialize the Vectorization agent
 
         Args:
-            chroma_handler: Instance of ChromaDBHandler
+            vector_handler: Instance of QdrantHandler
             mysql_handler: Instance of MySQLHandler
-            bm25_handler: Instance of BM25Handler (optional)
         """
-        self.chroma = chroma_handler
+        self.vector = vector_handler
         self.mysql = mysql_handler
-        self.bm25 = bm25_handler
         print("✓ Vectorization agent initialized")
 
     def vectorize_chunks(self, chunks: List[Chunk], document_id: int) -> int:
         """
-        Vectorize a list of chunks and store in ChromaDB
+        Vectorize a list of chunks and store in the vector database (Qdrant).
 
         Args:
             chunks: List of chunk objects with 'text' field
@@ -56,7 +54,7 @@ class VectorizationAgent:
             chunk_ids.append(chunk_id)
             texts.append(chunk.text)
 
-            # Prepare metadata for ChromaDB
+            # Prepare metadata for the vector store
             metadata = {
                 'document_id': document_id,
                 'chunk_order': idx,
@@ -67,12 +65,7 @@ class VectorizationAgent:
 
             metadatas.append(metadata)
 
-        # Now add to ChromaDB with MySQL chunk IDs
-        self.chroma.add_chunks(chunk_ids, texts, metadatas)
-
-        # Also add to BM25 index if available
-        if self.bm25:
-            self.bm25.add_chunks(chunk_ids, texts)
+        self.vector.add_chunks(chunk_ids, texts, metadatas)
 
         print(f"      ✓ Vectorized {len(chunk_ids)} chunks")
         return len(chunk_ids)
@@ -115,12 +108,7 @@ class VectorizationAgent:
                     pass
             metadatas.append(metadata)
 
-        # Add to ChromaDB
-        self.chroma.add_chunks(chunk_ids, texts, metadatas)
-
-        # Also add to BM25 index if available
-        if self.bm25:
-            self.bm25.add_chunks(chunk_ids, texts)
+        self.vector.add_chunks(chunk_ids, texts, metadatas)
 
         print(f"      ✓ Vectorized {len(chunk_ids)} chunks")
         return len(chunk_ids)
@@ -148,7 +136,7 @@ class VectorizationAgent:
             return 0
 
         # Delete old vectors
-        self.chroma.delete_chunks(chunk_ids)
+        self.vector.delete_chunks(chunk_ids)
 
         # Re-add with new vectors
         texts = [chunk['chunk_text'] for chunk in chunks]
@@ -161,7 +149,7 @@ class VectorizationAgent:
             }
             metadatas.append(metadata)
 
-        self.chroma.add_chunks(chunk_ids, texts, metadatas)
+        self.vector.add_chunks(chunk_ids, texts, metadatas)
 
         print(f"      ✓ Updated {len(chunk_ids)} vectors")
         return len(chunk_ids)
@@ -174,12 +162,10 @@ class VectorizationAgent:
             Dictionary with stats
         """
         mysql_chunks = self.mysql.get_chunk_count()
-        chroma_vectors = self.chroma.get_count()
-        bm25_docs = self.bm25.get_count() if self.bm25 else 0
+        vector_count = self.vector.get_count()
 
         return {
             'mysql_chunks': mysql_chunks,
-            'chroma_vectors': chroma_vectors,
-            'bm25_documents': bm25_docs,
-            'in_sync': mysql_chunks == chroma_vectors == bm25_docs if self.bm25 else mysql_chunks == chroma_vectors
+            'vector_count': vector_count,
+            'in_sync': mysql_chunks == vector_count,
         }

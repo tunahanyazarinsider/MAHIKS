@@ -14,8 +14,7 @@ pymysql==1.1.0
 SQLAlchemy==2.0.25
 neo4j==5.16.0
 
-# Vector Database
-chromadb==0.4.22
+# Vector Database (Qdrant — hybrid dense + sparse BM25)
 qdrant-client>=1.12.0
 fastembed>=0.4.0
 
@@ -56,12 +55,6 @@ python-jose[cryptography]==3.3.0
 neo4j-driver==5.16.0
 # redis client
 redis==5.0.1
-
-# BM25 for lexical search
-rank-bm25==0.2.2
-
-# Turkish stemmer
-TurkishStemmer
 
 # dotenv
 python-dotenv==1.0.0

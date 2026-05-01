@@ -5,10 +5,9 @@ MAHIKS-TR: Unified Evaluation Script
 Evaluates both retrieval quality (IR metrics) and generation quality
 (LLM-as-a-judge) using a local Ollama model — no external API required.
 
-RETRIEVAL METRICS  (3 pipeline stages)
-  Stage 1 — Vector-only (BGE-M3 bi-encoder)
-  Stage 2 — Hybrid: Vector + BM25 fused via RRF
-  Stage 3 — Full pipeline: Hybrid + cross-encoder sub-chunk reranking
+RETRIEVAL METRICS  (2 pipeline stages)
+  Stage 1 — Qdrant hybrid (dense BGE-M3 + sparse BM25, server-side RRF fusion)
+  Stage 2 — Full pipeline: Hybrid + cross-encoder sub-chunk reranking
   Metrics: Hit@k (k=1,3,5,10), MRR, MAP, nDCG@k (k=5,10)
 
 GENERATION METRICS  (LLM-as-a-judge via Ollama)
@@ -35,16 +34,17 @@ import requests
 from pathlib import Path
 from datetime import datetime
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
+_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(_ROOT))
+sys.path.insert(0, str(_ROOT / 'backend'))
 
-from database.mysql_handler import MySQLHandler
-from database.chroma_handler import ChromaDBHandler
-from database.neo4j_handler import Neo4jHandler
-from database.bm25_handler import BM25Handler
-from agents.retrieval_agent import RetrievalAgent
-from agents.generation_agent_ollama import GenerationAgentOllama
-from agents.orchestrator_agent import QueryOrchestratorAgent
-from config import Config
+from backend.database.mysql_handler import MySQLHandler
+from backend.database.qdrant_handler import QdrantHandler
+from backend.database.neo4j_handler import Neo4jHandler
+from backend.agents.retrieval_agent import RetrievalAgent
+from backend.agents.generation_agent_ollama import GenerationAgentOllama
+from backend.agents.orchestrator_agent import QueryOrchestratorAgent
+from backend.config import Config
 
 
 # ---------------------------------------------------------------------------
@@ -288,10 +288,16 @@ def init_pipeline(judge_model: str, ollama_base_url: str):
     )
     mysql.create_tables()
 
-    chroma = ChromaDBHandler(
-        persist_directory=Config.CHROMA_PERSIST_DIR,
-        collection_name=Config.CHROMA_COLLECTION_NAME,
-        embedding_model_name=Config.EMBEDDING_MODEL
+    vector = QdrantHandler(
+        url=Config.QDRANT_URL,
+        api_key=Config.QDRANT_API_KEY,
+        collection_name=Config.QDRANT_COLLECTION_NAME,
+        embedding_model_name=Config.EMBEDDING_MODEL,
+        dense_vector_name=Config.QDRANT_DENSE_VECTOR_NAME,
+        sparse_vector_name=Config.QDRANT_SPARSE_VECTOR_NAME,
+        sparse_model_name=Config.QDRANT_SPARSE_MODEL,
+        sparse_language=Config.QDRANT_SPARSE_LANGUAGE,
+        dense_dim=Config.QDRANT_DENSE_DIM,
     )
 
     neo4j = Neo4jHandler(
@@ -300,13 +306,7 @@ def init_pipeline(judge_model: str, ollama_base_url: str):
         password=Config.NEO4J_PASSWORD
     )
 
-    bm25 = BM25Handler(
-        persist_directory=Config.BM25_PERSIST_DIR,
-        k1=Config.BM25_K1,
-        b=Config.BM25_B
-    )
-
-    retrieval = RetrievalAgent(chroma, neo4j, mysql, bm25)
+    retrieval = RetrievalAgent(vector, neo4j, mysql)
     generation = GenerationAgentOllama(base_url=ollama_base_url, model=Config.OLLAMA_MODEL)
     orchestrator = QueryOrchestratorAgent(retrieval, generation, mysql)
 

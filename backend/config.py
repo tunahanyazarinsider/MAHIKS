@@ -23,13 +23,6 @@ class Config:
     NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
     NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
 
-    # Vector Backend Selection: "chroma" or "qdrant"
-    VECTOR_BACKEND = os.getenv("VECTOR_BACKEND", "chroma").lower()
-
-    # ChromaDB Configuration
-    CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
-    CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "medical_chunks")
-
     # Qdrant Configuration
     QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
     QDRANT_API_KEY = os.getenv("QDRANT_API_KEY") or None
@@ -67,12 +60,6 @@ class Config:
 
     # Data Directory to processde the docs for the chunking and embedding creation
     DATA_DIR = os.getenv("DATA_DIR", "./data/raw_documents")
-
-    # BM25 Configuration (Lexical Search)
-    BM25_PERSIST_DIR = os.getenv("BM25_PERSIST_DIR", "./bm25_data")
-    BM25_K1 = float(os.getenv("BM25_K1", "1.5"))  # Term frequency saturation
-    BM25_B = float(os.getenv("BM25_B", "0.75"))   # Length normalization
-    BM25_WEIGHT = float(os.getenv("BM25_WEIGHT", "0.3"))  # Fusion weight for hybrid search
 
     JWT_SECRET: str = os.getenv("JWT_SECRET", "")
     JWT_ALGORITHM: str = "HS256"

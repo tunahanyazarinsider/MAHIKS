@@ -1,28 +1,30 @@
 # MAHIKS-TR: Multi-Agent Health Insurance Knowledge System
 
-A RAG system combining vector search, BM25 lexical search, and knowledge graphs to answer Turkish health insurance questions using local LLMs.
+A RAG system combining hybrid dense + sparse vector search and knowledge graphs to answer Turkish health insurance questions using local LLMs.
 
 ## Architecture
 
 ```
-Query → Vector Search (BGE-M3 / ChromaDB) ─┐
-                                             ├→ RRF Fusion → Sub-chunk → Cross-Encoder Rerank → Top 10
-        BM25 Search (TurkishStemmer)       ─┘                (~120 words)   (mmarco-mMiniLMv2)
-                                                                                    │
-                                                                              Qwen 2.5 (7B)
-                                                                              via Ollama
-                                                                                    │
-                                                                                 Answer
+Query → Qdrant Hybrid Search ─┐
+        ┌─ Dense (BGE-M3 1024d cosine)        │
+        └─ Sparse BM25 (FastEmbed Qdrant/bm25, Turkish, IDF)
+        Server-side RRF Fusion ──→ Sub-chunk → Cross-Encoder Rerank → Top 10
+                                    (~120 words)   (mmarco-mMiniLMv2)
+                                                            │
+                                                      Qwen 2.5 (7B)
+                                                      via Ollama
+                                                            │
+                                                         Answer
 ```
 
 ### Pipeline
 
 | Step | Component | Detail |
 |------|-----------|--------|
-| Embedding | BAAI/bge-m3 | 1024d multilingual vectors |
-| Vector DB | ChromaDB | Cosine similarity search |
-| Lexical Search | BM25 | Turkish stemming, k1=1.5, b=0.75 |
-| Fusion | RRF | Reciprocal Rank Fusion, k=60 |
+| Dense Embedding | BAAI/bge-m3 | 1024d multilingual vectors |
+| Sparse Embedding | FastEmbed `Qdrant/bm25` | Turkish Snowball stemmer, IDF modifier |
+| Vector DB | Qdrant | Two named vectors per point (`dense`, `sparse_bm25`) |
+| Fusion | Qdrant RRF | Reciprocal Rank Fusion, server-side, k=60 |
 | Sub-chunking | Custom | 500w chunks → 120w overlapping sub-chunks |
 | Reranking | mmarco-mMiniLMv2-L12-H384-v1 | Cross-encoder scoring with threshold filtering |
 | LLM | Qwen 2.5 7B (Q4) | Local via Ollama, ~42 tok/s on M4 Pro |
@@ -33,7 +35,7 @@ Query → Vector Search (BGE-M3 / ChromaDB) ─┐
 
 **Backend**: FastAPI, Python 3.11, sentence-transformers, spaCy (tr_core_news_lg)
 **Frontend**: React 18, TypeScript, Vite, Tailwind CSS v4, Radix UI, react-markdown
-**Databases**: MySQL 8.0, ChromaDB, Neo4j 5.13, Redis 7
+**Databases**: MySQL 8.0, Qdrant 1.12, Neo4j 5.13, Redis 7
 **LLM**: Ollama (runs on host, not in Docker)
 
 ## Quick Start
@@ -97,9 +99,8 @@ MAHIKS/
 │   │   └── query_preprocessor.py      # Query normalization
 │   ├── database/
 │   │   ├── mysql_handler.py           # Document & chunk storage
-│   │   ├── chroma_handler.py          # Vector DB (BGE-M3)
+│   │   ├── qdrant_handler.py          # Hybrid vector DB (dense BGE-M3 + sparse BM25)
 │   │   ├── neo4j_handler.py           # Knowledge graph
-│   │   ├── bm25_handler.py            # Lexical search index
 │   │   └── cache_handler.py           # Redis cache
 │   ├── main.py                        # FastAPI app + endpoints
 │   └── config.py                      # Configuration
@@ -192,13 +193,13 @@ CONVERSATION_HISTORY_LIMIT=6
 ## Retrieval Pipeline Detail
 
 ```
-1. Vector Search (BGE-M3 → ChromaDB)     → 10 results
-2. BM25 Search (TurkishStemmer)           → 10 results
-3. Reciprocal Rank Fusion (k=60)          → Top 10 merged
-4. Sub-chunking (120 words, 30 overlap)   → ~60 sub-chunks
-5. Cross-Encoder Reranking                → Score each sub-chunk
-6. Threshold Filter (CE ≥ 0.1)            → Remove irrelevant
-7. Top 10 sub-chunks (~1200 words)        → Send to LLM
+1. Qdrant Hybrid Search                   → Top 10 (server-side RRF)
+   ├─ Dense: BGE-M3 1024d cosine
+   └─ Sparse: FastEmbed Qdrant/bm25 (Turkish, IDF)
+2. Sub-chunking (120 words, 30 overlap)   → ~60 sub-chunks
+3. Cross-Encoder Reranking                → Score each sub-chunk
+4. Threshold Filter (CE_SCORE_THRESHOLD)  → Remove irrelevant
+5. Top 10 sub-chunks (~1200 words)        → Send to LLM
 ```
 
 This two-stage approach uses large chunks (500 words) for better recall during vector search, then splits into small sub-chunks (120 words) for precise reranking. The result is focused, relevant context sent to the LLM.

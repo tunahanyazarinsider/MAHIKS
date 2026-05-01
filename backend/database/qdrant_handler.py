@@ -3,6 +3,27 @@ Qdrant Handler for MAHIKS-TR
 Stores two named vectors per point: dense (BGE-M3) + sparse_bm25 (FastEmbed BM25).
 Hybrid retrieval is performed inside Qdrant via Prefetch + RRF fusion.
 """
+import os
+import ssl
+
+# SSL bypass for environments behind self-signed cert proxies.
+# Applied once at module import; affects HuggingFace Hub + FastEmbed downloads.
+os.environ.setdefault("CURL_CA_BUNDLE", "")
+os.environ.setdefault("REQUESTS_CA_BUNDLE", "")
+ssl._create_default_https_context = ssl._create_unverified_context
+try:
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    import requests
+    _orig_request = requests.Session.request
+
+    def _patched_request(self, *args, **kwargs):
+        kwargs.setdefault("verify", False)
+        return _orig_request(self, *args, **kwargs)
+    requests.Session.request = _patched_request
+except Exception:
+    pass
+
 from typing import List, Dict, Optional
 
 from sentence_transformers import SentenceTransformer

@@ -16,8 +16,7 @@ from backend.agents.kg.KGExtractor import BaseKGExtractor
 from backend.agents.kg.KGFactory import KGFactory
 from backend.database.mysql_handler import MySQLHandler
 from backend.database.neo4j_handler import Neo4jHandler
-from backend.database.bm25_handler import BM25Handler
-from backend.database.vector_factory import build_vector_handler, is_hybrid_backend
+from backend.database.qdrant_handler import QdrantHandler
 from backend.agents.ingestion_agent import IngestionAgent
 from backend.agents.extraction_agent import ExtractionAgent
 from backend.agents.structure_aware_chunking_agent import SUTChunker, Chunk
@@ -74,7 +73,17 @@ def main():
         )
         mysql.create_tables()
 
-        chroma = build_vector_handler()
+        vector = QdrantHandler(
+            url=Config.QDRANT_URL,
+            api_key=Config.QDRANT_API_KEY,
+            collection_name=Config.QDRANT_COLLECTION_NAME,
+            embedding_model_name=Config.EMBEDDING_MODEL,
+            dense_vector_name=Config.QDRANT_DENSE_VECTOR_NAME,
+            sparse_vector_name=Config.QDRANT_SPARSE_VECTOR_NAME,
+            sparse_model_name=Config.QDRANT_SPARSE_MODEL,
+            sparse_language=Config.QDRANT_SPARSE_LANGUAGE,
+            dense_dim=Config.QDRANT_DENSE_DIM,
+        )
 
         neo4j = Neo4jHandler(
             uri=Config.NEO4J_URI,
@@ -82,15 +91,6 @@ def main():
             password=Config.NEO4J_PASSWORD
         )
         neo4j.create_indexes()
-
-        if is_hybrid_backend():
-            bm25 = None
-        else:
-            bm25 = BM25Handler(
-                persist_directory=Config.BM25_PERSIST_DIR,
-                k1=Config.BM25_K1,
-                b=Config.BM25_B
-            )
 
     except Exception as e:
         print(f"✗ Database initialization failed: {e}")
@@ -102,10 +102,8 @@ def main():
         confirm = input("Are you sure? Type 'yes' to confirm: ")
         if confirm.lower() == 'yes':
             print("Resetting databases...")
-            chroma.reset_collection()
+            vector.reset_collection()
             neo4j.clear_all()
-            if bm25:
-                bm25.reset_index()
             print("✓ Databases reset")
         else:
             print("Reset cancelled")
@@ -123,7 +121,7 @@ def main():
 
         chunking = SUTChunker()
 
-        vectorization = VectorizationAgent(chroma, mysql, bm25)
+        vectorization = VectorizationAgent(vector, mysql)
 
         # Initialize KG extractor (local Ollama by default, Gemini as option)
         kg_extractor : BaseKGExtractor = KGFactory.create_kg_extractor(method=Config.KG_EXTRACTION_METHOD, neo4j_handler=neo4j)
@@ -224,9 +222,7 @@ def main():
     print("="*70)
     print(f"MySQL Documents: {mysql.get_document_count()}")
     print(f"MySQL Chunks: {mysql.get_chunk_count()}")
-    print(f"Vector store ({Config.VECTOR_BACKEND}) Points: {chroma.get_count()}")
-    if bm25:
-        print(f"BM25 Documents: {bm25.get_count()}")
+    print(f"Qdrant Points: {vector.get_count()}")
 
     graph_stats = neo4j.get_statistics()
     print(f"Neo4j Nodes: {graph_stats.get('node_count', 0)}")
@@ -234,9 +230,6 @@ def main():
 
     # Cleanup
     print("\n" + "="*70)
-    if bm25:
-        print("Saving BM25 index...")
-        bm25.save_index()
     mysql.close()
     neo4j.close()
 

@@ -3,6 +3,7 @@ Retrieval Agent for MAHIKS-TR
 Responsible for hybrid retrieval from both vector database and knowledge graph.
 Uses a two-stage chunking strategy: large chunks for recall, sub-chunks for precision.
 """
+import os
 import spacy
 from typing import List, Dict
 
@@ -14,16 +15,15 @@ class RetrievalAgent:
     SUB_CHUNK_WORDS = 120
     SUB_CHUNK_OVERLAP = 30
     TOP_SUB_CHUNKS = 10
-    CE_SCORE_THRESHOLD = 0.1  # Minimum reranker score to include in context
+    # Minimum reranker score to include in context.
+    # mmarco-mMiniLMv2 emits negative scores for Turkish; default loosened to -10.
+    CE_SCORE_THRESHOLD = float(os.getenv("CE_SCORE_THRESHOLD", "-10.0"))
 
-    def __init__(self, chroma_handler, neo4j_handler, mysql_handler, bm25_handler=None):
-        self.chroma = chroma_handler
+    def __init__(self, vector_handler, neo4j_handler, mysql_handler):
+        # Qdrant hybrid handler: dense + sparse_bm25 with server-side RRF fusion.
+        self.vector = vector_handler
         self.neo4j = neo4j_handler
         self.mysql = mysql_handler
-        # If the vector handler is hybrid (e.g. Qdrant with built-in BM25),
-        # ignore any externally provided bm25_handler — fusion is done in-store.
-        self.vector_is_hybrid = bool(getattr(chroma_handler, "is_hybrid", False))
-        self.bm25 = None if self.vector_is_hybrid else bm25_handler
 
         # Load spaCy for entity extraction
         try:
@@ -61,7 +61,7 @@ class RetrievalAgent:
 
     def vector_search(self, query: str, top_k: int = 5) -> List[Dict]:
         print(f"    Vector search for: '{query[:50]}...'")
-        results_with_scores = self.chroma.query_with_scores(query, n_results=top_k)
+        results_with_scores = self.vector.query_with_scores(query, n_results=top_k)
         if not results_with_scores:
             print("      No vector results found")
             return []
@@ -115,57 +115,6 @@ class RetrievalAgent:
 
         print(f"      ✓ Found {len(all_facts)} graph facts")
         return all_facts
-
-    def bm25_search(self, query: str, top_k: int = 5) -> List[Dict]:
-        if not self.bm25:
-            print("      BM25 not available")
-            return []
-
-        print(f"    BM25 search for: '{query[:50]}...'")
-        results_with_scores = self.bm25.search(query, top_k)
-        if not results_with_scores:
-            print("      No BM25 results found")
-            return []
-
-        chunk_ids = [r[0] for r in results_with_scores]
-        chunks = self.mysql.get_chunks_by_ids(chunk_ids)
-
-        for chunk in chunks:
-            score_info = next(
-                (r for r in results_with_scores if r[0] == chunk['id']),
-                None
-            )
-            if score_info:
-                chunk['bm25_score'] = score_info[1]
-
-        print(f"      ✓ Found {len(chunks)} relevant chunks")
-        return chunks
-
-    def fuse_results(self, vector_results: List[Dict], bm25_results: List[Dict], k: int = 60) -> List[Dict]:
-        chunk_map = {}
-
-        for rank, chunk in enumerate(vector_results, 1):
-            chunk_id = chunk['id']
-            if chunk_id not in chunk_map:
-                chunk_map[chunk_id] = chunk.copy()
-                chunk_map[chunk_id]['rrf_score'] = 0
-            chunk_map[chunk_id]['rrf_score'] += 1 / (k + rank)
-            chunk_map[chunk_id]['vector_rank'] = rank
-
-        for rank, chunk in enumerate(bm25_results, 1):
-            chunk_id = chunk['id']
-            if chunk_id not in chunk_map:
-                chunk_map[chunk_id] = chunk.copy()
-                chunk_map[chunk_id]['rrf_score'] = 0
-            chunk_map[chunk_id]['rrf_score'] += 1 / (k + rank)
-            chunk_map[chunk_id]['bm25_rank'] = rank
-
-        fused_results = sorted(
-            chunk_map.values(),
-            key=lambda x: x['rrf_score'],
-            reverse=True
-        )
-        return fused_results
 
     def _split_into_sub_chunks(self, text: str, source_name: str,
                                 chunk_id: int, similarity: float) -> List[Dict]:
@@ -265,28 +214,14 @@ class RetrievalAgent:
     def hybrid_retrieve(self, query: str, vector_top_k: int = 10, use_reranking: bool = True) -> Dict:
         """
         Hybrid retrieval with sub-chunk reranking:
-        1. Vector search → 10 results
-        2. BM25 search → 10 results
-        3. RRF fusion → top 10
-        4. Sub-chunk + rerank → top 10 small chunks (~1200 words total)
-        5. Graph search → entity relationships
+        1. Vector search → top_k results (Qdrant fuses dense + sparse_bm25 via RRF server-side)
+        2. Sub-chunk + rerank → top sub-chunks (~1200 words total)
+        3. Graph search → entity relationships
         """
         print(f"\n  Hybrid retrieval for: '{query}'")
 
-        # 1. Vector search
-        vector_results = self.vector_search(query, top_k=vector_top_k)
-
-        # 2. BM25 search
-        bm25_results = []
-        if self.bm25:
-            bm25_results = self.bm25_search(query, top_k=vector_top_k)
-
-        # 3. RRF fusion
-        if bm25_results:
-            fused_results = self.fuse_results(vector_results, bm25_results)
-            print(f"    ✓ Fused {len(vector_results)} vector + {len(bm25_results)} BM25 results")
-        else:
-            fused_results = vector_results
+        # 1. Vector search (already RRF-fused inside Qdrant)
+        fused_results = self.vector_search(query, top_k=vector_top_k)
 
         # 4. Sub-chunk and rerank
         if use_reranking and self.cross_encoder and fused_results:
@@ -300,7 +235,6 @@ class RetrievalAgent:
         result = {
             'query': query,
             'vector_context': final_results,
-            'bm25_context': bm25_results,
             'graph_facts': graph_results,
             'total_sources': len(final_results) + len(graph_results)
         }
