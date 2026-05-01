@@ -23,9 +23,22 @@ class Config:
     NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
     NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
 
+    # Vector Backend Selection: "chroma" or "qdrant"
+    VECTOR_BACKEND = os.getenv("VECTOR_BACKEND", "chroma").lower()
+
     # ChromaDB Configuration
     CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
     CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "medical_chunks")
+
+    # Qdrant Configuration
+    QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+    QDRANT_API_KEY = os.getenv("QDRANT_API_KEY") or None
+    QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "sut_documents")
+    QDRANT_DENSE_VECTOR_NAME = os.getenv("QDRANT_DENSE_VECTOR_NAME", "dense")
+    QDRANT_SPARSE_VECTOR_NAME = os.getenv("QDRANT_SPARSE_VECTOR_NAME", "sparse_bm25")
+    QDRANT_SPARSE_MODEL = os.getenv("QDRANT_SPARSE_MODEL", "Qdrant/bm25")
+    QDRANT_SPARSE_LANGUAGE = os.getenv("QDRANT_SPARSE_LANGUAGE", "turkish")
+    QDRANT_DENSE_DIM = int(os.getenv("QDRANT_DENSE_DIM", "1024"))
 
     # Ollama Configuration (Local LLM)
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")

@@ -22,6 +22,7 @@ from backend.database.mysql_handler import MySQLHandler
 from backend.database.chroma_handler import ChromaDBHandler
 from backend.database.neo4j_handler import Neo4jHandler
 from backend.database.bm25_handler import BM25Handler
+from backend.database.vector_factory import build_vector_handler, is_hybrid_backend
 from backend.database.cache_handler import (
     init_cache_handler,
     get_cache_handler
@@ -75,11 +76,8 @@ async def lifespan(app: FastAPI):
         )
         mysql_handler.create_tables()
 
-        chroma_handler = ChromaDBHandler(
-            persist_directory=Config.CHROMA_PERSIST_DIR,
-            collection_name=Config.CHROMA_COLLECTION_NAME,
-            embedding_model_name=Config.EMBEDDING_MODEL
-        )
+        # Vector store handler — Chroma or Qdrant based on VECTOR_BACKEND
+        chroma_handler = build_vector_handler()
 
         neo4j_handler = Neo4jHandler(
             uri=Config.NEO4J_URI,
@@ -88,12 +86,17 @@ async def lifespan(app: FastAPI):
         )
         neo4j_handler.create_indexes()
 
-        # Initialize BM25 Handler
-        bm25_handler = BM25Handler(
-            persist_directory=Config.BM25_PERSIST_DIR,
-            k1=Config.BM25_K1,
-            b=Config.BM25_B
-        )
+        # BM25 only needed when vector backend is not hybrid (Chroma case).
+        # Qdrant stores BM25 sparse vectors natively.
+        if is_hybrid_backend():
+            bm25_handler = None
+            print("ℹ Hybrid vector backend active — external BM25 handler disabled")
+        else:
+            bm25_handler = BM25Handler(
+                persist_directory=Config.BM25_PERSIST_DIR,
+                k1=Config.BM25_K1,
+                b=Config.BM25_B
+            )
 
         # Initialize Redis Cache
         # if redis setup fails, continue without cache functionality

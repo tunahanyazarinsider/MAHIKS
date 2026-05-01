@@ -6,16 +6,16 @@ Skips KG extraction entirely.
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from database.mysql_handler import MySQLHandler
-from database.chroma_handler import ChromaDBHandler
-from database.bm25_handler import BM25Handler
-from agents.ingestion_agent import IngestionAgent
-from agents.extraction_agent import ExtractionAgent
-from agents.structure_aware_chunking_agent import SUTChunker, Chunk
-from agents.vectorization_agent import VectorizationAgent
-from config import Config
+from backend.database.mysql_handler import MySQLHandler
+from backend.database.bm25_handler import BM25Handler
+from backend.database.vector_factory import build_vector_handler, is_hybrid_backend
+from backend.agents.ingestion_agent import IngestionAgent
+from backend.agents.extraction_agent import ExtractionAgent
+from backend.agents.structure_aware_chunking_agent import SUTChunker, Chunk
+from backend.agents.vectorization_agent import VectorizationAgent
+from backend.config import Config
 from datetime import datetime
 from typing import List
 
@@ -41,22 +41,22 @@ def main():
     )
     mysql.create_tables()
 
-    chroma = ChromaDBHandler(
-        persist_directory=Config.CHROMA_PERSIST_DIR,
-        collection_name=Config.CHROMA_COLLECTION_NAME,
-        embedding_model_name=Config.EMBEDDING_MODEL
-    )
+    chroma = build_vector_handler()
 
-    bm25 = BM25Handler(
-        persist_directory=Config.BM25_PERSIST_DIR,
-        k1=Config.BM25_K1,
-        b=Config.BM25_B
-    )
+    if is_hybrid_backend():
+        bm25 = None
+    else:
+        bm25 = BM25Handler(
+            persist_directory=Config.BM25_PERSIST_DIR,
+            k1=Config.BM25_K1,
+            b=Config.BM25_B
+        )
 
     # Reset vector stores for fresh re-index
-    print("\nResetting ChromaDB and BM25 for fresh BGE-M3 embeddings...")
+    print(f"\nResetting vector store ({Config.VECTOR_BACKEND}) for fresh embeddings...")
     chroma.reset_collection()
-    bm25.reset_index()
+    if bm25:
+        bm25.reset_index()
 
     # Init agents
     ingestion = IngestionAgent(data_directory=Config.DATA_DIR)
@@ -120,16 +120,18 @@ def main():
             print(f"  Error: {e}\n")
             stats['errors'] += 1
 
-    # Save BM25
-    bm25.save_index()
+    # Save BM25 (only if we have an external BM25 index)
+    if bm25:
+        bm25.save_index()
 
     print("\n" + "=" * 70)
     print("Done!")
     print(f"Documents: {stats['docs']}/{len(documents)}")
     print(f"Chunks embedded: {stats['chunks']}")
     print(f"Errors: {stats['errors']}")
-    print(f"ChromaDB vectors: {chroma.get_count()}")
-    print(f"BM25 documents: {bm25.get_count()}")
+    print(f"Vector store ({Config.VECTOR_BACKEND}) points: {chroma.get_count()}")
+    if bm25:
+        print(f"BM25 documents: {bm25.get_count()}")
     print(f"End: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70 + "\n")
 

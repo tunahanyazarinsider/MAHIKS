@@ -20,7 +20,10 @@ class RetrievalAgent:
         self.chroma = chroma_handler
         self.neo4j = neo4j_handler
         self.mysql = mysql_handler
-        self.bm25 = bm25_handler
+        # If the vector handler is hybrid (e.g. Qdrant with built-in BM25),
+        # ignore any externally provided bm25_handler — fusion is done in-store.
+        self.vector_is_hybrid = bool(getattr(chroma_handler, "is_hybrid", False))
+        self.bm25 = None if self.vector_is_hybrid else bm25_handler
 
         # Load spaCy for entity extraction
         try:

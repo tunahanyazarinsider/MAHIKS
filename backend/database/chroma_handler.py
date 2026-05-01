@@ -12,6 +12,8 @@ import numpy as np
 class ChromaDBHandler:
     """Handler for ChromaDB vector database operations"""
 
+    is_hybrid = False
+
     def __init__(self, persist_directory: str = "./chroma_data",
                  collection_name: str = "medical_chunks",
                  embedding_model_name: str = "BAAI/bge-m3"):
