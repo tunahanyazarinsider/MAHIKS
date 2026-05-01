@@ -125,7 +125,7 @@ def main():
 
         models = {
             "ollama": Config.KG_OLLAMA_MODEL,
-            "gemini": Config.KG_GEMINI_MODEL,
+            "gemini": Config.GEMINI_MODEL,
             "vertex": Config.KG_VERTEX_MODEL,
             "openrouter": Config.KG_OPENROUTER_MODEL,
         }
