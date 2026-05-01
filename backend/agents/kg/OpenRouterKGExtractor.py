@@ -14,7 +14,7 @@ from typing import Optional
 
 from openai import OpenAI
 
-from backend.agents.kg import KGExtractorTypeEnum
+from backend.agents.kg.KGExtractorTypeEnum import KGExtractorTypeEnum
 from backend.agents.kg.KGExtractor import BaseKGExtractor
 from backend.database.neo4j_handler import Neo4jHandler
 
@@ -27,8 +27,8 @@ class OpenRouterKGExtractor(BaseKGExtractor):
 
     def __init__(self, neo4j_handler: Neo4jHandler,
                  api_key: Optional[str] = None,
-                 model: Optional[str] = None):
-        resolved_model = model or os.getenv("KG_OPENROUTER_MODEL")
+                 model: str = 'qwen/qwen-2.5-72b-instruct'):
+        resolved_model = model or os.getenv("KG_OPENROUTER_MODEL", "qwen/qwen-2.5-72b-instruct")
         if not resolved_model:
             raise ValueError(
                 "KG_OPENROUTER_MODEL is required for OpenRouter "

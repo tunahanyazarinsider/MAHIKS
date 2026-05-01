@@ -98,6 +98,7 @@ class BaseKGExtractor(ABC):
     def __init__(self, neo4j_handler: Neo4jHandler, model: Optional[str] = None):
         self.neo4j: Neo4jHandler = neo4j_handler
         self.model: Optional[str] = model
+        print(f"✓ Initializing {self.method_name} KG Extractor (model={self.model})")
         self.system_prompt: str = KG_SYSTEM_PROMPT
 
     @abstractmethod

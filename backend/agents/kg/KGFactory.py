@@ -12,6 +12,7 @@ class KGFactory:
     @staticmethod
     def create_kg_extractor(method: Optional[str] = None,
                             neo4j_handler: Optional[Neo4jHandler] = None,
+                            models : Optional[dict] = None,
                             **kwargs) -> BaseKGExtractor:
         """
         Build the KG extractor specified by `method` (or the KG_EXTRACTION_METHOD env var).
@@ -38,16 +39,16 @@ class KGFactory:
 
         if extractor_type == KGExtractorTypeEnum.OLLAMA or extractor_type == KGExtractorTypeEnum.LOCAL:
             from backend.agents.kg.OllamaKGExtractor import OllamaKGExtractor
-            return OllamaKGExtractor(neo4j_handler, **kwargs)
+            return OllamaKGExtractor(neo4j_handler, model = models.get("ollama"), **kwargs)
         if extractor_type == KGExtractorTypeEnum.GEMINI:
             from backend.agents.kg.GeminiKGExtractor import GeminiKGExtractor
-            return GeminiKGExtractor(neo4j_handler, **kwargs)
+            return GeminiKGExtractor(neo4j_handler, model = models.get("gemini"), **kwargs)
         if extractor_type == KGExtractorTypeEnum.VERTEX:
             from backend.agents.kg.VertexKGExtractor import VertexKGExtractor
-            return VertexKGExtractor(neo4j_handler, **kwargs)
+            return VertexKGExtractor(neo4j_handler, model = models.get("vertex"), **kwargs)
         if extractor_type == KGExtractorTypeEnum.OPENROUTER:
             from backend.agents.kg.OpenRouterKGExtractor import OpenRouterKGExtractor
-            return OpenRouterKGExtractor(neo4j_handler, **kwargs)
+            return OpenRouterKGExtractor(neo4j_handler, model = models.get("openrouter"), **kwargs)
 
         raise ValueError(
             f"Unsupported KG Extractor type: {extractor_type!r}. "

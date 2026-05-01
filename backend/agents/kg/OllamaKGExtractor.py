@@ -4,7 +4,7 @@ from typing import Optional
 
 import requests
 
-from backend.agents.kg import KGExtractorTypeEnum
+from backend.agents.kg.KGExtractorTypeEnum import KGExtractorTypeEnum
 from backend.agents.kg.KGExtractor import BaseKGExtractor
 from backend.database.neo4j_handler import Neo4jHandler
 
