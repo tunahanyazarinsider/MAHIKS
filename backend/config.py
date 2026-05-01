@@ -85,11 +85,11 @@ class Config:
     # Vertex AI (Google Cloud — uses ADC, no API key)
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
     GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
-    VERTEX_MODEL = os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
+    KG_VERTEX_MODEL = os.getenv("KG_VERTEX_MODEL", "gemini-2.5-flash")  # e.g. "gemini-2.5-flash"
 
     # OpenRouter
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-    KG_OPENROUTER_MODEL = os.getenv("KG_OPENROUTER_MODEL")  # required when method=openrouter
+    KG_OPENROUTER_MODEL = os.getenv("KG_OPENROUTER_MODEL", "qwen/qwen-2.5-72b-instruct")  # required when method=openrouter
 
     # CORS Configuration
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
