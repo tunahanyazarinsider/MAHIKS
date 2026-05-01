@@ -6,16 +6,17 @@ Skips KG extraction entirely.
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
+_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(_ROOT))
+sys.path.insert(0, str(_ROOT / 'backend'))
 
-from database.mysql_handler import MySQLHandler
-from database.chroma_handler import ChromaDBHandler
-from database.bm25_handler import BM25Handler
-from agents.ingestion_agent import IngestionAgent
-from agents.extraction_agent import ExtractionAgent
-from agents.structure_aware_chunking_agent import SUTChunker, Chunk
-from agents.vectorization_agent import VectorizationAgent
-from config import Config
+from backend.database.mysql_handler import MySQLHandler
+from backend.database.qdrant_handler import QdrantHandler
+from backend.agents.ingestion_agent import IngestionAgent
+from backend.agents.extraction_agent import ExtractionAgent
+from backend.agents.structure_aware_chunking_agent import SUTChunker, Chunk
+from backend.agents.vectorization_agent import VectorizationAgent
+from backend.config import Config
 from datetime import datetime
 from typing import List
 
@@ -41,22 +42,21 @@ def main():
     )
     mysql.create_tables()
 
-    chroma = ChromaDBHandler(
-        persist_directory=Config.CHROMA_PERSIST_DIR,
-        collection_name=Config.CHROMA_COLLECTION_NAME,
-        embedding_model_name=Config.EMBEDDING_MODEL
+    vector = QdrantHandler(
+        url=Config.QDRANT_URL,
+        api_key=Config.QDRANT_API_KEY,
+        collection_name=Config.QDRANT_COLLECTION_NAME,
+        embedding_model_name=Config.EMBEDDING_MODEL,
+        dense_vector_name=Config.QDRANT_DENSE_VECTOR_NAME,
+        sparse_vector_name=Config.QDRANT_SPARSE_VECTOR_NAME,
+        sparse_model_name=Config.QDRANT_SPARSE_MODEL,
+        sparse_language=Config.QDRANT_SPARSE_LANGUAGE,
+        dense_dim=Config.QDRANT_DENSE_DIM,
     )
 
-    bm25 = BM25Handler(
-        persist_directory=Config.BM25_PERSIST_DIR,
-        k1=Config.BM25_K1,
-        b=Config.BM25_B
-    )
-
-    # Reset vector stores for fresh re-index
-    print("\nResetting ChromaDB and BM25 for fresh BGE-M3 embeddings...")
-    chroma.reset_collection()
-    bm25.reset_index()
+    # Reset vector store for fresh re-index
+    print("\nResetting Qdrant collection for fresh embeddings...")
+    vector.reset_collection()
 
     # Init agents
     ingestion = IngestionAgent(data_directory=Config.DATA_DIR)
@@ -65,7 +65,7 @@ def main():
         chunk_overlap=Config.CHUNK_OVERLAP
     )
     chunking = SUTChunker()
-    vectorization = VectorizationAgent(chroma, mysql, bm25)
+    vectorization = VectorizationAgent(vector, mysql)
 
     # Scan documents
     print("\n[Phase 1] Scanning documents...")
@@ -120,16 +120,12 @@ def main():
             print(f"  Error: {e}\n")
             stats['errors'] += 1
 
-    # Save BM25
-    bm25.save_index()
-
     print("\n" + "=" * 70)
     print("Done!")
     print(f"Documents: {stats['docs']}/{len(documents)}")
     print(f"Chunks embedded: {stats['chunks']}")
     print(f"Errors: {stats['errors']}")
-    print(f"ChromaDB vectors: {chroma.get_count()}")
-    print(f"BM25 documents: {bm25.get_count()}")
+    print(f"Qdrant points: {vector.get_count()}")
     print(f"End: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70 + "\n")
 

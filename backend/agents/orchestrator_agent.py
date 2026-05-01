@@ -320,7 +320,7 @@ class QueryOrchestratorAgent:
                 'status': 'operational',
                 'documents': doc_count,
                 'chunks': vec_stats,
-                'vectors': self.retrieval_agent.chroma.get_count(),
+                'vectors': self.retrieval_agent.vector.get_count(),
                 'graph': {
                     'nodes': graph_stats.get('node_count', 0),
                     'relationships': graph_stats.get('relationship_count', 0)
