@@ -6,10 +6,11 @@ from google import genai
 
 from backend.agents.kg.KGExtractor import BaseKGExtractor, KG_JSON_SCHEMA
 from backend.database.neo4j_handler import Neo4jHandler
+from backend.agents.kg.KGExtractorTypeEnum import KGExtractorTypeEnum
 
 
 class GeminiKGExtractor(BaseKGExtractor):
-    method_name = "Gemini"
+    method_name = KGExtractorTypeEnum.GEMINI
 
     def __init__(self, neo4j_handler: Neo4jHandler,
                  api_key: Optional[str] = None,
