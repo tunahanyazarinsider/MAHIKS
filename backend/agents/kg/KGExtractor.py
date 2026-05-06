@@ -13,7 +13,7 @@ from typing import Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from backend.agents.kg.KGExtractorTypeEnum import KGExtractorTypeEnum
+from backend.agents.client.BaseLLMClient import BaseLLMClient
 from backend.database.neo4j_handler import Neo4jHandler
 
 
@@ -90,20 +90,30 @@ KG_JSON_SCHEMA = {
 }
 
 
-class BaseKGExtractor(ABC):
+class KGExtractor():
     """Abstract base for KG extractors. Subclasses override `_generate_triplets_json`."""
 
-    method_name: KGExtractorTypeEnum = KGExtractorTypeEnum.BASE  # overridden by subclasses
-
-    def __init__(self, neo4j_handler: Neo4jHandler, model: Optional[str] = None):
+    def __init__(self, llm_client : BaseLLMClient, neo4j_handler: Neo4jHandler):
+        self.llm = llm_client
         self.neo4j: Neo4jHandler = neo4j_handler
-        self.model: Optional[str] = model
-        print(f"✓ Initializing {self.method_name} KG Extractor (model={self.model})")
         self.system_prompt: str = KG_SYSTEM_PROMPT
+        print(
+            f"✓ KGExtractor initialized "
+            f"(provider={llm_client.__class__.__name__}, model={llm_client.model})"
+        )
+    
+    @property
+    def model(self) -> str:
+        return self.llm.model
 
-    @abstractmethod
     def _generate_triplets_json(self, text: str) -> str:
-        """One LLM call. Returns the raw JSON string the model produced."""
+        """Call the LLM to extract triplets as JSON."""
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": f"Metinden tripletleri çıkar:\n\n{text}"},
+        ]
+        # Use chat_json for providers that support native JSON mode
+        return self.llm.chat_json(messages, temperature=0.1, max_tokens=2000)
 
     def _extract_triplets(self, text: str, retries: int = 3) -> List[Triplet]:
         for attempt in range(retries):
@@ -115,14 +125,14 @@ class BaseKGExtractor(ABC):
                     if all(k in t for k in ("subject", "predicate", "object"))
                 ]
             except Exception as e:
-                print(f"      ⚠ {self.method_name} attempt {attempt+1}/{retries}: {e}")
+                print(f"      ⚠ KG Extractor attempt {attempt+1}/{retries}: {e}")
                 if attempt < retries - 1:
                     time.sleep(2 ** attempt)
         return []
 
     def _populate_graph(self, text: str, chunk_size: int = 3000,
                         progress_callback: Optional[Callable[[int, int, int], None]] = None) -> int:
-        print(f"    Extracting relationships using {self.method_name} ({self.model})...")
+        print(f"    Extracting relationships using ({self.model})...")
 
         chunks: List[str] = self._split_text(text, chunk_size)
         total_chunks: int = len(chunks)
@@ -159,7 +169,6 @@ class BaseKGExtractor(ABC):
         triplets_count: int = self._populate_graph(text, chunk_size, progress_callback)
         return {
             "triplets_extracted": triplets_count,
-            "method": self.method_name,
             "model": self.model,
         }
 

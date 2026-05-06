@@ -38,11 +38,13 @@ _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / 'backend'))
 
+from backend.agents.client.BaseLLMClient import BaseLLMClient
+from backend.agents.client.factory.LLMClientFactory import LLMClientFactory
 from backend.database.mysql_handler import MySQLHandler
 from backend.database.qdrant_handler import QdrantHandler
 from backend.database.neo4j_handler import Neo4jHandler
 from backend.agents.retrieval_agent import RetrievalAgent
-from backend.agents.generation_agent_ollama import GenerationAgentOllama
+from backend.agents.GenerationAgent import GenerationAgent
 from backend.agents.orchestrator_agent import QueryOrchestratorAgent
 from backend.config import Config
 
@@ -306,8 +308,10 @@ def init_pipeline(judge_model: str, ollama_base_url: str):
         password=Config.NEO4J_PASSWORD
     )
 
+    llm_client : BaseLLMClient = LLMClientFactory.create_llm_client(provider=Config.JUDGE_MODEL_PROVIDER, usage="evaluation")
+
     retrieval = RetrievalAgent(vector, neo4j, mysql)
-    generation = GenerationAgentOllama(base_url=ollama_base_url, model=Config.OLLAMA_MODEL)
+    generation : GenerationAgent= GenerationAgent(llm_client=llm_client)
     orchestrator = QueryOrchestratorAgent(retrieval, generation, mysql)
 
     return retrieval, orchestrator, mysql
