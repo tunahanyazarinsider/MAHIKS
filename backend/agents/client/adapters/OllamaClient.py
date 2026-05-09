@@ -7,7 +7,7 @@ from typing import Dict, Iterator, List, Optional
 
 import requests
 
-from backend.agents.client import BaseLLMClient
+from backend.agents.client.BaseLLMClient import BaseLLMClient
 
 
 class OllamaClient(BaseLLMClient):

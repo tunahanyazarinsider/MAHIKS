@@ -1,0 +1,142 @@
+[
+  {
+    "id": 1,
+    "question": "MEDULA sistemi veya sağlık hizmet sunucusuna ait sistem çalışmaması durumunda ne tür bir sevk belgesi düzenlenir?",
+    "ground_truth": "Bu durumda manuel sevk belgesi düzenlenir ve belgede ‘Sistemlerin çalışmaması nedeniyle e-sevk düzenlenememiştir’ ibaresi kase veya el yazısıyla belirtilir, ayrıca sevki düzenleyen hekim tarafından onaylanır.",
+    "source_chunk_id": 258,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 2,
+    "question": "Poliartiküler juvenil idiopatik artriti olan 2 yaş ve üzeri çocuklarda, methotrexat veya anti-TNF ile 3 aylık tedavi sonunda ACR pediatrik 30 yanıtı alınamamışsa, ilaca başlanabilmek için hangi belgenin olması gerekir?",
+    "ground_truth": "3 ay süreli sağlık kurulu raporunun olması gerekir.",
+    "source_chunk_id": 485,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 3,
+    "question": "Diyaliz hastalarında roksadustat tedavisine geçiş yapabilmek için hangi koşulların sağlanması gerekir?",
+    "ground_truth": "Roxadustat tedavisine geçiş yapabilmek için, hastanın durumunun stabil olması, geçerli bir klinik nedenin olması ve bu durumun raporda belirtilmesi gerekmektedir.",
+    "source_chunk_id": 559,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 4,
+    "question": "Sağlam çocuk doğumu için preimplantasyon genetik tanının bedeli hangi listeye göre karşılanır?",
+    "ground_truth": "SUT eki EK -2/K listesinde yer alan tanılarda Kurumca karşılanır.",
+    "source_chunk_id": 209,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 5,
+    "question": "Reçetelerde hastanın hangi bilgilerin yer alması zorunludur?",
+    "ground_truth": "Reçetelerde hastanın adı soyadı, T.C. Kimlik Numarası veya reçete tanzim tarihi ile birlikte MEDULA takip numarası veya e-reçete numarası veya protokol numarası yer almalıdır.",
+    "source_chunk_id": 425,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 6,
+    "question": "Kişi yurt dışında tedavi için sevk edildiğinde, sözleşmeli sağlık hizmeti sunucusuna gitmeyi reddederse ne olur?",
+    "ground_truth": "Kişi yurt dışında tedavi için sevk edildiğinde, sözleşmeli sağlık hizmeti sunucusuna gitmeyi reddederse, Kurum sözleşmeli yere ödenebilecek tutarı geçmemek üzere ödeme yapar ve arada fark oluşması hâlinde fark kişi tarafından karşılanır.",
+    "source_chunk_id": 235,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 7,
+    "question": "BRCA1 veya 2 mutasyonuna sahip ve erken evre meme kanserinde monoterapi olarak kullanıldığı zaman, olaparib tedavisi en fazla ne kadar süreyle karşılanır?",
+    "ground_truth": "Olaparib tedavisi en fazla 1 yıl süreyle karşılanır.",
+    "source_chunk_id": 665,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 8,
+    "question": "Antiinflamatuar ve antiromatizmal grubu ilaçların solid -oral formlarında büyük ambalaj kapsamlı ilaçlar reçete edilirken hangi belge gerekir?",
+    "ground_truth": "Ayakta tedavide tek uzman hekim tarafından düzenlenen sağlık raporu gerekir.",
+    "source_chunk_id": 440,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 9,
+    "question": "G80 kodu ile yer alan tanılarda, 16 yaşından büyük hastalarda fizik tedavi ve rehabilitasyon uygulamaları için en fazla kaç seans Kurumca karşılanır?",
+    "ground_truth": "16 yaşından büyük hastalarda 31-60 seans ve 61-90 seansa kadar olan fizik tedavi ve rehabilitasyon uygulamaları resmi sağlık hizmeti sunucusunca uygulanması halinde Kurumca karşılanır.",
+    "source_chunk_id": 170,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 10,
+    "question": "Kanakinumab tedavisine 6 aydan fazla süre ara verilmesi veya kesilmesi durumunda, tedaviye devam etmek için hangi koşulların sağlanması gerekir?",
+    "ground_truth": "Kanakinumab tedavisine 6 aydan fazla süre ara verilmesi veya kesilmesi durumunda, hastanın bu süre zarfında en az üç atak geçirmiş olması ve atak dönemlerine ait en az 15 gün arayla ölçülmüş CRP değerinin normal üst sınır değerinin 2 katı ve üstü yüksekliğini göstermesi gerekir. Bu bilgilerin raporda belirtilmesi şarttır.",
+    "source_chunk_id": 501,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 11,
+    "question": "Flutikazonfuroat 200 mcg + umeklidinyum + vilanterol içeren ürünler hangi hastalarda ve hangi hekimler tarafından reçete edilir?",
+    "ground_truth": "Bu ürünler, flutikazonfuroat 100 mcg + umeklidinyum + vilanterol veya uzun etkili beta-2 agonist ve yüksek doz inhale kortikosteroid kombinasyonu ile yeterince kontrol edilemeyen ve önceki yıl bir veya daha fazla astım alevlenmesi yaşayan erişkin hastalarda, göğüs hastalıkları veya alerji uzman hekimleri tarafından reçete edilir.",
+    "source_chunk_id": 731,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 12,
+    "question": "Bevacizumab tedavisinden yanıt alınamaması durumu uygulama tarihinden ne kadar süre sonra OKT görüntüsünün eklenerek dokümante edilmesi zorunludur?",
+    "ground_truth": "4 veya 12 hafta sonra",
+    "source_chunk_id": 800,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 13,
+    "question": "Aksiyel tutulumlu ankilozan spondilitli hastalarda tofacitinib veya upadasitinib tedavisine başlanabilmesi için hangi koşulların sağlanması gerekir?",
+    "ground_truth": "Aksiyel tutulumlu ankilozan spondilitli hastalarda tofacitinib veya upadasitinib tedavisine başlanabilmesi için bir veya daha fazla anti-TNF ajanına yetersiz cevap olması veya intolerans olması durumunda, bu durumun 3 ay süreli sağlık kurulu raporunda belirtilmesi gerekir.",
+    "source_chunk_id": 491,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 14,
+    "question": "Uzun etkili solunum yolu beta-agonistini (LABA) ve inhale kortikosteroidi (İKS) kombine olan ürünler (LABA+İKS) hangi durumlarda reçete edildiğinde bedelleri Kurumca karşılanır?",
+    "ground_truth": "LABA+İKS ürünlerinin bedelleri, tek başına veya obstrüktif solunum yolu hastalıklarında kullanılan uzun etkili antikolinerjik maddeyi içeren ürünler (LAMA) ile birlikte reçete edildiğinde Kurumca karşılanır.",
+    "source_chunk_id": 737,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 15,
+    "question": "İnek sütü ve/veya çoklu gıda protein alerjisi olan bebekler için tıbbi mamaların reçete edilmesi için hangi uzman hekimlerin raporuna ihtiyaç vardır?",
+    "ground_truth": "Çocuk gastroenteroloji, çocuk alerji veya çocuk immünoloji ve alerji hastalıkları uzman hekimlerinin raporuna ihtiyaç vardır; bu uzman hekimlerin bulunmadığı hastanelerde çocuk sağlığı ve hastalıkları uzman hekimlerinin raporuna dayanılarak reçete edilebilir.",
+    "source_chunk_id": 694,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 16,
+    "question": "Turner sendromunda büyüme hormonu tedavisi için gerekli olan sağlık kurul raporunun geçerlilik süresi nedir?",
+    "ground_truth": "Sağlık kurul raporu en fazla 1 yıl süreyle geçerlidir.",
+    "source_chunk_id": 538,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 17,
+    "question": "Epifiz hatları kapalı olanlara hangi tedavi başlanmaz?",
+    "ground_truth": "Epifiz hatları kapalı olanlara tedavi başlanmaz.",
+    "source_chunk_id": 541,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 18,
+    "question": "Darbepoetin için tedaviye başlama dozu nedir?",
+    "ground_truth": "0.25 -0.75 mcg/kg/hafta",
+    "source_chunk_id": 557,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 19,
+    "question": "Psöriatik artritli hastaların tedavisi için sağlık kurul raporu ne sıklıkta düzenlenmektedir?",
+    "ground_truth": "Psöriatik artritli hastaların tedavisi için sağlık kurul raporu en fazla 6 ay süreli düzenlenmektedir.",
+    "source_chunk_id": 481,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 20,
+    "question": "Miltefosine kullanımı için hangi yaş ve ağırlık sınırlamaları vardır?",
+    "ground_truth": "Miltefosine kullanımı, ≥12 yaş ve ≥30 kg ağırlığında olan adolesanlarda ve yetişkinlerde uygun olarak kabul edilir.",
+    "source_chunk_id": 856,
+    "source_name": "sutdoc"
+  }
+]

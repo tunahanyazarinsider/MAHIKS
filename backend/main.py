@@ -452,6 +452,7 @@ async def rag_debug(request: QueryRequest):
         # 1. Vector search (Qdrant hybrid: dense + sparse_bm25, RRF fused server-side)
         vector_results = retrieval_agent.vector_search(query, top_k=10)
         fused = vector_results
+        vector_chunk_ids = [chunk.get('id') for chunk in vector_results if chunk.get('id') is not None]
 
         # 2. Sub-chunking
         top_chunks = fused[:10]
@@ -497,11 +498,14 @@ async def rag_debug(request: QueryRequest):
                 "total_words_to_llm": sum(len(sc['chunk_text'].split()) for sc in final),
                 "retrieval_time_ms": elapsed,
             },
+            # Ordered chunk IDs from vector search — used for Stage-1 IR metrics (Hit@k, MRR, nDCG)
+            "vector_chunk_ids": vector_chunk_ids,
             "final_sub_chunks": [
                 {
                     "rank": i + 1,
                     "text": sc['chunk_text'],
                     "source": sc['source_name'],
+                    "parent_chunk_id": sc.get('parent_chunk_id'),
                     "ce_score": round(sc['ce_score'], 4),
                     "similarity": round(sc.get('similarity', 0), 4),
                     "word_count": len(sc['chunk_text'].split()),
@@ -512,9 +516,10 @@ async def rag_debug(request: QueryRequest):
                 {
                     "text": sc['chunk_text'][:100] + "...",
                     "source": sc['source_name'],
+                    "parent_chunk_id": sc.get('parent_chunk_id'),
                     "ce_score": round(sc['ce_score'], 4),
                 }
-                for sc in rejected[:5]  # Show top 5 rejected
+                for sc in rejected[:5]
             ],
         }
     except Exception as e:
