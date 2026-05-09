@@ -15,7 +15,13 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first (for better caching)
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install CPU-only torch BEFORE requirements.txt to prevent pip from resolving
+# the CUDA variant (which pulls 2+ GB of nvidia_cudnn/cublas/etc on Linux/aarch64).
+RUN pip install --no-cache-dir \
+    torch \
+    --index-url https://download.pytorch.org/whl/cpu
+
+# Install remaining Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Download spaCy Turkish model (optional, will auto-download on first use if missing)
@@ -35,7 +41,7 @@ RUN mkdir -p /app/data/raw_documents /app/chroma_data
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=5 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the application

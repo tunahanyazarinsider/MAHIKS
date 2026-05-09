@@ -117,7 +117,9 @@ MAHIKS/
 │       └── styles/globals.css         # Theme (DM Sans + Source Serif 4)
 ├── scripts/
 │   ├── update_knowledge_base.py       # Full pipeline (chunks + KG)
-│   └── vectorize_only.py             # Chunks only (no KG)
+│   ├── vectorize_only.py              # Chunks only (no KG)
+│   ├── generate_eval_questions.py     # Generate Q&A pairs (multi-provider LLM)
+│   └── evaluate_api.py               # API-based evaluation (IR metrics + LLM judge + latency)
 ├── docker-compose.yml
 ├── Dockerfile
 └── .env.example
@@ -206,47 +208,87 @@ This two-stage approach uses large chunks (500 words) for better recall during v
 
 ## Evaluation
 
-### Generate Evaluation Questions
+Evaluation runs entirely inside Docker — no local Python setup needed.
 
-Generates question + ground truth pairs from random indexed chunks using local Ollama.
+### Step 1 — Generate Evaluation Questions
+
+Samples random indexed chunks and uses an LLM to write a Turkish question + ground truth answer pair for each. Supports multiple providers for higher quality output.
 
 ```bash
-# Generate 10 questions (default)
-docker compose run --rm backend python -m scripts.generate_eval_questions
-
-# Generate 20 questions
+# Default: OpenRouter (qwen/qwen-2.5-72b-instruct) — best quality/cost ratio
 docker compose run --rm backend python -m scripts.generate_eval_questions --count 20
 
-# Use a different model or custom output path
-docker compose run --rm backend python -m scripts.generate_eval_questions --model qwen2.5:14b
-docker compose run --rm backend python -m scripts.generate_eval_questions --output data/my_questions.json
+# OpenAI
+docker compose run --rm backend python -m scripts.generate_eval_questions --provider openai --model gpt-4o --count 20
+
+# Gemini
+docker compose run --rm backend python -m scripts.generate_eval_questions --provider gemini --model gemini-2.5-flash --count 20
+
+# Anthropic
+docker compose run --rm backend python -m scripts.generate_eval_questions --provider anthropic --model claude-haiku-4-5-20251001 --count 20
+
+# Local Ollama (free, lower quality)
+docker compose run --rm backend python -m scripts.generate_eval_questions --provider ollama --count 20
+
+# Custom output path
+docker compose run --rm backend python -m scripts.generate_eval_questions --count 20 --output data/my_questions.json
 ```
 
-Output is saved to `data/eval_questions.json`. Review the questions before running evaluation.
+Output is saved to `data/eval_questions.json`. Review the questions before running evaluation — bad ground truth corrupts your metrics.
 
-### Run Evaluation
+**Provider selection tip:** For eval datasets that will be reused, prefer a strong model (GPT-4o, Gemini 2.5 Flash) — you only generate once and evaluate many times.
 
-Evaluates retrieval quality (IR metrics across 3 pipeline stages) and generation quality (LLM-as-a-judge) using local Ollama — no external API required.
+### Step 2 — Run Evaluation
+
+Calls the live backend API to evaluate retrieval and generation quality, then uses an external LLM as judge. Reports IR metrics, generation quality scores, and latency statistics.
 
 ```bash
-# Run with defaults (reads data/eval_questions.json, saves timestamped report)
-docker compose run --rm backend python -m scripts.evaluate
+# Default: OpenRouter judge (qwen/qwen-2.5-72b-instruct)
+docker compose run --rm backend python -m scripts.evaluate_api
 
-# Save to a specific output file
-docker compose run --rm backend python -m scripts.evaluate --output data/eval_report.json
+# OpenAI judge
+docker compose run --rm backend python -m scripts.evaluate_api --judge-provider openai --judge-model gpt-4o-mini
 
-# Use a stronger judge model or custom top-k
-docker compose run --rm backend python -m scripts.evaluate --judge-model qwen2.5:14b
-docker compose run --rm backend python -m scripts.evaluate --top-k 10 --questions data/my_questions.json
+# Gemini judge
+docker compose run --rm backend python -m scripts.evaluate_api --judge-provider gemini --judge-model gemini-2.5-flash
+
+# Anthropic judge
+docker compose run --rm backend python -m scripts.evaluate_api --judge-provider anthropic --judge-model claude-haiku-4-5-20251001
+
+# Local Ollama judge (no API cost)
+docker compose run --rm backend python -m scripts.evaluate_api --judge-provider ollama
+
+# Quick test run (first 5 questions only)
+docker compose run --rm backend python -m scripts.evaluate_api --limit 5
+
+# Retrieval metrics only — skip LLM judge
+docker compose run --rm backend python -m scripts.evaluate_api --skip-generation
+
+# Custom questions file or output path
+docker compose run --rm backend python -m scripts.evaluate_api --questions data/my_questions.json --output data/my_report.json
 ```
 
-**Retrieval metrics** (3 stages: Vector-only → Hybrid RRF → Full pipeline with reranking):
-Hit@1, Hit@3, Hit@5, Hit@10, MRR, MAP, nDCG@5, nDCG@10
+**Retrieval metrics** (2 stages compared side-by-side):
 
-**Generation metrics** (LLM-as-a-judge, 1–5 scale):
-Faithfulness, Answer Relevance, Context Precision, Context Recall (when ground truth present)
+| Stage | What it measures |
+|---|---|
+| Stage 1 — Vector | Qdrant hybrid search ranking (dense BGE-M3 + sparse BM25, RRF fused) |
+| Stage 2 — Full pipeline | After cross-encoder sub-chunk reranking |
 
-Report is saved as JSON to `data/`.
+Metrics per stage: `Hit@1`, `Hit@3`, `Hit@5`, `Hit@10`, `MRR`, `MAP`, `nDCG@5`, `nDCG@10`
+
+**Generation metrics** (LLM-as-judge, scored 1–5):
+
+| Metric | Description |
+|---|---|
+| Faithfulness | Every claim in the answer is grounded in retrieved context |
+| Answer Relevance | The answer directly and completely addresses the question |
+| Context Precision | Retrieved sub-chunks were actually useful for the answer |
+| Context Recall | Ground-truth facts are covered by retrieved context *(requires ground_truth)* |
+
+**Latency statistics** (both retrieval and generation): `mean`, `median`, `p95`, `p99`, `min`, `max`
+
+Report is saved as JSON to `data/eval_api_report_<timestamp>.json`.
 
 ## Development
 
