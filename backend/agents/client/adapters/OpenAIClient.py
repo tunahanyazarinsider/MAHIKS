@@ -1,16 +1,14 @@
-"""
-OpenAI-compatible LLM client — works for OpenAI API and OpenRouter.
-"""
+"""OpenAI LLM client."""
 import os
 from typing import Dict, Iterator, List, Optional
 
 from openai import OpenAI
 
-from backend.agents.client import BaseLLMClient
+from backend.agents.client.BaseLLMClient import BaseLLMClient
 
 
 class OpenAIClient(BaseLLMClient):
-    """Client for OpenAI and OpenRouter (OpenAI-compatible) APIs."""
+    """Client for the OpenAI API."""
 
     def __init__(
         self,
@@ -31,34 +29,7 @@ class OpenAIClient(BaseLLMClient):
             base_url=base_url,
             default_headers=default_headers,
         )
-        print(f"✓ OpenAIClient initialized (model={self.model}, base_url={base_url or 'default'})")
-
-    @classmethod
-    def openrouter(
-        cls,
-        model: Optional[str] = None,
-        api_key: Optional[str] = None,
-    ) -> "OpenAIClient":
-        """Convenience constructor for OpenRouter."""
-        model = model or os.getenv("OPENROUTER_LLM_MODEL", "qwen/qwen-2.5-72b-instruct")
-        api_key = api_key or os.getenv("OPENROUTER_API_KEY")
-        if not api_key:
-            raise ValueError("OPENROUTER_API_KEY is required")
-
-        headers = {}
-        referer = os.getenv("OPENROUTER_REFERER")
-        title = os.getenv("OPENROUTER_TITLE", "MAHIKS-TR")
-        if referer:
-            headers["HTTP-Referer"] = referer
-        if title:
-            headers["X-Title"] = title
-
-        return cls(
-            model=model,
-            api_key=api_key,
-            base_url="https://openrouter.ai/api/v1",
-            default_headers=headers or None,
-        )
+        print(f"✓ {type(self).__name__} initialized (model={self.model}, base_url={base_url or 'default'})")
 
     def chat(
         self,

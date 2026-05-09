@@ -84,8 +84,8 @@ class LLMClientFactory:
             return OpenAIClient(model=models["openai"], **kwargs)
 
         if provider == "openrouter":
-            from backend.agents.client.adapters.OpenAIClient import OpenAIClient
-            return OpenAIClient.openrouter(model=models["openrouter"], **kwargs)
+            from backend.agents.client.adapters.OpenRouterClient import OpenRouterClient
+            return OpenRouterClient(model=models["openrouter"], api_key=os.getenv("OPENROUTER_API_KEY"))
 
         if provider == "gemini":
             from backend.agents.client.adapters.GeminiClient import GeminiClient
