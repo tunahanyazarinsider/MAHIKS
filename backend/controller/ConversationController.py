@@ -121,8 +121,8 @@ async def get_conversations(current_user: dict = Depends(get_current_user)):
                 "title": conv["title"],
                 "message_count": conv["message_count"] or 0,
                 "last_message": conv["last_message"],
-                "created_at": conv["created_at"].isoformat() if conv["created_at"] else None,
-                "updated_at": conv["updated_at"].isoformat() if conv["updated_at"] else None
+                "created_at": conv["created_at"].isoformat() + 'Z' if conv["created_at"] else None,
+                "updated_at": conv["updated_at"].isoformat() + 'Z' if conv["updated_at"] else None
             })
         
         return success_response(data=formatted)
@@ -152,7 +152,7 @@ async def get_conversation(
                 "conversation_id": msg["conversation_id"],
                 "content": msg["content"],
                 "sender": msg["sender"],
-                "created_at": msg["created_at"].isoformat() if msg["created_at"] else None
+                "created_at": msg["created_at"].isoformat() + 'Z' if msg["created_at"] else None
             })
         
         return success_response(data={
@@ -269,7 +269,7 @@ async def get_messages(
                 "conversation_id": msg["conversation_id"],
                 "content": msg["content"],
                 "sender": msg["sender"],
-                "created_at": msg["created_at"].isoformat() if msg["created_at"] else None
+                "created_at": msg["created_at"].isoformat() + 'Z' if msg["created_at"] else None
             })
         
         return success_response(data=formatted)

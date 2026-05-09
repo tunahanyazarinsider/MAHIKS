@@ -3,6 +3,7 @@ Retrieval Agent for MAHIKS-TR
 Responsible for hybrid retrieval from both vector database and knowledge graph.
 Uses a two-stage chunking strategy: large chunks for recall, sub-chunks for precision.
 """
+import json
 import os
 import spacy
 from typing import List, Dict
@@ -78,6 +79,14 @@ class RetrievalAgent:
                 chunk['similarity'] = score_info['similarity']
                 chunk['distance'] = score_info['distance']
 
+            if chunk.get('metadata_json'):
+                try:
+                    meta = json.loads(chunk['metadata_json'])
+                    chunk.setdefault('section_number', meta.get('section_number', ''))
+                    chunk.setdefault('section_title', meta.get('section_title', ''))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
         print(f"      ✓ Found {len(chunks)} relevant chunks")
         return chunks
 
@@ -117,7 +126,8 @@ class RetrievalAgent:
         return all_facts
 
     def _split_into_sub_chunks(self, text: str, source_name: str,
-                                chunk_id: int, similarity: float) -> List[Dict]:
+                                chunk_id: int, similarity: float,
+                                section_number: str = '', section_title: str = '') -> List[Dict]:
         """
         Split a large chunk into smaller overlapping sub-chunks.
 
@@ -126,6 +136,8 @@ class RetrievalAgent:
             source_name: Source document name
             chunk_id: Parent chunk ID
             similarity: Original similarity score
+            section_number: Section identifier from chunk metadata
+            section_title: Section title from chunk metadata
 
         Returns:
             List of sub-chunk dicts with text and metadata
@@ -135,6 +147,8 @@ class RetrievalAgent:
             return [{
                 'chunk_text': text,
                 'source_name': source_name,
+                'section_number': section_number,
+                'section_title': section_title,
                 'parent_chunk_id': chunk_id,
                 'similarity': similarity,
             }]
@@ -148,6 +162,8 @@ class RetrievalAgent:
             sub_chunks.append({
                 'chunk_text': sub_text,
                 'source_name': source_name,
+                'section_number': section_number,
+                'section_title': section_title,
                 'parent_chunk_id': chunk_id,
                 'similarity': similarity,
             })
@@ -184,6 +200,8 @@ class RetrievalAgent:
                 source_name=chunk.get('source_name', 'Bilinmeyen'),
                 chunk_id=chunk.get('id', 0),
                 similarity=chunk.get('similarity', 0),
+                section_number=chunk.get('section_number', ''),
+                section_title=chunk.get('section_title', ''),
             )
             all_sub_chunks.extend(sub_chunks)
 

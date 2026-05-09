@@ -1,5 +1,5 @@
 # app/core/security.py
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -49,7 +49,7 @@ def create_access_token(subject: str, claims: dict = None) -> str:
     Returns:
         Encoded JWT token string
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": subject,
         "type": "access",
@@ -70,7 +70,7 @@ def create_refresh_token(subject: str) -> str:
     Returns:
         Encoded JWT refresh token string
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     payload = {
         "sub": subject,
         "type": "refresh",
