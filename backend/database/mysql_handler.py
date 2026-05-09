@@ -166,7 +166,7 @@ class MySQLHandler:
             """
             self.cursor.execute(
                 query,
-                (source_url, source_name, doc_type, content_hash, datetime.now())
+                (source_url, source_name, doc_type, content_hash, datetime.utcnow())
             )
             self.connection.commit()
 

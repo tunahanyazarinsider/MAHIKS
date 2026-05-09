@@ -216,6 +216,8 @@ class QueryOrchestratorAgent:
                 for chunk in context.get('vector_context', [])[:3]:
                     citations.append({
                         'source': chunk.get('source_name', 'Bilinmeyen'),
+                        'section_number': chunk.get('section_number', ''),
+                        'section_title': chunk.get('section_title', ''),
                         'type': chunk.get('document_type', 'PDF'),
                         'similarity': chunk.get('similarity', 0),
                         'ce_score': chunk.get('ce_score', 'N/A'),

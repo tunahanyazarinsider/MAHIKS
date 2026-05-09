@@ -18,15 +18,22 @@ COPY requirements.txt .
 # Install CPU-only torch BEFORE requirements.txt to prevent pip from resolving
 # the CUDA variant (which pulls 2+ GB of nvidia_cudnn/cublas/etc on Linux/aarch64).
 RUN pip install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --trusted-host download.pytorch.org \
     torch \
     --index-url https://download.pytorch.org/whl/cpu
 
 # Install remaining Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    -r requirements.txt
 
 # Download spaCy Turkish model (optional, will auto-download on first use if missing)
 # Using || true to make this non-fatal - the KG agent will download it when needed
-RUN python -m spacy download tr_core_news_lg || echo "Warning: spaCy model download failed, will download on first use"
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org spacy && \
+    python -m spacy download tr_core_news_lg || echo "Warning: spaCy model download failed, will download on first use"
 
 # Copy application code
 COPY backend/ ./backend/
