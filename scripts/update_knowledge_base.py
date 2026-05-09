@@ -139,6 +139,19 @@ def main():
 
     print("✓ Agents initialized successfully\n")
 
+    # Check connectivity to LLM provider
+    try:
+        print("Testing LLM connectivity...")
+        test_response = kg_extractor.llm.chat(
+            messages=[{"role": "system", "content": "You are a helpful assistant."},
+                      {"role": "user", "content": "Hello, can you respond to this test message?"}]
+        )
+        print(f"✓ LLM connectivity test successful: {test_response[:100]}...\n")
+    except Exception as e:
+        print(f"✗ LLM connectivity test failed: {e}")
+        sys.exit(1)
+
+
     # Scan for documents
     print("\n" + "="*70)
     print("Phase 1: Document Discovery")

@@ -94,7 +94,7 @@ class KGExtractor():
     """Abstract base for KG extractors. Subclasses override `_generate_triplets_json`."""
 
     def __init__(self, llm_client : BaseLLMClient, neo4j_handler: Neo4jHandler):
-        self.llm = llm_client
+        self.llm : BaseLLMClient = llm_client
         self.neo4j: Neo4jHandler = neo4j_handler
         self.system_prompt: str = KG_SYSTEM_PROMPT
         print(
