@@ -9,6 +9,8 @@ from contextlib import asynccontextmanager
 import uvicorn
 import json
 from pathlib import Path
+from backend.agents.client.BaseLLMClient import BaseLLMClient
+from backend.agents.client.factory.LLMClientFactory import LLMClientFactory
 from backend.controller.ConversationController import conversation_router, set_mysql_handler as set_conversation_mysql_handler
 
 from backend.config import Config
@@ -30,6 +32,7 @@ from backend.database.cache_handler import (
 from backend.agents.retrieval_agent import RetrievalAgent
 from backend.agents.generation_agent import GenerationAgent
 from backend.agents.generation_agent_ollama import GenerationAgentOllama
+from backend.agents.GenerationAgent import GenerationAgent
 from backend.agents.orchestrator_agent import QueryOrchestratorAgent
 
 # Routers
@@ -124,11 +127,15 @@ async def lifespan(app: FastAPI):
             mysql_handler,
         )
 
+        llm_client : BaseLLMClient = LLMClientFactory.create_llm_client(Config.LLM_PROVIDER, usage="generation")
+
         # Use Ollama for local LLM generation
-        generation_agent = GenerationAgentOllama(
+        """generation_agent = GenerationAgentOllama(
             base_url=Config.OLLAMA_BASE_URL,
             model=Config.OLLAMA_MODEL
-        )
+        )"""
+
+        generation_agent : GenerationAgent = GenerationAgent(llm_client)
 
         orchestrator = QueryOrchestratorAgent(
             retrieval_agent,

@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
 # with the above, now this script will be callable like:
 # python3 -m backend.scripts.update_knowledge_base
 
-from backend.agents.kg.KGExtractor import BaseKGExtractor
+from backend.agents.kg.KGExtractor import KGExtractor
 from backend.agents.kg.KGFactory import KGFactory
 from backend.database.mysql_handler import MySQLHandler
 from backend.database.neo4j_handler import Neo4jHandler
@@ -131,7 +131,7 @@ def main():
         }
 
         # Initialize KG extractor (local Ollama by default, Gemini as option)
-        kg_extractor : BaseKGExtractor = KGFactory.create_kg_extractor(method=Config.KG_EXTRACTION_METHOD, neo4j_handler=neo4j, models = models)
+        kg_extractor : KGExtractor = KGFactory.create_kg_extractor(method=Config.KG_EXTRACTION_METHOD, neo4j_handler=neo4j)
 
     except Exception as e:
         print(f"✗ Agent initialization failed: {e}")
