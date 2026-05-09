@@ -6,7 +6,7 @@ from typing import Dict, Iterator, List, Optional
 
 from google import genai
 
-from backend.agents.client import BaseLLMClient
+from backend.agents.client.BaseLLMClient import BaseLLMClient
 
 
 class GeminiClient(BaseLLMClient):

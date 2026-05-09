@@ -9,7 +9,7 @@ Drop-in replacement for both GenerationAgentOllama and CloudGenerationAgent.
 """
 from typing import Dict, List, Optional
 
-from backend.agents.client import BaseLLMClient
+from backend.agents.client.BaseLLMClient import BaseLLMClient
 
 
 class GenerationAgent:
