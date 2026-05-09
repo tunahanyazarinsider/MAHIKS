@@ -101,58 +101,11 @@ services:
     container_name: mahiks-backend
     ports:
       - "8000:8000"
-    environment:
-      - MYSQL_HOST=${MYSQL_HOST:-mysql}
-      - MYSQL_PORT=${MYSQL_PORT:-3306}
-      - MYSQL_USER=${MYSQL_USER:-root}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-mahiks_password}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-mahiks_db}
-      - NEO4J_URI=${NEO4J_URI:-bolt://neo4j:7687}
-      - NEO4J_USER=${NEO4J_USER:-neo4j}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-mahiks_neo4j_password}
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:7b}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-BAAI/bge-m3}
-      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
-      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
-      - QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME:-sut_documents}
-      - QDRANT_SPARSE_MODEL=${QDRANT_SPARSE_MODEL:-Qdrant/bm25}
-      - QDRANT_SPARSE_LANGUAGE=${QDRANT_SPARSE_LANGUAGE:-turkish}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_DB=${REDIS_DB:-0}
-      - CACHE_ENABLED=${CACHE_ENABLED:-true}
-      - CACHE_TTL=${CACHE_TTL:-3600}
-      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - OPENROUTER_LLM_MODEL=${OPENROUTER_LLM_MODEL:-qwen/qwen-2.5-72b-instruct}
-      - OPENROUTER_REFERER=${OPENROUTER_REFERER}
-      - OPENROUTER_TITLE=${OPENROUTER_TITLE:-MAHIKS-TR}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
-      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
-      - GOOGLE_CLOUD_LOCATION=${GOOGLE_CLOUD_LOCATION:-us-central1}
-      - VERTEX_MODEL=${VERTEX_MODEL:-gemini-2.5-flash}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - KG_EXTRACTION_METHOD=${KG_EXTRACTION_METHOD:-ollama}
-      - KG_OLLAMA_MODEL=${KG_OLLAMA_MODEL:-qwen2.5:7b}
-      - KG_GEMINI_MODEL=${KG_GEMINI_MODEL:-gemini-2.5-flash}
-      - KG_VERTEX_MODEL=${KG_VERTEX_MODEL:-gemini-2.5-flash}
-      - KG_OPENROUTER_MODEL=${KG_OPENROUTER_MODEL:-qwen/qwen-2.5-72b-instruct}
-      - KG_CHUNK_SIZE=${KG_CHUNK_SIZE:-3000}
-      - JUDGE_MODEL_PROVIDER=${JUDGE_MODEL_PROVIDER:-ollama}
-      - JUDGE_MODEL_OLLAMA=${JUDGE_MODEL_OLLAMA:-qwen2.5:7b}
-      - JUDGE_MODEL_GEMINI=${JUDGE_MODEL_GEMINI:-gemini-2.5-flash}
-      - JUDGE_MODEL_VERTEX=${JUDGE_MODEL_VERTEX:-gemini-2.5-flash}
-      - JUDGE_MODEL_OPENROUTER=${JUDGE_MODEL_OPENROUTER:-qwen/qwen-2.5-72b-instruct}
-      - JWT_SECRET=${JWT_SECRET}
-      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
-      - MAHIKS_API_URL=http://backend:8000
+    env_file:
+      - .env
     volumes:
       - ./backend:/app/backend
+      - ./scripts:/app/scripts
       - ./data:/app/data
       - hf_cache:/root/.cache/huggingface
     depends_on:

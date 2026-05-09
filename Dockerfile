@@ -32,7 +32,7 @@ RUN python -m spacy download tr_core_news_lg || echo "Warning: spaCy model downl
 COPY backend/ ./backend/
 COPY scripts/ ./scripts/
 # It copies the .env.example file to .env and the values inside the .env.example will be used as default environment variables.
-COPY .env.example .env
+# COPY .env.example .env
 
 # Create data directories
 RUN mkdir -p /app/data/raw_documents /app/chroma_data
