@@ -39,6 +39,7 @@ def main():
         default=Config.DATA_DIR,
         help='Directory containing documents to process'
     )
+    # Usage .... --no-check-qdrant to skip the Qdrant emptiness check. By default the script verifies that embeddings exist before running KG extraction.
     parser.add_argument(
         '--no-check-qdrant',
         dest='check_qdrant',
