@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-KG-only script: Extract knowledge graph triplets and store in Neo4j.
-Skips vectorization (Qdrant) entirely.
+
+KG-only script: Extract text from files and feed it to the KG extractor.
+Refuses to run if Qdrant has no embeddings — KG is only built on top of
+already-embedded documents (run vectorize_only.py first).
 """
 import sys
 import argparse
@@ -12,12 +14,15 @@ _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / 'backend'))
 
+
+from backend.agents.kg.KGExtractor import KGExtractor
+from backend.agents.kg.KGFactory import KGFactory
 from backend.database.neo4j_handler import Neo4jHandler
+from backend.database.qdrant_handler import QdrantHandler
 from backend.agents.ingestion_agent import IngestionAgent
 from backend.agents.extraction_agent import ExtractionAgent
-from backend.agents.kg.KGFactory import KGFactory
 from backend.config import Config
-
+import argparse
 
 def main():
     parser = argparse.ArgumentParser(
@@ -46,6 +51,27 @@ def main():
 
     Config.validate()
 
+    # Guard: refuse to run if no embeddings exist yet
+    print("Checking Qdrant for existing embeddings...")
+    vector = QdrantHandler(
+        url=Config.QDRANT_URL,
+        api_key=Config.QDRANT_API_KEY,
+        collection_name=Config.QDRANT_COLLECTION_NAME,
+        embedding_model_name=Config.EMBEDDING_MODEL,
+        dense_vector_name=Config.QDRANT_DENSE_VECTOR_NAME,
+        sparse_vector_name=Config.QDRANT_SPARSE_VECTOR_NAME,
+        sparse_model_name=Config.QDRANT_SPARSE_MODEL,
+        sparse_language=Config.QDRANT_SPARSE_LANGUAGE,
+        dense_dim=Config.QDRANT_DENSE_DIM,
+    )
+    point_count = vector.get_count()
+    if point_count == 0:
+        print(f"✗ Qdrant collection '{Config.QDRANT_COLLECTION_NAME}' is empty.")
+        print("  Run scripts/vectorize_only.py first to embed documents.")
+        sys.exit(1)
+    print(f"✓ Qdrant has {point_count} points — proceeding with KG extraction\n")
+
+    # Init Neo4j
     print("Initializing Neo4j...")
     neo4j = Neo4jHandler(
         uri=Config.NEO4J_URI,
@@ -55,14 +81,16 @@ def main():
     neo4j.create_indexes()
 
     if args.reset:
-        print("\nWARNING: Clearing all Neo4j data!")
-        confirm = input("Type 'yes' to confirm: ")
+
+        print("⚠ WARNING: Resetting Neo4j graph!")
+        confirm = input("Are you sure? Type 'yes' to confirm: ")
         if confirm.lower() == 'yes':
             neo4j.clear_all()
-            print("Neo4j cleared\n")
+            print("✓ Neo4j cleared\n")
         else:
             print("Reset cancelled")
             sys.exit(0)
+
 
     print("Initializing agents...")
     ingestion = IngestionAgent(data_directory=args.data_dir)
@@ -70,25 +98,28 @@ def main():
         chunk_size=Config.CHUNK_SIZE,
         chunk_overlap=Config.CHUNK_OVERLAP
     )
-    kg_extractor = KGFactory.create_kg_extractor(
+
+    kg_extractor: KGExtractor = KGFactory.create_kg_extractor(
         method=Config.KG_EXTRACTION_METHOD,
         neo4j_handler=neo4j
     )
 
-    print("Testing LLM connectivity...")
+    # LLM connectivity check
     try:
-        test_response = kg_extractor.llm.chat(
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Hello, can you respond to this test message?"}
-            ]
+        print("Testing LLM connectivity with kg_extractor...")
+        response = kg_extractor.process_document(
+            "Test document for connectivity check. This should be a simple "
+            "sentence to verify that the LLM client is working correctly."
         )
-        print(f"LLM OK: {test_response[:80]}...\n")
+        print("✓ LLM connectivity OK\n")
+        print(f"Test LLM Response: {response})
     except Exception as e:
-        print(f"LLM connectivity failed: {e}")
+        print(f"✗ LLM connectivity test failed: {e}")
         sys.exit(1)
 
-    print("\n[Phase 1] Scanning documents...")
+    # Scan documents
+    print("[Phase 1] Scanning documents...")
+
     documents = ingestion.scan_documents()
     if not documents:
         print("No documents found!")
@@ -106,7 +137,7 @@ def main():
                 print("  Skipping: insufficient text")
                 continue
 
-            print("  Extracting KG triplets...")
+            print("  Extracting knowledge graph...")
             kg_stats = kg_extractor.process_document(text)
             triplets = kg_stats.get('triplets_extracted', 0)
 
@@ -118,15 +149,15 @@ def main():
             print(f"  Error: {e}\n")
             stats['errors'] += 1
 
-    graph_stats = neo4j.get_statistics()
-
-    print("\n" + "=" * 70)
+    # Final stats
+    print("=" * 70)
     print("Done!")
     print(f"Documents: {stats['docs']}/{len(documents)}")
     print(f"Triplets extracted: {stats['triplets']}")
     print(f"Errors: {stats['errors']}")
-    print(f"Neo4j nodes: {graph_stats.get('node_count', 0)}")
-    print(f"Neo4j relationships: {graph_stats.get('relationship_count', 0)}")
+    graph_stats = neo4j.get_statistics()
+    print(f"Neo4j Nodes: {graph_stats.get('node_count', 0)}")
+    print(f"Neo4j Relationships: {graph_stats.get('relationship_count', 0)}")
     print(f"End: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70 + "\n")
 
