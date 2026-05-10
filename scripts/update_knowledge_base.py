@@ -37,6 +37,11 @@ def main():
         help='Reset all databases before processing (WARNING: deletes all data)'
     )
     parser.add_argument(
+        '--force',
+        action='store_true',
+        help='Re-process documents even if the vector collection is already populated'
+    )
+    parser.add_argument(
         '--data-dir',
         type=str,
         default=Config.DATA_DIR,
@@ -141,12 +146,9 @@ def main():
 
     # Check connectivity to LLM provider
     try:
-        print("Testing LLM connectivity...")
-        test_response = kg_extractor.llm.chat(
-            messages=[{"role": "system", "content": "You are a helpful assistant."},
-                      {"role": "user", "content": "Hello, can you respond to this test message?"}]
-        )
-        print(f"✓ LLM connectivity test successful: {test_response[:100]}...\n")
+        print("Testing LLM connectivity with kg_extractor...")
+        test_response = kg_extractor.process_document("Test document for connectivity check. This should be a simple sentence to verify that the LLM client is working correctly.")
+        print(f"✓ LLM connectivity test successful: {test_response}...\n")
     except Exception as e:
         print(f"✗ LLM connectivity test failed: {e}")
         sys.exit(1)
@@ -164,6 +166,18 @@ def main():
         sys.exit(1)
 
     print(f"Found {len(documents)} documents to process\n")
+
+    # Decide whether to skip the (expensive) embedding step.
+    # If Qdrant already has points and the user did not pass --reset/--force,
+    # we skip chunking + vectorization but still run KG extraction.
+    skip_vectorization = False
+    if not args.reset and not args.force:
+        existing_points = vector.get_count()
+        if existing_points > 0:
+            skip_vectorization = True
+            print(f"✓ Qdrant collection already has {existing_points} points "
+                  f"— skipping embedding step.")
+            print("  (Use --force to re-embed, --reset to wipe and rebuild.)\n")
 
     # Process each document
     stats = {
@@ -203,13 +217,18 @@ def main():
                 print(f"  ⚠ Document already exists, skipping...")
                 continue
 
-            # Create chunks
-            print(f"  [3/4] Creating text chunks...")
-            chunks: List[Chunk] = chunking.chunk_document(text)
+            num_chunks = 0
+            if skip_vectorization:
+                print(f"  [3/4] Skipping chunking + vectorization "
+                      f"(collection already populated)")
+            else:
+                # Create chunks
+                print(f"  [3/4] Creating text chunks...")
+                chunks: List[Chunk] = chunking.chunk_document(text)
 
-            # Vectorize chunks
-            print(f"  [4/4] Vectorizing and storing chunks...")
-            num_chunks = vectorization.vectorize_chunks(chunks, doc_id)
+                # Vectorize chunks
+                print(f"  [4/4] Vectorizing and storing chunks...")
+                num_chunks = vectorization.vectorize_chunks(chunks, doc_id)
 
             # Extract knowledge graph triplets
             print(f"  [4/4] Extracting knowledge graph...")

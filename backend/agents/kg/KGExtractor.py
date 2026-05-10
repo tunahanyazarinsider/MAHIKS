@@ -120,6 +120,8 @@ class KGExtractor():
             try:
                 raw: str = self._generate_triplets_json(text)
                 data = json.loads(raw)
+                print(f"      Extracted {len(data.get('triplets', []))} triplets from chunk (raw JSON length: {len(raw)})")
+                print(f"      Sample triplet (if any): {data.get('triplets', [])[0] if data.get('triplets') else 'N/A'}")
                 return [
                     Triplet(**t) for t in data.get("triplets", [])
                     if all(k in t for k in ("subject", "predicate", "object"))
