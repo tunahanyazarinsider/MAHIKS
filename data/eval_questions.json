@@ -1,142 +1,702 @@
 [
   {
     "id": 1,
-    "question": "MEDULA sistemi veya sağlık hizmet sunucusuna ait sistem çalışmaması durumunda ne tür bir sevk belgesi düzenlenir?",
-    "ground_truth": "Bu durumda manuel sevk belgesi düzenlenir ve belgede ‘Sistemlerin çalışmaması nedeniyle e-sevk düzenlenememiştir’ ibaresi kase veya el yazısıyla belirtilir, ayrıca sevki düzenleyen hekim tarafından onaylanır.",
-    "source_chunk_id": 258,
+    "question": "Büyük kemik kistlerinin cerrahi tedavisinde kullanılan allogreft/xenogreft için karşılanabilecek maksimum bedel nedir?",
+    "ground_truth": "120 cc’yi geçmemek üzere bedelleri Kurumca karşılanır.",
+    "source_chunk_id": 361,
     "source_name": "sutdoc"
   },
   {
     "id": 2,
-    "question": "Poliartiküler juvenil idiopatik artriti olan 2 yaş ve üzeri çocuklarda, methotrexat veya anti-TNF ile 3 aylık tedavi sonunda ACR pediatrik 30 yanıtı alınamamışsa, ilaca başlanabilmek için hangi belgenin olması gerekir?",
-    "ground_truth": "3 ay süreli sağlık kurulu raporunun olması gerekir.",
-    "source_chunk_id": 485,
+    "question": "PNH bulgusu olan hastalarda, kemik iliği normoselüler veya hiperselüler iken granülosit klonunun akım sitometrik olarak ne oranın üzerinde olması gerekir?",
+    "ground_truth": "%1’in üzerinde",
+    "source_chunk_id": 650,
     "source_name": "sutdoc"
   },
   {
     "id": 3,
-    "question": "Diyaliz hastalarında roksadustat tedavisine geçiş yapabilmek için hangi koşulların sağlanması gerekir?",
-    "ground_truth": "Roxadustat tedavisine geçiş yapabilmek için, hastanın durumunun stabil olması, geçerli bir klinik nedenin olması ve bu durumun raporda belirtilmesi gerekmektedir.",
-    "source_chunk_id": 559,
+    "question": "NİMV cihazı verilecek hastalıklar arasında yer alan 'uykuyla ilişkili hipoventilasyon/ hipoksemik sendromlar' hangi alt kategorilere ayrılır?",
+    "ground_truth": "Uykuyla ilişkili hipoventilasyon/ hipoksemik sendromlar şunları içerir: uyku ilişkili obstrüktif olmayan idiyopatik alveoler hipoventilasyon, konjenital santral alveoler hipoventilasyon sendromu, pulmoner parankimal veya vasküler patolojilere bağlı hipoventilasyon hipoksemi, alt solunum yolu hastalıklarına/kronik obstrüktif akciğer hastalığına bağlı hipoventilasyon hipoksemi, nöromuskuler ya da göğüs duvarı hastalıklarına bağlı hipoventilasyon hipoksemi.",
+    "source_chunk_id": 368,
     "source_name": "sutdoc"
   },
   {
     "id": 4,
-    "question": "Sağlam çocuk doğumu için preimplantasyon genetik tanının bedeli hangi listeye göre karşılanır?",
-    "ground_truth": "SUT eki EK -2/K listesinde yer alan tanılarda Kurumca karşılanır.",
-    "source_chunk_id": 209,
+    "question": "Yurt dışında yapılacak tetkikler için avans ödemesi nasıl yapılabilir?",
+    "ground_truth": "Yurt dışında yapılacak tetkikler için avans ödemesi, kişilere veya sağlık hizmeti sunucusuna, misyon şefliği aracılığıyla yapılabilir.",
+    "source_chunk_id": 244,
     "source_name": "sutdoc"
   },
   {
     "id": 5,
-    "question": "Reçetelerde hastanın hangi bilgilerin yer alması zorunludur?",
-    "ground_truth": "Reçetelerde hastanın adı soyadı, T.C. Kimlik Numarası veya reçete tanzim tarihi ile birlikte MEDULA takip numarası veya e-reçete numarası veya protokol numarası yer almalıdır.",
-    "source_chunk_id": 425,
+    "question": "Sodium benzoate'nin kullanımına izin verilen metabolik hastalıkların listesini verin.",
+    "ground_truth": "Sodium benzoate'nin kullanımına izin verilen metabolik hastalıklar şunlardır: a) Organik asidemiler, b) Yağ asidi oksidasyon bozuklukları, c) Sitrülinemi tip -2, ç) HHH (Hiperornitinemi -Hiperamonyemi -Homositrülinem) sendromu, d) Hiperamonemi -hiperinsülinizm sendromu, e) Sekonder hiperamonemiler.",
+    "source_chunk_id": 859,
     "source_name": "sutdoc"
   },
   {
     "id": 6,
-    "question": "Kişi yurt dışında tedavi için sevk edildiğinde, sözleşmeli sağlık hizmeti sunucusuna gitmeyi reddederse ne olur?",
-    "ground_truth": "Kişi yurt dışında tedavi için sevk edildiğinde, sözleşmeli sağlık hizmeti sunucusuna gitmeyi reddederse, Kurum sözleşmeli yere ödenebilecek tutarı geçmemek üzere ödeme yapar ve arada fark oluşması hâlinde fark kişi tarafından karşılanır.",
-    "source_chunk_id": 235,
+    "question": "İlgili ilaçların reçete edilmesi için hangi uzman hekimlerin katıldığı bir sağlık kurulu raporu gereklidir?",
+    "ground_truth": "İlgili ilaçların reçete edilmesi için kardiyoloji, kalp damar cerrahisi, göğüs hastalıkları veya çocuk kardiyolojisi uzman hekimlerinden birinin yer aldığı 3 ay süreli bir sağlık kurulu raporu gereklidir.",
+    "source_chunk_id": 777,
     "source_name": "sutdoc"
   },
   {
     "id": 7,
-    "question": "BRCA1 veya 2 mutasyonuna sahip ve erken evre meme kanserinde monoterapi olarak kullanıldığı zaman, olaparib tedavisi en fazla ne kadar süreyle karşılanır?",
-    "ground_truth": "Olaparib tedavisi en fazla 1 yıl süreyle karşılanır.",
-    "source_chunk_id": 665,
+    "question": "Parikalsitol tedavisi hangi PTH düzeylerinde başlanabilir?",
+    "ground_truth": "Parikalsitol tedavisi, PTH düzeyi 600 pg/ml’nin üzerinde olan hastalarda veya PTH düzeyi 300 pg/ml’nin üzerinde olmak koşuluyla PTH düzeyinde bir önceki ölçüme göre %25’in üzerinde artış tespit edilen hastalarda başlanabilir.",
+    "source_chunk_id": 562,
     "source_name": "sutdoc"
   },
   {
     "id": 8,
-    "question": "Antiinflamatuar ve antiromatizmal grubu ilaçların solid -oral formlarında büyük ambalaj kapsamlı ilaçlar reçete edilirken hangi belge gerekir?",
-    "ground_truth": "Ayakta tedavide tek uzman hekim tarafından düzenlenen sağlık raporu gerekir.",
-    "source_chunk_id": 440,
+    "question": "Sağlık hizmetinin kişilerce karşılanması durumunda, ödeme tutarının belirlenmesi ve bilgilendirme formunun verilmesi için hangi form kullanılır?",
+    "ground_truth": "SUT eki 'Sözleşmesiz Sağlı k Hizmeti Sunucularınca Acil Hallerde Sunulan Sağlık Hizmetlerine İlişkin Bilgilendirme Formu (EK -1/E)' kullanılır.",
+    "source_chunk_id": 97,
     "source_name": "sutdoc"
   },
   {
     "id": 9,
-    "question": "G80 kodu ile yer alan tanılarda, 16 yaşından büyük hastalarda fizik tedavi ve rehabilitasyon uygulamaları için en fazla kaç seans Kurumca karşılanır?",
-    "ground_truth": "16 yaşından büyük hastalarda 31-60 seans ve 61-90 seansa kadar olan fizik tedavi ve rehabilitasyon uygulamaları resmi sağlık hizmeti sunucusunca uygulanması halinde Kurumca karşılanır.",
-    "source_chunk_id": 170,
+    "question": "Emicizumab tedavisine ilk 4 hafta boyunca hangi dozda başlanır?",
+    "ground_truth": "Emicizumab tedavisine ilk 4 hafta boyunca haftada 1 kez 3 mg/kg yükleme dozu ile başlanır.",
+    "source_chunk_id": 757,
     "source_name": "sutdoc"
   },
   {
     "id": 10,
-    "question": "Kanakinumab tedavisine 6 aydan fazla süre ara verilmesi veya kesilmesi durumunda, tedaviye devam etmek için hangi koşulların sağlanması gerekir?",
-    "ground_truth": "Kanakinumab tedavisine 6 aydan fazla süre ara verilmesi veya kesilmesi durumunda, hastanın bu süre zarfında en az üç atak geçirmiş olması ve atak dönemlerine ait en az 15 gün arayla ölçülmüş CRP değerinin normal üst sınır değerinin 2 katı ve üstü yüksekliğini göstermesi gerekir. Bu bilgilerin raporda belirtilmesi şarttır.",
-    "source_chunk_id": 501,
+    "question": "Fingolimod tedavisi için hangi EDSS puanı ve altında olan hastalarda uygulanabilir?",
+    "ground_truth": "Fingolimod tedavisi, EDSS 5,5 ve altında olan, relaps ve remisyonla seyreden güncel Multipl Skleroz (MS) tanı kriterlerini karşılayan hastalarda uygulanabilir.",
+    "source_chunk_id": 809,
     "source_name": "sutdoc"
   },
   {
     "id": 11,
-    "question": "Flutikazonfuroat 200 mcg + umeklidinyum + vilanterol içeren ürünler hangi hastalarda ve hangi hekimler tarafından reçete edilir?",
-    "ground_truth": "Bu ürünler, flutikazonfuroat 100 mcg + umeklidinyum + vilanterol veya uzun etkili beta-2 agonist ve yüksek doz inhale kortikosteroid kombinasyonu ile yeterince kontrol edilemeyen ve önceki yıl bir veya daha fazla astım alevlenmesi yaşayan erişkin hastalarda, göğüs hastalıkları veya alerji uzman hekimleri tarafından reçete edilir.",
-    "source_chunk_id": 731,
+    "question": "Uzun etkili solunum yolu beta-agonistleri (LABA) ve inhale kortikosteroidlerin (İKS) mono veya sabit doz kombinasyonu gruplarındaki ürünlerin hangi durumlarda bedelleri karşılanmaz?",
+    "ground_truth": "Bu ürünlerin diğer şekillerde reçete edilmesi halinde bedelleri Kurumca karşılanmaz.",
+    "source_chunk_id": 728,
     "source_name": "sutdoc"
   },
   {
     "id": 12,
-    "question": "Bevacizumab tedavisinden yanıt alınamaması durumu uygulama tarihinden ne kadar süre sonra OKT görüntüsünün eklenerek dokümante edilmesi zorunludur?",
-    "ground_truth": "4 veya 12 hafta sonra",
-    "source_chunk_id": 800,
+    "question": "Lu -177 veya Y -90 işaretli PSMA bileşikleri ile tedavi öncesi hastanın performans skoru ne olmalıdır?",
+    "ground_truth": "Hastanın performans skoru ≤ 2 olmalıdır.",
+    "source_chunk_id": 222,
     "source_name": "sutdoc"
   },
   {
     "id": 13,
-    "question": "Aksiyel tutulumlu ankilozan spondilitli hastalarda tofacitinib veya upadasitinib tedavisine başlanabilmesi için hangi koşulların sağlanması gerekir?",
-    "ground_truth": "Aksiyel tutulumlu ankilozan spondilitli hastalarda tofacitinib veya upadasitinib tedavisine başlanabilmesi için bir veya daha fazla anti-TNF ajanına yetersiz cevap olması veya intolerans olması durumunda, bu durumun 3 ay süreli sağlık kurulu raporunda belirtilmesi gerekir.",
-    "source_chunk_id": 491,
+    "question": "Tanıya dayalı işlemlerin kapsamına dahil olan sağlık hizmetleri nelerdir?",
+    "ground_truth": "Tanıya dayalı işlemlerin kapsamına dahil olan sağlık hizmetleri şunlardır: yatak bedeli, muayeneler ve konsültasyonlar, operasyon ve girişimler, anestezi ilaçları, yatış dönemindeki ilaçlar (kan ürünleri dışında), kan bileşenleri, sarf malzemesi, anestezi bedeli, laboratuvar, patoloji ve radyoloji tetkikleri, refakatçi bedeli (tıbbi zorunluluk halinde).",
+    "source_chunk_id": 86,
     "source_name": "sutdoc"
   },
   {
     "id": 14,
-    "question": "Uzun etkili solunum yolu beta-agonistini (LABA) ve inhale kortikosteroidi (İKS) kombine olan ürünler (LABA+İKS) hangi durumlarda reçete edildiğinde bedelleri Kurumca karşılanır?",
-    "ground_truth": "LABA+İKS ürünlerinin bedelleri, tek başına veya obstrüktif solunum yolu hastalıklarında kullanılan uzun etkili antikolinerjik maddeyi içeren ürünler (LAMA) ile birlikte reçete edildiğinde Kurumca karşılanır.",
-    "source_chunk_id": 737,
+    "question": "Sıkışma tipi üriner inkontinans tedavisinde, antikolinerjik/antimuskarinik ilaçların kullanım süresi ve tedavinin tekrarlanma süresi nedir?",
+    "ground_truth": "Antikolinerjik/antimuskarinik ilaçların kullanım süresi 3 aydır. Tedavi 3 aydan önce tekrarlanmaz.",
+    "source_chunk_id": 528,
     "source_name": "sutdoc"
   },
   {
     "id": 15,
-    "question": "İnek sütü ve/veya çoklu gıda protein alerjisi olan bebekler için tıbbi mamaların reçete edilmesi için hangi uzman hekimlerin raporuna ihtiyaç vardır?",
-    "ground_truth": "Çocuk gastroenteroloji, çocuk alerji veya çocuk immünoloji ve alerji hastalıkları uzman hekimlerinin raporuna ihtiyaç vardır; bu uzman hekimlerin bulunmadığı hastanelerde çocuk sağlığı ve hastalıkları uzman hekimlerinin raporuna dayanılarak reçete edilebilir.",
-    "source_chunk_id": 694,
+    "question": "Ortez, protez, tıbbî araç ve gereç, kişi kullanımına mahsus tıbbî cihaz, tıbbî sarf, basit sıhhi sarf ve iyileştirici nitelikteki tıbbî sarf malzemeleri hangi kategoriye dahil edilir?",
+    "ground_truth": "Bu malzemeler tıbbi malzeme kapsamında değerlendirilir.",
+    "source_chunk_id": 282,
     "source_name": "sutdoc"
   },
   {
     "id": 16,
-    "question": "Turner sendromunda büyüme hormonu tedavisi için gerekli olan sağlık kurul raporunun geçerlilik süresi nedir?",
-    "ground_truth": "Sağlık kurul raporu en fazla 1 yıl süreyle geçerlidir.",
-    "source_chunk_id": 538,
+    "question": "Kronik kas iskelet ağrısı ve fibromiyalji için pregabalin etken maddeli ilaçların reçete edilmesi için hangi uzman hekimlerin raporuna ve hangi sağlık kurumlarının raporuna dayanılmalıdır?",
+    "ground_truth": "Pregabalin etken maddeli ilaçların reçete edilmesi için ikinci veya üçüncü basamak sağlık kurumlarında düzenlenen, romatoloji, ortopedi ve travmatoloji, fizik tedavi ve rehabilitasyon, nöroloji veya algoloji uzman hekimlerinden en az birinin yer aldığı en fazla 6 ay süreli sağlık kurulu raporuna dayanılmalıdır.",
+    "source_chunk_id": 820,
     "source_name": "sutdoc"
   },
   {
     "id": 17,
-    "question": "Epifiz hatları kapalı olanlara hangi tedavi başlanmaz?",
-    "ground_truth": "Epifiz hatları kapalı olanlara tedavi başlanmaz.",
-    "source_chunk_id": 541,
+    "question": "IVF tedavileri için genel sağlık sigortası kapsamında en fazla kaç deneme hakkı vardır?",
+    "ground_truth": "En fazla üç deneme hakkı vardır.",
+    "source_chunk_id": 197,
     "source_name": "sutdoc"
   },
   {
     "id": 18,
-    "question": "Darbepoetin için tedaviye başlama dozu nedir?",
-    "ground_truth": "0.25 -0.75 mcg/kg/hafta",
-    "source_chunk_id": 557,
+    "question": "Hasta kabul işlemlerinde doğrudan veya sevkli müracaatlar hangi sağlık hizmeti sunucuları tarafından kabul edilir?",
+    "ground_truth": "Kurum ile götürü bedel üzerinden sağlık hizmeti alım sözleşmesi imzalanan sağlık hizmeti sunucuları ve belediyelere ait sağlık hizmeti sunucuları tarafından doğrudan veya sevkli müracaatlar kabul edilir.",
+    "source_chunk_id": 10,
     "source_name": "sutdoc"
   },
   {
     "id": 19,
-    "question": "Psöriatik artritli hastaların tedavisi için sağlık kurul raporu ne sıklıkta düzenlenmektedir?",
-    "ground_truth": "Psöriatik artritli hastaların tedavisi için sağlık kurul raporu en fazla 6 ay süreli düzenlenmektedir.",
-    "source_chunk_id": 481,
+    "question": "Fatura üst yazısında hangi bilgilerin yer alması gerekir?",
+    "ground_truth": "Fatura üst yazısında sağlık hizmeti sunucusunun adı, MEDULA tesis kodu, adresi, fatura dönemi, hasta sayısı (uzmanlık dalı bazında ve toplam) ve fatura tutarı (uzmanlık dalı bazında ve toplam) yer alır.",
+    "source_chunk_id": 944,
     "source_name": "sutdoc"
   },
   {
     "id": 20,
-    "question": "Miltefosine kullanımı için hangi yaş ve ağırlık sınırlamaları vardır?",
-    "ground_truth": "Miltefosine kullanımı, ≥12 yaş ve ≥30 kg ağırlığında olan adolesanlarda ve yetişkinlerde uygun olarak kabul edilir.",
-    "source_chunk_id": 856,
+    "question": "Hastanın organ nakli sırasına alındığı tarihten itibaren bekleme süresinin beş yılı geçmesi halinde ne yapılması gerekmektedir?",
+    "ground_truth": "Hastanın yurt dışına gönderilmeye ilişkin sağlık kurulu raporunu SUT’un 2.5.3.A -1 maddesi doğrultusunda yenilenmesi ve ilgili onayların yapılmış olması gereklidir.",
+    "source_chunk_id": 233,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 21,
+    "question": "Allogreft/xenogreft kullanılan posterior spinal stabilizasyon uygulamalarında, Torakal 11 - Sakral 1 vertebralar arası her seviye için maksimum kaç cc bedel karşılanır?",
+    "ground_truth": "10 cc",
+    "source_chunk_id": 360,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 22,
+    "question": "Uçak ile yapılan sevklerde, hangi belgelerin ibraz edilmesi gerekmektedir?",
+    "ground_truth": "Uçak ile yapılan sevklerde, faturanın/biletin, uçak biniş kartının veya QR kod çıktısında yer alan bilgilerin birbirini tutması kaydıyla QR kod çıktısının da ibraz edilmesi gerekmektedir.",
+    "source_chunk_id": 270,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 23,
+    "question": "İzinli veya raporlu bir fizik tedavi ve rehabilitasyon uzman hekimin hastalarının tedavisi, diğer uzman hekim tarafından nasıl fatura edilebilir?",
+    "ground_truth": "İzinli veya raporlu bir fizik tedavi ve rehabilitasyon uzman hekimin hastalarının tedavisi, diğer çalışan uzman hekim tarafından Kuruma fatura edilebilir; ancak bu, fatura edilebilecek fizik tedavi ve rehabilitasyon uygulama sayısını aşan hastaların sayısı, uzman hekimin Kuruma fatura edebileceği günlük hasta işlem sayısına ilave edilerek fatura edilir. Uzman hekimin izin/rapor durumu ve tedaviyi devam ettirecek diğer uzman hekimin bilgileri, sağlık hizmeti sunucuları tarafından MEDULA sistemine bildirilir.",
+    "source_chunk_id": 174,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 24,
+    "question": "Tedavide kullanılan ilaçlar hangi uzman hekimler tarafından reçete edilir?",
+    "ground_truth": "Tedavide kullanılan ilaçlar gastroenteroloji veya enfeksiyon hastalıkları uzman hekimleri ile çocuk sağlığı ve hastalıkları uzman hekimi veya iç hastalıkları uzman hekimi tarafından reçete edilir.",
+    "source_chunk_id": 605,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 25,
+    "question": "Jinekolojik malignite tedavisinde ilaç reçetesi için hangi sağlık kurulunun raporuna ihtiyaç vardır?",
+    "ground_truth": "Jinekolojik malignite tedavisinde ilaç reçetesi için yalnızca üçüncü basamak sağlık kurumlarında olmak üzere jinekolojik malignite tedavisinde ayrıca kadın hastalıkları ve doğum uzmanı hekiminin yer aldığı sağlık kurulunun raporuna ihtiyaç vardır.",
+    "source_chunk_id": 671,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 26,
+    "question": "Alektinib, hangi tür akciğer kanseri hastalarında birinci basamak tedavi olarak kullanılabilir?",
+    "ground_truth": "Alektinib, Anaplastik Lenfoma Kinaz (ALK) pozitifliği standardize FISH veya RT-PCR veya yeni nesil dizileme yöntemleri ile tespit edilen rearanjman/füzyon varlığı veya immünhistokimyasal olarak saptanan ileri evre küçük hücreli dışı akciğer kanserli (KHDAK) hastaların birinci basamak tedavisinde monoterapi olarak progresyona kadar kullanılabilir.",
+    "source_chunk_id": 648,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 27,
+    "question": "Koklear implant bedeli hangi kurum tarafından karşılanır?",
+    "ground_truth": "Koklear implant bedeli, Koklear Implant Yerleştirilmesi Uygun Görülen Kişilerde veya belirli kriterlere uyan hastalarda Sağlık Kurumu tarafından karşılanır.",
+    "source_chunk_id": 407,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 28,
+    "question": "Diyabetik ayak ülserinde epidermal büyüme faktörü (topikal formu) tedavisi için maksimum yıllık tedavi süresi ve bu süre boyunca en fazla kullanılabilen ilaç kutu adedi nedir?",
+    "ground_truth": "Maksimum tedavi süresi yılda 8 (sekiz) hafta olup bu süre boyunca en fazla kullanılabilen ilaç kutu adedi 8 (sekiz)'dir.",
+    "source_chunk_id": 863,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 29,
+    "question": "Ortodontik tedaviler için düzenlenen sağlık kurulu raporunda imzası bulunan hekim, hastayı hangi durumlarda tedavi edemez?",
+    "ground_truth": "Hekim, kendi kendisini, birinci derece yakını veya ortaklarını tedavi edemez.",
+    "source_chunk_id": 112,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 30,
+    "question": "Crohn hastalığında vedolizumab tedavisine cevap kriteri nedir?",
+    "ground_truth": "Crohn Hastalık Aktivite İndeksi’nde 70 puanlık düşüş olması gerekir.",
+    "source_chunk_id": 506,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 31,
+    "question": "İlk dozları fiziksel tıp ve rehabilitasyon, iç hastalıkları veya çocuk sağlığı ve hastalıkları uzman hekiminin bulunduğu sağlık kurumda uygulanan ilaçların subkütan formları, hastane dışında uygulanmak üzere reçete edilmesi için hangi şartlar gerekir?",
+    "ground_truth": "İlgili uzman hekimin uygun görür ve sağlık kurulu raporunda 'Mahallinde tedavisi sürdürülebilir' ibaresine yer verilmesi gerekir. Ayrıca, hastaya veya hasta yakınına uygun enjeksiyon tekniği konusunda eğitim verilmelidir. Bu şartlar sağlanırsa, ilaçlar 12 haftalık dozlar halinde hastane dışında uygulanmak üzere reçete edilebilir.",
+    "source_chunk_id": 468,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 32,
+    "question": "Oral esansiyel aminoasit preperatları ve keto analogları tedavisi için hangi kriterlerde başlanır?",
+    "ground_truth": "Tedavi, serum albumin düzeyi < 3,5 g/dL olan; Evre 4 KBH (glomerüler filtrasyon hızı <30 ml/dak) veya Evre 5 KBH (diyaliz hastaları dahil) hastalarda; son 3 ayda ağırlığında %10 ve daha fazla kilo kaybı olması veya Vücut Kitle İndeksi (BMI) 19’un altında olması halinde başlanır.",
+    "source_chunk_id": 564,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 33,
+    "question": "Protez veya ortezin yenilenmesi gerektiğinde, sağlık kurulu raporunda hangi bilgilerin belirtilmesi gerekmektedir?",
+    "ground_truth": "Protez veya ortezin yenilenmesi gerektiğinde, sağlık kurulu raporunda önceden Kurumca bedeli karşılanan protez veya ortezin yenilenmesi gerektiğinin gerekçeleriyle birlikte belirtilmesi gerekmektedir. Ayrıca, protez veya ortezin kullanım süresinin dolduğu ve/veya sağlık kurulu raporu ile yenilenmesinin gerektiği durumlarda, daha önce kullanılan protez veya ortezin belirtilmesi gerekmektedir.",
+    "source_chunk_id": 309,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 34,
+    "question": "Sağlık Bakanlığı tarafından seviyelendirilmemiş yoğun bakım yataklarında verilen tedaviler nasıl faturalandırılır?",
+    "ground_truth": "Sağlık Bakanlığı tarafından herhangi bir nedenle seviyelendirilmemiş yoğun bakım yataklarında verilen tedaviler birinci basamak yoğun bakım fiyatından faturalandırılır.",
+    "source_chunk_id": 182,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 35,
+    "question": "Okrelizumab tedavisi için hangi durumlarda Kurum tarafından ödeme yapılır?",
+    "ground_truth": "Okrelizumab tedavisi için ödeme, yüksek hastalık aktivitesi gösteren relapsing remitting multipl skleroz hastalarında, beta interferonlar, glatiramer asetat, teriflunomid veya dimetil fumarat tedavilerinden en az bir yıl süre ile kullanılmış ve bu tedavilere yeterli yanıt verilmemiş, ayrıca en az iki yüksek hastalık aktivitesi özelliği taşıyan hastalarda yapılır. Ayrıca, EDSS 7 ve altında olan, relapsing remitting, güncel multipl skleroz tanı kriterlerini karşılayan hastalarda ve primer progresif multipl skleroz hastalarında, üçüncü basamak sağlık hizmeti sunucularında nöroloji uzman hekimi tarafından düzenlenen en fazla 1 yıl süreli raporda bu durumun belirtilmesi ve nöroloji uzman hekimleri tarafından reçete edilmesi halinde ödeme yapılır.",
+    "source_chunk_id": 811,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 36,
+    "question": "Etelkalsetid tedavisi hangi durumlarda sonlandırılır?",
+    "ground_truth": "Etelkalsetid tedavisi, hemodiyaliz tedavisi altındaki hastalarda albumin ile düzeltilmiş serum kalsiyum değeri ≤8,4 mg/dl olması veya PTH düzeyinin 300 pg/ml’nin altına düşmesi halinde sonlandırılır.",
+    "source_chunk_id": 565,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 37,
+    "question": "Pregabalin etken maddeli ilaçların reçetesi için hangi uzman hekimlerin katılımını gerektiren sağlık kurulu raporunun süreği ne kadardır?",
+    "ground_truth": "6 ay",
+    "source_chunk_id": 816,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 38,
+    "question": "Regorafenib, metastatik gastrointestinal stromal tümör (GİST) tedavisinde hangi önceden yapılan tedavilerin ardından kullanılabilir?",
+    "ground_truth": "Regorafenib, metastatik gastrointestinal stromal tümör (GİST) tedavisinde öncesinde imatinib mesilat ve sunitinib malat tedavileri görmüş ve progresyon göstermiş hastalarda kullanılabilir.",
+    "source_chunk_id": 640,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 39,
+    "question": "2-18 yaş arasındaki çocuk hastalarda lamivudin tedavisi alırken, 24. haftada HBV DNA düzeyi 50 IU/ml ve üzerindeyse hangi tedaviler uygulanabilir?",
+    "ground_truth": "24. haftada HBV DNA düzeyi 50 IU/ml ve üzerindeyse, yaş grubuna göre tenofovir disoproksil fumarat, tenofovir alafenamid fumarat veya entekavir kullanılabilir.",
+    "source_chunk_id": 594,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 40,
+    "question": "Sağlık Bakanlığı tarafından perakende satış fiyatı verilen ürünlere hangi listede gösterilen indirim oranları uygulanır?",
+    "ground_truth": "EK -4/A listesinde gösterilen indirim oranları (özel iskontolar dahil) uygulanır.",
+    "source_chunk_id": 901,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 41,
+    "question": "IVF tedavisinde freezing işlemi uygulanan embriyonun transferi nasıl faturalandırılır?",
+    "ground_truth": "IVF tedavisinde freezing işlemi uygulanan embriyonun transferi, SUT eki EK -2/C listesinde yer alan 'Freezing işlemi uygulanan embriyonun transferi' işlemi üzerinden faturalandırılır.",
+    "source_chunk_id": 216,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 42,
+    "question": "3713 sayılı Kanun kapsamına girmese dahi hangi malullerin sağlık kurulu raporuyla ihtiyaç duydukları her türlü ortez/protez ve diğer iyileştirici araç ve gereçlerin bedelleri herhangi bir kısıtlama getirilmeksizin Kurumca karşılanır?",
+    "ground_truth": "Başkasının yardımı ve desteği olmaksızın yaşamak için gereken hareketleri yapamayacak derecede malul olan vazife ve harp malulleri ile atış, tatbikat veya diğer ateşli silah yaralanmaları nedeniyle malul olan vazife ve harp malullerinin sağlık kurulu raporuyla ihtiyaç duydukları her türlü ortez/protez ve diğer iyileştirici araç ve gereçlerin bedelleri herhangi bir kısıtlama getirilmeksizin Kurumca karşılanır.",
+    "source_chunk_id": 311,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 43,
+    "question": "Metastatik ber rak hücreli renal kanser hastalarında, daha önce en az bir seri VEGF hedefli tedaviyi ve/veya bir basamak anti-PD-1 monoklonal antikoru tedavisi kullanmış ve sonrasında progresyon gelişmiş olan hastalarda, hangi tedavinin bedelleri Kurumca karşılanır?",
+    "ground_truth": "Bu hastalarda progresyona kadar kullanılan tedavinin bedelleri Kurumca karşılanır.",
+    "source_chunk_id": 657,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 44,
+    "question": "Kanama durdurmada kullanılan emilemeyen tıbbi malzemelerin bedeli hangi durumlarda en fazla 2 adet olmak üzere Kurumca karşılanır?",
+    "ground_truth": "Kanama durdurmada kullanılan emilemeyen tıbbi malzemelerin bedeli, acil servislerde veya yatarak tedavilerde, e pikrizde aşağıdaki durumlardan en az birinin belirtilmesi şartıyla en fazla 2 adet olmak üzere Kurumca karşılanır: a) Hemorajik diyateze neden olan durumlar ve/veya hastalıklarının olduğu bilinen vakalarda, b) Trombosit değerinin 50.000 K/mm³'ün altında olduğu vakalarda, c) Maligniteye sekonder kanamalarda, ç) Girişimsel ve iatrojenik işlemler hariç olmak üzere boyun, aksiller bölge ve inguinal bölgenin direkt bası ile durdurulamayan travmaya bağlı açık kanamalı damar yaralanmalarında.",
+    "source_chunk_id": 399,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 45,
+    "question": "SMA Tip-1 tanısı konmuş hastalarda nusinersen tedavisi için genetik kriterler nelerdir?",
+    "ground_truth": "Genetik kriterler şunlardır: 5qSMA homozigot gen delesyonu veya homozigot gen mutasyonu veya bileşik heterozigot gen mutasyonu olmalı ve SMN2 kopya sayısının en az 1 olması gerekir.",
+    "source_chunk_id": 844,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 46,
+    "question": "Acil hallerde sözleşmeli olmayan eczanelerden alınan ilaçların bedellerinin ödenmesi için hangi belgelerin ibraz edilmesi gerekir?",
+    "ground_truth": "Reçete, ilaç fiyat kupürleri ve eczane tarafından verilen ilaçları ve tutarını gösteren fatura ibraz edilmelidir.",
+    "source_chunk_id": 904,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 47,
+    "question": "6 dakika yürüme testi yerine hangi yetenek kontrol edilir?",
+    "ground_truth": "Yürümeyen ancak vücudunu yardım almadan hareket ettirme yeteneği olan hastalarda, bu yetenek kontrol edilir.",
+    "source_chunk_id": 580,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 48,
+    "question": "Crohn Hastalığı tedavisinde, hastalık aktivitesinin kontrol altına alınamaması durumunda tedavinin kesilmesi için hangi kriterin karşılanması gerekir?",
+    "ground_truth": "Tedavinin 4. ayında Crohn Hastalık Aktivite İndeksi’nde başlangıca göre en az 70 puanlık düşüşün olmaması halinde tedavi kesilir.",
+    "source_chunk_id": 482,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 49,
+    "question": "Trafik kazası nedeniyle ilk müdahale sonrası tedavi süresi en fazla kaç ay sürebilir?",
+    "ground_truth": "6 ay",
+    "source_chunk_id": 64,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 50,
+    "question": "Reçetede majistrallerin kullanım dozu ve tedavi süresi nasıl belirtilmelidir?",
+    "ground_truth": "Reçetede majistrallerin günlük kullanım dozu mutlaka belirtilmelidir ve tedavi süresi ile tedavi amaçları hekim tarafından reçete üzerinde belirtilmelidir.",
+    "source_chunk_id": 439,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 51,
+    "question": "Keratokonusu olan ve gözlük uygulaması sonucunda görme keskinliği 10/10'a kadar artmayan hastalarda, kontakt lensin sağlanması için hangi belgelerin düzenlenmesi gerekmektedir?",
+    "ground_truth": "Keratokonusu olan ve gözlük uygulaması sonucunda görme keskinliği 10/10'a kadar artmayan hastalarda, üçüncü basamak resmi sağlık hizmeti sunucularınca düzenlenen en az bir göz sağlığı ve hastalıkları uzman hekiminin yer aldığı sağlık kurulu raporunda/e-raporda, teşhis, hastaya uygun görülen lensin çapı (BC), derinliği (DİA), diyoptri değeri (POW) ile lensin niteliğinin (sert, yumuşak, gaz geçirgenliği vb.) belirtilmesi gerekmektedir.",
+    "source_chunk_id": 346,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 52,
+    "question": "Ekstrakorporeal fotoferez tedavisi için ödeme ne zaman yapılır?",
+    "ground_truth": "Ekstrakorporeal fotoferez tedavisi bedellerinin ödenebilmesi için üçüncü basamak sağlık hizmeti sunucuları tarafından sağlık kurulu raporu düzenlenmesi gerekmektedir. Kemik İliği/Organ Nakil Merkezi ve Terapötik Aferez Merkezi ruhsatı olan ikinci basamak sağlık hizmeti sunucuları ise sadece Graft Versus Host Hastalığı veya solid organ nakillerinde doku reddinin önlenmesi (kalp, akciğer, böbrek nakillerinde) için sağlık kurulu raporu düzenleyebilir.",
+    "source_chunk_id": 144,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 53,
+    "question": "PGT ile birlikte uygulanacak IVF tedavisi için gerekli sağlık kurulu raporunun düzenlenmesi hangi kurumda ve kimler tarafından gerçekleştirilir?",
+    "ground_truth": "PGT ile birlikte uygulanacak IVF tedavisi için gerekli sağlık kurulu raporu, sözleşmeli üçüncü basamak resmi sağlık hizmeti sunucularında, SUT eki EK -2/K listesinde belirtilen branş hekimlerinin yer aldığı sağlık kurulu tarafından düzenlenir. Sağlık kurulunun üyeleri, sağlık hizmeti sunucusunda görevli hekimlerden oluşur.",
+    "source_chunk_id": 207,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 54,
+    "question": "Myasthenia Gravis Activities of Daily Living (MG-ADL) toplam skoru kaç puan ve üzeri olan hastalar tedavi alabilir?",
+    "ground_truth": "MG-ADL toplam skoru 6 ve üzeri olan hastalar tedavi alabilir.",
+    "source_chunk_id": 651,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 55,
+    "question": "Eritropoietin, darbepoietin ve roksadustat preparatlarının kullanımında, bir defada en fazla ne kadar ilaç verilebilir?",
+    "ground_truth": "Bir defada en fazla 1 aylık ilaç verilir.",
+    "source_chunk_id": 554,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 56,
+    "question": "Kurum bilgi işlem sistemi tarafından hasta takip numarası/provizyon verilmezse, hangi istisnai hallerde sağlık hizmeti bedelleri faturalandırılabilir?",
+    "ground_truth": "Acil hal, iş kazası ile meslek hastalığı hali, trafik kazası, bildirimi zorunlu bulaşıcı hastalık, kişiye yönelik koruyucu sağlık hizmeti, analık hali, afet ve savaş ile grev ve lokavt hali, 18 yaş altı çocuklar, tıbben başkasının bakımına muhtaç kişiler, maddi bağımlılığı tedavisine yönelik sağlık hizmetleri.",
+    "source_chunk_id": 16,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 57,
+    "question": "Sözleşmeli sağlık hizmeti sunucularının, ağız ve diş sağlığı hizmeti verirken genel anestezi altında yapılması gereken tetkik, tahlil ve tedavileri nerede sağlayabilecekleri belirtilmiştir?",
+    "ground_truth": "Sözleşmeli resmi sağlık hizmeti sunucuları, genel anestezi altında yapılması gereken tetkik, tahlil ve tedavileri bünyelerinde veya başka bir resmi sağlık hizmeti sunucusunda hizmet alımı ile sağlayabilirler.",
+    "source_chunk_id": 54,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 58,
+    "question": "Uzun etkili solunum yolu beta-agonistini (LABA) ve uzun etkili antikolinerjik maddeden (LAMA) oluşan kombinasyon ürünlerinin (LABA+LAMA) reçete edilmesi halinde hangi durumlarda bedelleri Kurumca karşılanır?",
+    "ground_truth": "LABA+LAMA kombinasyon ürünlerinin tek başına veya inhale kortikosteroid içeren ürünler (İKS) ile birlikte reçete edilmesi halinde bedelleri Kurumca karşılanır.",
+    "source_chunk_id": 738,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 59,
+    "question": "Periferik eklem tutulumlu ankilozan spondilitli hastalarda, sulfasalazin veya methotrexat kullanarak yeterli cevap alınamadığında (BASDAİ >5), ilaca başlanabilmesi için hangi ek kriterlerin sağlanması gerekmektedir?",
+    "ground_truth": "Eritrosit sedimentasyon hızı >28 mm/s veya normalin üst sınırını aşan CRP değeri olmalıdır ve bu durum 3 ay süreli sağlık kurulu raporunda belirtilmelidir.",
+    "source_chunk_id": 464,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 60,
+    "question": "Everolimus'un pankreatik nöroendokrin tümör tedavisinde kullanıldığı durumlarda, sunitinib ile ardışık veya kombine kullanımına ne zaman izin verilir?",
+    "ground_truth": "Everolimus ve sunitinib etkin maddeli ilaçlar arasında sadece tolere edilemeyen majör yan etki (Grade 3 -4 seviyesinde) olması ve bu durumun Sağlık Bakanlığı endikasyon dışı ilaç kullanım onayında belirtilmesi halinde ilaç değişimi ardışık kullanım olarak değerlendirilmez.",
+    "source_chunk_id": 629,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 61,
+    "question": "Kanakinumab tedavisinde 6 ay sonunda yapılacak neye dayalı bir değerlendirme yapılır?",
+    "ground_truth": "6 ay sonunda yapılacak yanıt değerlendirmesine göre yanıt alınan hastalarda tedavi devam eder, yanıt alınamayan hastalarda tedavi kesilir.",
+    "source_chunk_id": 504,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 62,
+    "question": "Alemtuzumab tedavisi başlanmasından itibaren 5 yıllık süre zarfında hangi ilaçların kullanımı Sağlık Bakanlığından hasta bazında alınacak endikasyon dışı ilaç kullanım onayı ile mümkündür?",
+    "ground_truth": "Alemtuzumab tedavisi başlanmasından itibaren 5 yıllık süre zarfında beta interferon, glatiramer asetat, teriflunomid, dimetil fumarat, fingolimod, okrelizumab, kladribin veya natalizumab etken maddelerini içeren ilaçların kullanımı Sağlık Bakanlığından hasta bazında alınacak endikasyon dışı ilaç kullanım onayı ile mümkündür.",
+    "source_chunk_id": 813,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 63,
+    "question": "Natalizumab tedavisi için hangi durumlarda sağlık kurumu tarafından bedeli karşılanır?",
+    "ground_truth": "Natalizumab tedavisi, beta interferonlar, glatiramer asetat, teriflunomid veya dime til fumarat tedavilerinden en az bir yıl süreyle kullanılmış ve bu tedavilere yeterli yanıt verilmeyen, yüksek hastalık aktivitesi gösteren relaps ve remisyonla seyreden MS hastalarında, aynı zamanda son 1 yıl içinde en az bir atak geçirmiş olmak, birbirini takip eden MRG'lerde lezyon yükünde artış veya doğrulanmış EDSS ölçeğinde en az 0,5 puan artışı gibi en az iki yüksek hastalık aktivitesi özelliği taşıyan hastalarda bedeli karşılanır.",
+    "source_chunk_id": 810,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 64,
+    "question": "Günübirlik tedavilerde SUT eki EK -2/C Listesinde yer alan işlemler için ne tür bir bedel faturalandırılamaz?",
+    "ground_truth": "Gündüz yatak bedeli faturalandırılamaz.",
+    "source_chunk_id": 82,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 65,
+    "question": "MEDULA sistemi ve/veya sağlık hizmet sunucusuna ait sistemin çalışmaması nedeniyle e-sevkin düzenlenemediği durumlarda ne tür bir sevk belgesi düzenlenir ve bu belgede hangi ibare yer almalıdır?",
+    "ground_truth": "Bu durumlarda manuel sevk belgesi düzenlenir ve belgede “Sistemlerin çalışmaması nedeniyle e-sevk düzenlenememiştir” ibaresi kaşe ya da el yazısı ile belirtilir.",
+    "source_chunk_id": 258,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 66,
+    "question": "4 yaş ve puberte arası çocuklarda büyüme hormonu tedavisi için hangi yaş farkı gereklidir?",
+    "ground_truth": "4 yaş ve puberte arası çocuklarda büyüme hormonu tedavisi için kemik yaşı, kronolojik yaştan en az 2 yıl geri olmalıdır.",
+    "source_chunk_id": 534,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 67,
+    "question": "Hemodiyaliz veya periton diyaliz tedavisi altındaki hastalarda cinacalcet tedavisi ne zaman kesilir?",
+    "ground_truth": "Hemodiyaliz veya periton diyaliz tedavisi altındaki hastalarda, albumin ile düzeltilmiş serum kalsiyum değeri ≤8,4 mg/dl veya PTH düzeyi 300 pg/ml’nin altına düşen durumlarda cinacalcet tedavisi kesilir.",
+    "source_chunk_id": 563,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 68,
+    "question": "Erişkin hastaların lamivudin veya telbivudin tedavisi alırken, 24. haftada HBV DNA düzeyi 50 IU/ml ve üzerinde olduğunda ne yapılabilir?",
+    "ground_truth": "24. haftada HBV DNA düzeyi 50 IU/ml ve üzerinde olan hastalarda diğer antiviraller kullanılabilir.",
+    "source_chunk_id": 593,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 69,
+    "question": "Ayakta tedavide hekim ve diş hekimi muayenesi katılım payları eczanelerde ne zaman tahsil edilir?",
+    "ground_truth": "Ayakta tedavide hekim ve diş hekimi muayenesi katılım payları, kişilerin reçete ile eczaneye ilk müracaatında tahsil edilir.",
+    "source_chunk_id": 24,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 70,
+    "question": "Açil ve yatan hastaların transferi kim tarafından yapılır?",
+    "ground_truth": "Açil ve yatan hastaların transferi sağlık hizmeti sunucuları tarafından yapılır.",
+    "source_chunk_id": 57,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 71,
+    "question": "Sentetik greft, allogreft ve xenogreftler hangi durumlarda kullanılabilmektedir?",
+    "ground_truth": "Sentetik greft, allogreft ve xenogreftler; otogreft uygulanmış ve greft alımında yeterli doku bulunmayan, otogreft donör alımında morbidite riski olan, çok parçalı ve defektli kırıkların 3 uzman hekim tarafından belgelendirilen cerrahi tedavisinde, kemiklerde geniş defektler oluşturan benign veya malign tümörlerin cerrahisinde, 3 veya daha fazla vertebra içeren füzyo n uygulanan omurga cerrahisinde, spinal cerrahide tümör ya da travma nedeniyle korpektomi boşluğuna titanyum ya da çelik interbody kafes yerleştirilmesi sırasında kafes içinin doldurulduğu durumlarda kullanılabilir.",
+    "source_chunk_id": 357,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 72,
+    "question": "Metastatik kolon veya metastatik rektum kanserli hastalarda, birinci basamak tedavi olarak hangi ilaç kombinasyonlarının bedeli Kurum tarafından karşılanır?",
+    "ground_truth": "Okzaliplatin ile kapesitabin veya 5-florourasil/folinik asit ile kombine olarak kullanılması halinde bedeli Kurumca karşılanır.",
+    "source_chunk_id": 645,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 73,
+    "question": "HBO tedavisi için sağlık kurulu raporunda hangi bilgiler yer almalıdır?",
+    "ground_truth": "HBO tedavisi için sağlık kurulu raporunda tanı ile uygulanması istenilen seans sayısı yer almalıdır.",
+    "source_chunk_id": 131,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 74,
+    "question": "Ortodontik tedavi gereksinimi olan hastaların tedaviye başlaması için ne kadar süre vardır?",
+    "ground_truth": "6 ay",
+    "source_chunk_id": 109,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 75,
+    "question": "Kurumla sözleşmeli sağlık hizmeti sunucuları, hangi tür tedavilerin giderlerini Kuruma faturalandıramazlar?",
+    "ground_truth": "Kurumla sözleşmeli sağlık hizmeti sunucuları, bir başka sağlık hizmeti sunucusundan hizmet alımı yoluyla sağladıkları ruhsat/faaliyet veya uygunluk belgesinde yer alan tetkik ve/veya tahlil dışındaki tedavilere (gastroskopi, kolonoskopi, rektosigmoidoskopi, rektoskopi, bronkoskopi, anjiyografi gibi işlemler de dahil olmak üzere) ait giderleri Kuruma faturalandıramazlar.",
+    "source_chunk_id": 56,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 76,
+    "question": "SUT eki EK -2/A-2 Listesinde yer alan işlemler faturalandırılırken, sağlık bakanlığına bağlı eğitim ve araştırma hastaneleri için uygulanan ek oran nedir?",
+    "ground_truth": "SUT eki EK -2/A-2 Listesinde yer alan işlemler faturalandırılırken, sağlık bakanlığına bağlı eğitim ve araştırma hastaneleri için işlem puanlarına %10 oranında ilave edilerek faturalandırılır.",
+    "source_chunk_id": 77,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 77,
+    "question": "FLT-3 mutasyonu pozitif akut miyeloblastik lösemi tanısı konulmuş hastalarda midostaurin tedavisi hangi durumlarda uygulanır?",
+    "ground_truth": "FLT-3 mutasyonu pozitif akut miyeloblastik lösemi tanısı konulmuş olan ve yoğun kemoterapiye (standart doz 3+7 remisyon indüksiyonu ve yüksek doz ARA-C ile konsolidasyon tedavisi) uygun hastalarda remisyon indüksiyon tedavisi ve konsolidasyon tedavisi ile kombine olarak kullanılması halinde bedelleri Kurumca karşılanır.",
+    "source_chunk_id": 659,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 78,
+    "question": "14 yaş ve altı çocukların gözlük cam ve çerçevesi miat süresi nedir?",
+    "ground_truth": "14 yaş ve altı çocukların gözlük cam ve çerçevesi miat süresi 1 (bir) yıldır.",
+    "source_chunk_id": 344,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 79,
+    "question": "Pompe Hastalığı tedavisine iki yaş ve altındaki hastalarda ne zaman başlanır?",
+    "ground_truth": "İki yaş ve altındaki tüm hastalarda tedaviye doğrudan başlanır.",
+    "source_chunk_id": 581,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 80,
+    "question": "Yurt dışında faaliyet gösteren Kurumla sözleşmeli sağlık hizmeti sunucularında kullanılan tıbbi malzemeler için hangi bedellerin karşılanmadığı belirtilmiştir?",
+    "ground_truth": "İşletme gideri, hazine kesintisi, Sosyal Hizmetler ve Çocuk Esirgeme Kurumu kesintisi bedelleri karşılanmaz.",
+    "source_chunk_id": 293,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 81,
+    "question": "P551120, P615895 ve P615991 kodlu işlemler hangi branş hekimlerince ve hangi sağlık hizmet sunucularında yapıldığında Kurum tarafından karşılanır?",
+    "ground_truth": "Bu işlemlerin bedelleri algoloji, beyin cerrahisi ve ortopedi ve travmatoloji branş hekimlerince üçüncü basamak sağlık hizmet sunucularında yapıldığında Kurum tarafından karşılanır.",
+    "source_chunk_id": 219,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 82,
+    "question": "Jeneralize lipodistrofi tedavisinde, başlangıç HbA1c düzeyinde en az ne kadar düşüş olması gerekir?",
+    "ground_truth": "Başlangıç HbA1c düzeyinde en az 1,5 (%) düşüş olması gerekir.",
+    "source_chunk_id": 842,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 83,
+    "question": "Çölyak hastalığı olan 0-5 yaş arasındaki bir çocuğun aylık özel formüllü un ve mamul ürünleri için ne kadar tutar ödenir?",
+    "ground_truth": "344,48 TL",
+    "source_chunk_id": 695,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 84,
+    "question": "Dasatinib, hangi evrelerdeki Kronik Miyeloid Lösemi hastalarında reçetelenir?",
+    "ground_truth": "Dasatinib, imatinib dahil önceki tedavilere dirençli veya intolere olan, Philadelphia kromozomu pozitif kronik, hızlanmış veya blastik evre Kronik Miyeloid Lösemi tanılı yetişkin hastaların tedavisinde reçetelenir.",
+    "source_chunk_id": 622,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 85,
+    "question": "Psöriatik artritli hastaların tedavisine başlamak için hangi ilaçların ve tedavi sürelerinin uygun olduğuna dair kriterler nelerdir?",
+    "ground_truth": "Psöriatik artritli hastaların tedavisine başlamak için en az 3 farklı hastalık modifiye edici antiromatizmal ilacı üçer ay süre ile uygun dozda kullanması ve sonrasında en az bir anti-TNF ajanı 3 ay süreyle kullanması gerekmektedir. Ayrıca hastalık aktivitesinin kontrol altına alınamaması (bir ay arayla yapılmış iki ayrı muayenede en az üç hassas eklem ve en az üç şiş eklem olması) gerekli olmaktadır.",
+    "source_chunk_id": 481,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 86,
+    "question": "Ayakta ağız ve diş tedavilerinde greftler ve membranların bedellerinin karşılanabilmesi için hangi sağlık hizmeti sunucusunda çalışan uzmanların imzası gerekmektedir?",
+    "ground_truth": "Aynı sağlık hizmeti sunucusunda çalışan, en az bir periodontoloji veya ağız diş çene cerrahisi uzman hekim dahil olmak üzere üç diş hekiminin imzası gerekmektedir.",
+    "source_chunk_id": 392,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 87,
+    "question": "Kanser tedavisinde endikasyon dışı ilaç kullanılması durumunda hangi raporun hazırlanması gerekmektedir?",
+    "ground_truth": "Kanser tedavisinde endikasyon dışı ilaç kullanımında, tedavi protokolünü ve daha önce uygulanan kemoterapi dahil diğer tedavileri de gösteren tıbbi onkoloji veya hematoloji uzman hekimlerinden birinin bulunduğu sağlık kurulu raporu aranır.",
+    "source_chunk_id": 613,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 88,
+    "question": "0-18 yaş arasındaki çocuklarda işitme cihazı temini için sağlık kurulu raporunun düzenlenmesinde en az kaç kulak burun boğaz hastalıkları uzman hekiminin yer alması gerekmektedir?",
+    "ground_truth": "En az 1 (bir) kulak burun boğaz hastalıkları uzman hekiminin yer alması gerekmektedir.",
+    "source_chunk_id": 404,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 89,
+    "question": "Acil hallerde, yeni nesil antipsikotiklerin parenteral formları hangi şartlarda ve kimler tarafından reçete edilebilir?",
+    "ground_truth": "Acil hallerde, yeni nesil antipsikotiklerin parenteral formları (uzun salınımlı/depo etkili formları hariç) acil servislerde, klinik şartlarda, tek doz olarak tüm hekimler tarafından reçete edilebilir.",
+    "source_chunk_id": 520,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 90,
+    "question": "Kronik böbrek hastalığı (evre 2 -5) tanısı olan 3 yaş ve üzeri çocuklarda, boy SDS ve/veya kilo SDS –1 ve altında olanlarda, pediyatrik nefroloji uzman hekim tarafından günlük en fazla kaç şişe reçete edilebilir?",
+    "ground_truth": "Kronik böbrek hastalığı (evre 2 -5) tanısı olan 3 yaş ve üzeri çocuklarda, boy SDS ve/veya kilo SDS –1 ve altında olanlarda, pediyatrik nefroloji uzman hekim tarafından günlük en fazla 3 şişe reçete edilebilir.",
+    "source_chunk_id": 696,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 91,
+    "question": "Propranolol hidroklorür (oral çözelti formları) hangi yaş grubunda ve hangi durumlarda kullanılabilmektedir?",
+    "ground_truth": "Propranolol hidroklorür (oral çözelti formları), 5 hafta - 5 ay yaş aralığında olan bebeklerde, yutma güçlüğü, kanama/bası bulguları veya solunum güçlüğü gibi morbiditeyi önemli derecede olumsuz etkileyecek durumlara sebep olan ve sistemik tedavi gerektiren çocukluk çağı hemanjiyomlarının tedavisinde kullanılabilir. Bu hemanjiyomlar, hayatı veya hayati fonksiyonu tehdit edici, ağrılı ve/veya basit yara bakım tedavilerine yanıt vermeyen ülsere, veya kalıcı yara izi veya şekil bozukluğuna yol açma riski taşıyan olabilir.",
+    "source_chunk_id": 861,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 92,
+    "question": "Kurumca finansmanı sağlanan sağlık hizmetleri için ödeme hesaplanırken kullanılan katsayı nedir?",
+    "ground_truth": "Katsayı 0,593'tür.",
+    "source_chunk_id": 61,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 93,
+    "question": "DSÖ Grup I pulmoner arteriyel hipertansiyonlu hastalarda, fonksiyonel kapasiteleri NYHA sınıf II veya III olanlarda hangi ilaç kombinasyonları kullanılabilmektedir?",
+    "ground_truth": "NYHA sınıf II veya III olan hastalarda, yetişkinler için sadece ambrisentan veya masitentan ile tadalafil veya sildenafil kombinasyonu, 1 -17 yaş için sadece bosentan ile sildenafil kombinasyonu kullanılabilmektedir.",
+    "source_chunk_id": 774,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 94,
+    "question": "Genel sağlık sigortalılar arasında yurtdışına sürekli veya geçici görevle gönderilenlere sağlanan sağlık hizmeti bedelleri nasıl karşılanır?",
+    "ground_truth": "Yurtdışına sürekli veya geçici görevle gönderilen genel sağlık sigortalıların sağlık hizmeti bedelleri, acil olup olmadığına bakılmaksızın, yurt içinde sözleşmeli sağlık hizmeti sunucularına tedavinin yapıldığı tarihte ödenen en yüksek tutarı aşmamak kaydıyla Kurumca karşılanır.",
+    "source_chunk_id": 228,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 95,
+    "question": "Kişilere sağlanan sağlık hizmetlerine ilişkin düzenlenen sağlık raporu bedelleri nasıl faturalandırılır?",
+    "ground_truth": "Kişilere sağlanan sağlık hizmetlerine ilişkin düzenlenen sağlık raporu bedelleri, SUT eki EK -2/B Listesinde yer alan rapor puanları esas alınarak sadece bir adet olarak faturalandırılır.",
+    "source_chunk_id": 59,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 96,
+    "question": "Psöriyatik artritli hastalarda ilaç tedavisine başlanabilmesi için hangi kriterlerin sağlanması gerekir?",
+    "ground_truth": "Psöriyatik artritli hastalarda ilaç tedavisine başlanabilmesi için en az 3 farklı hastalık modifiye edici antiromatizmal ilacı uygun dozunda en az üçer ay kullanılmış olmasına rağmen hastalık aktivitesinin kontrol altına alınamamış olması ve bir a y arayla yapılmış iki ayrı muayenede en az üç hassas eklem ve en az üç şiş eklem olması gerekir. Bu durumun sağlık kurulu raporunda belirtilmesi de şarttır.",
+    "source_chunk_id": 466,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 97,
+    "question": "SUT ve eki listelerde belirtilen özel durumlar dışında, sağlık raporlarına dayanılarak reçete edilen il açlar için hastalardan ve raporu düzenleyen sağlık kurum ve kuruluşlarından hangi belgeler talep edilemeyecektir?",
+    "ground_truth": "SUT ve eki listelerde belirtilen özel durumlar dışında, hastalardan ve raporu düzenleyen sağlık kurum ve kuruluşlarından ek bilgi ve belge talep edilemeyecektir.",
+    "source_chunk_id": 434,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 98,
+    "question": "Hizmet başına ödeme yönteminde, aynı seansa birden fazla işlem yapıldığında, aynı kesiden yapılan işlemler için faturalandırılma oranları nedir?",
+    "ground_truth": "Aynı kesiden yapılan işlem puanı yüksek olan işlemin puanı tam, sonraki işlem puanları ise her birinin %30'u alınarak faturalandırılır.",
+    "source_chunk_id": 83,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 99,
+    "question": "Enzim replasman tedavisi hangi böbrek fonksiyon bozukluğunda uygulanır?",
+    "ground_truth": "Enzim replasman tedavisi, yaşa göre ayarlanmış kreatinin klerensinin (glomerül filtrasyon hızı) 80 ml/dk altında olması, 24 saatte 300 mg üzerinde proteinüri olması veya böbrek biyopsisinde endoteliyal depolanmanın varlığı ile birlikte mikroalbüminürinin olması durumunda uygulanır.",
+    "source_chunk_id": 576,
+    "source_name": "sutdoc"
+  },
+  {
+    "id": 100,
+    "question": "Sözleşmeli sağlık hizmeti sunucularındaki tedavilerle ilgili tet kik ve/veya tahlil fatura bedelleri nasıl ödenir?",
+    "ground_truth": "Sözleşmeli sağlık hizmeti sunucularındaki tedavilerle ilgili tet kik ve/veya tahlil fatura bedelleri, sevk/istem belgesine dayanarak kişilere ödenir ve bu bedeller sevk/istem belgesini düzenleyen sağlık hizmeti sunucusunun alacağından mahsup edilir.",
+    "source_chunk_id": 55,
     "source_name": "sutdoc"
   }
 ]
