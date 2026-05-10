@@ -39,6 +39,14 @@ def main():
         default=Config.DATA_DIR,
         help='Directory containing documents to process'
     )
+    # Usage .... --no-check-qdrant to skip the Qdrant emptiness check. By default the script verifies that embeddings exist before running KG extraction.
+    parser.add_argument(
+        '--no-check-qdrant',
+        dest='check_qdrant',
+        action='store_false',
+        help='Skip the Qdrant emptiness check. By default the script verifies '
+             'that embeddings exist before running KG extraction.'
+    )
     args = parser.parse_args()
 
     print("\n" + "=" * 70)
@@ -52,24 +60,25 @@ def main():
     Config.validate()
 
     # Guard: refuse to run if no embeddings exist yet
-    print("Checking Qdrant for existing embeddings...")
-    vector = QdrantHandler(
-        url=Config.QDRANT_URL,
-        api_key=Config.QDRANT_API_KEY,
-        collection_name=Config.QDRANT_COLLECTION_NAME,
-        embedding_model_name=Config.EMBEDDING_MODEL,
-        dense_vector_name=Config.QDRANT_DENSE_VECTOR_NAME,
-        sparse_vector_name=Config.QDRANT_SPARSE_VECTOR_NAME,
-        sparse_model_name=Config.QDRANT_SPARSE_MODEL,
-        sparse_language=Config.QDRANT_SPARSE_LANGUAGE,
-        dense_dim=Config.QDRANT_DENSE_DIM,
-    )
-    point_count = vector.get_count()
-    if point_count == 0:
-        print(f"✗ Qdrant collection '{Config.QDRANT_COLLECTION_NAME}' is empty.")
-        print("  Run scripts/vectorize_only.py first to embed documents.")
-        sys.exit(1)
-    print(f"✓ Qdrant has {point_count} points — proceeding with KG extraction\n")
+    if args.check_qdrant:
+        print("Checking Qdrant for existing embeddings...")
+        vector = QdrantHandler(
+            url=Config.QDRANT_URL,
+            api_key=Config.QDRANT_API_KEY,
+            collection_name=Config.QDRANT_COLLECTION_NAME,
+            embedding_model_name=Config.EMBEDDING_MODEL,
+            dense_vector_name=Config.QDRANT_DENSE_VECTOR_NAME,
+            sparse_vector_name=Config.QDRANT_SPARSE_VECTOR_NAME,
+            sparse_model_name=Config.QDRANT_SPARSE_MODEL,
+            sparse_language=Config.QDRANT_SPARSE_LANGUAGE,
+            dense_dim=Config.QDRANT_DENSE_DIM,
+        )
+        point_count = vector.get_count()
+        if point_count == 0:
+            print(f"✗ Qdrant collection '{Config.QDRANT_COLLECTION_NAME}' is empty.")
+            print("  Run scripts/vectorize_only.py first to embed documents.")
+            sys.exit(1)
+        print(f"✓ Qdrant has {point_count} points — proceeding with KG extraction\n")
 
     # Init Neo4j
     print("Initializing Neo4j...")
@@ -112,7 +121,7 @@ def main():
             "sentence to verify that the LLM client is working correctly."
         )
         print("✓ LLM connectivity OK\n")
-        print(f"Test LLM Response: {response})
+        print(f"Test LLM Response: {response}")
     except Exception as e:
         print(f"✗ LLM connectivity test failed: {e}")
         sys.exit(1)
