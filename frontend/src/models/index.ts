@@ -28,6 +28,8 @@ export interface ChatResponse {
 
 export interface Citation {
     source: string;
+    section_number?: string;
+    section_title?: string;
     content: string;
     relevance_score?: number;
     document_type?: 'pdf' | 'html' | 'txt';

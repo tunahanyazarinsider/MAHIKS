@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
+
 KG-only script: Extract text from files and feed it to the KG extractor.
 Refuses to run if Qdrant has no embeddings — KG is only built on top of
 already-embedded documents (run vectorize_only.py first).
 """
 import sys
+import argparse
 from pathlib import Path
+from datetime import datetime
 
 _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT))
 sys.path.insert(0, str(_ROOT / 'backend'))
+
 
 from backend.agents.kg.KGExtractor import KGExtractor
 from backend.agents.kg.KGFactory import KGFactory
@@ -18,18 +22,16 @@ from backend.database.qdrant_handler import QdrantHandler
 from backend.agents.ingestion_agent import IngestionAgent
 from backend.agents.extraction_agent import ExtractionAgent
 from backend.config import Config
-from datetime import datetime
 import argparse
-
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract knowledge graph from already-embedded documents"
+        description="Rebuild Neo4j knowledge graph from documents"
     )
     parser.add_argument(
         '--reset',
         action='store_true',
-        help='Clear Neo4j before processing (WARNING: deletes all graph data)'
+        help='Clear all Neo4j data before processing (WARNING: deletes all nodes/relationships)'
     )
     parser.add_argument(
         '--data-dir',
@@ -40,7 +42,7 @@ def main():
     args = parser.parse_args()
 
     print("\n" + "=" * 70)
-    print("MAHIKS-TR: KG Only (Neo4j)")
+    print("MAHIKS-TR: KG Only (Neo4j Triplet Extraction)")
     print("=" * 70)
     print(f"Start: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"KG method: {Config.KG_EXTRACTION_METHOD}")
@@ -70,6 +72,7 @@ def main():
     print(f"✓ Qdrant has {point_count} points — proceeding with KG extraction\n")
 
     # Init Neo4j
+    print("Initializing Neo4j...")
     neo4j = Neo4jHandler(
         uri=Config.NEO4J_URI,
         user=Config.NEO4J_USER,
@@ -78,6 +81,7 @@ def main():
     neo4j.create_indexes()
 
     if args.reset:
+
         print("⚠ WARNING: Resetting Neo4j graph!")
         confirm = input("Are you sure? Type 'yes' to confirm: ")
         if confirm.lower() == 'yes':
@@ -87,12 +91,14 @@ def main():
             print("Reset cancelled")
             sys.exit(0)
 
-    # Init agents
+
+    print("Initializing agents...")
     ingestion = IngestionAgent(data_directory=args.data_dir)
     extraction = ExtractionAgent(
         chunk_size=Config.CHUNK_SIZE,
         chunk_overlap=Config.CHUNK_OVERLAP
     )
+
     kg_extractor: KGExtractor = KGFactory.create_kg_extractor(
         method=Config.KG_EXTRACTION_METHOD,
         neo4j_handler=neo4j
@@ -101,17 +107,19 @@ def main():
     # LLM connectivity check
     try:
         print("Testing LLM connectivity with kg_extractor...")
-        kg_extractor.process_document(
+        response = kg_extractor.process_document(
             "Test document for connectivity check. This should be a simple "
             "sentence to verify that the LLM client is working correctly."
         )
         print("✓ LLM connectivity OK\n")
+        print(f"Test LLM Response: {response})
     except Exception as e:
         print(f"✗ LLM connectivity test failed: {e}")
         sys.exit(1)
 
     # Scan documents
     print("[Phase 1] Scanning documents...")
+
     documents = ingestion.scan_documents()
     if not documents:
         print("No documents found!")
@@ -121,8 +129,7 @@ def main():
     stats = {'docs': 0, 'triplets': 0, 'errors': 0}
 
     for idx, doc in enumerate(documents, 1):
-        print(f"[{idx}/{len(documents)}] {doc['name']} "
-              f"({doc['type']}, {doc['size']:,} bytes)")
+        print(f"[{idx}/{len(documents)}] {doc['name']} ({doc['type']}, {doc['size']:,} bytes)")
 
         try:
             text = extraction.extract_text(doc['path'], doc['type'])

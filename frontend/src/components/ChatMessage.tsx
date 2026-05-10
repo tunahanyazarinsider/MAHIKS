@@ -114,7 +114,15 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 <div className="w-5 h-5 rounded bg-[#ecfdf5] flex items-center justify-center shrink-0">
                   <FileText className="h-3 w-3 text-[#047857]" />
                 </div>
-                <span className="truncate text-[#1a2e28] font-medium">{citation.source}</span>
+                <span className="truncate text-[#1a2e28] font-medium">
+                  {citation.source}
+                  {citation.section_number && (
+                    <span className="text-[#5f7068] font-normal"> · §{citation.section_number}</span>
+                  )}
+                  {citation.section_title && (
+                    <span className="text-[#5f7068] font-normal"> — {citation.section_title}</span>
+                  )}
+                </span>
                 {citation.relevance_score != null && (
                   <span className="ml-auto text-[11px] text-[#9aada2] tabular-nums shrink-0">
                     {(citation.relevance_score * 100).toFixed(0)}%

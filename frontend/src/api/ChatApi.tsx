@@ -7,6 +7,8 @@ interface BackendQueryResponse {
   answer: string;
   citations: Array<{
     source: string;
+    section_number?: string;
+    section_title?: string;
     type: string;
     similarity: number;
     ce_score?: number;
@@ -27,6 +29,8 @@ export interface ChatResponse {
   answer: string;
   citations?: Array<{
     source: string;
+    section_number?: string;
+    section_title?: string;
     content: string;
     relevance_score?: number;
   }>;
@@ -81,6 +85,8 @@ export const chatRequest = async (queryRequest: QueryRequest): Promise<ChatRespo
     answer: backendData.answer,
     citations: backendData.citations?.map(c => ({
       source: c.source,
+      section_number: c.section_number,
+      section_title: c.section_title,
       content: c.type,
       relevance_score: c.similarity
     })),
@@ -93,7 +99,7 @@ export const chatRequestStream = async (
   queryRequest: QueryRequest,
   onChunk: (chunk: string) => void,
   onMetadata?: (metadata: Record<string, unknown>) => void,
-  onCitations?: (citations: Array<{ source: string; type: string; similarity: number }>) => void,
+  onCitations?: (citations: Array<{ source: string; section_number?: string; section_title?: string; type: string; similarity: number }>) => void,
   onDone?: (data: { response_time_ms: number; answer: string }) => void,
   onError?: (error: string) => void,
 ): Promise<void> => {
@@ -167,6 +173,8 @@ export const batchChatRequest = async (queries: QueryRequest[]): Promise<ChatRes
     answer: backendData.answer,
     citations: backendData.citations?.map(c => ({
       source: c.source,
+      section_number: c.section_number,
+      section_title: c.section_title,
       content: c.type,
       relevance_score: c.similarity
     })),
