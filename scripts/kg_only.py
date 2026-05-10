@@ -121,7 +121,7 @@ def main():
             "sentence to verify that the LLM client is working correctly."
         )
         print("✓ LLM connectivity OK\n")
-        print(f"Test LLM Response: {response})
+        print(f"Test LLM Response: {response}")
     except Exception as e:
         print(f"✗ LLM connectivity test failed: {e}")
         sys.exit(1)
