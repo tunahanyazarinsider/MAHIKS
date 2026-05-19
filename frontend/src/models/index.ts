@@ -27,6 +27,7 @@ export interface ChatResponse {
 }
 
 export interface Citation {
+    index?: number;
     source: string;
     section_number?: string;
     section_title?: string;

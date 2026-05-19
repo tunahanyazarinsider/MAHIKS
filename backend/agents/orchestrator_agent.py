@@ -210,17 +210,22 @@ class QueryOrchestratorAgent:
                 full_answer += token
                 yield {"type": "chunk", "data": token}
 
-            # Step 3: Yield citations
+            # Citations after the stream finishes — the frontend creates the
+            # agent message on the first chunk, so citations need a target.
+            # Indexes match the [N] tokens the model is instructed to produce
+            # in GenerationAgent.build_messages.
             if include_citations:
                 citations = []
-                for chunk in context.get('vector_context', [])[:3]:
+                for i, chunk in enumerate(context.get('vector_context', [])[:10], start=1):
                     citations.append({
+                        'index': i,
                         'source': chunk.get('source_name', 'Bilinmeyen'),
                         'section_number': chunk.get('section_number', ''),
                         'section_title': chunk.get('section_title', ''),
-                        'type': chunk.get('document_type', 'PDF'),
-                        'similarity': chunk.get('similarity', 0),
-                        'ce_score': chunk.get('ce_score', 'N/A'),
+                        'content': chunk.get('chunk_text', ''),
+                        'document_type': (chunk.get('document_type') or 'pdf').lower(),
+                        'relevance_score': chunk.get('similarity', 0),
+                        'ce_score': chunk.get('ce_score', None),
                     })
                 yield {"type": "citations", "data": citations}
 

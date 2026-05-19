@@ -110,13 +110,15 @@ class GenerationAgent:
 KURALLAR:
 - Sadece verilen kaynaklara dayanarak yanıt ver
 - Sana verilen bilgileri kullanarak soruyu yanıtla, dışarıdan bilgi ekleme
-- Bilgi yoksa "Bu konuda yeterli bilgim yok" de
+- Her olgusal iddianın sonuna [N] formatında atıf ekle; N aşağıdaki "Kaynak N" numarasıyla eşleşmeli
+- Birden fazla kaynak kullanıyorsan [1][2] şeklinde yan yana belirt
+- Sadece gerçekten kullandığın kaynakları atıf olarak göster, uydurma
+- Bilgi yoksa "Bu konuda yeterli bilgim yok" de (atıf gerekmez)
 - Konuşma geçmişindeki bağlamı dikkate al
 - Kısa ve net yanıtla, gerekirse madde işaretleri kullan
-- Kaynaklara atıfta bulun
 - Yanıtını Markdown formatında ver (başlıklar, maddeler, kalın yazı)
 
-## İlgili Belge Parçaları:
+## Numaralı Kaynaklar:
 {vector_context}
 
 ## Bilgi Grafiğinden İlişkiler:
@@ -173,13 +175,16 @@ KURALLAR:
         answer = self.generate_answer(query, context,
                                       conversation_history=conversation_history)
         citations = []
-        for chunk in context.get('vector_context', [])[:3]:
+        for i, chunk in enumerate(context.get('vector_context', [])[:10], start=1):
             citations.append({
+                'index': i,
                 'source': chunk.get('source_name', 'Bilinmeyen'),
-                'text': chunk.get('chunk_text', ''),
-                'type': chunk.get('document_type', 'PDF'),
-                'similarity': chunk.get('similarity', 0),
-                'ce_score': chunk.get('ce_score', 'N/A'),
+                'section_number': chunk.get('section_number', ''),
+                'section_title': chunk.get('section_title', ''),
+                'content': chunk.get('chunk_text', ''),
+                'document_type': (chunk.get('document_type') or 'pdf').lower(),
+                'relevance_score': chunk.get('similarity', 0),
+                'ce_score': chunk.get('ce_score', None),
             })
         return {
             'answer': answer,

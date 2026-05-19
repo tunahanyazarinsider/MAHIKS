@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { User, HeartPulse, FileText, ChevronDown, ChevronUp, Search, Zap, Clock } from 'lucide-react';
 import { Message } from '../models';
 import ReactMarkdown from 'react-markdown';
@@ -8,10 +8,42 @@ interface ChatMessageProps {
   message: Message;
 }
 
+const CITE_TOKEN_RE = /__CITE_(\d+)__/;
+
+// Swap [N] markers for an inline-code token so ReactMarkdown delivers them
+// to our `code` renderer as a single atomic unit. We rebuild as `\`__CITE_N__\``.
+function injectCitationMarkers(text: string): string {
+  return text.replace(/\[(\d+)\]/g, '`__CITE_$1__`');
+}
+
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.sender === 'user';
   const [showCitations, setShowCitations] = useState(false);
   const [showRagDetails, setShowRagDetails] = useState(false);
+  const citationRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  const hasInlineCitations = useMemo(
+    () => !isUser && /\[(\d+)\]/.test(message.content || ''),
+    [isUser, message.content],
+  );
+
+  // Auto-expand citation panel the first time the answer references [N].
+  useEffect(() => {
+    if (hasInlineCitations) setShowCitations(true);
+  }, [hasInlineCitations]);
+
+  const focusCitation = (n: number) => {
+    setShowCitations(true);
+    requestAnimationFrame(() => {
+      const el = citationRefs.current[n];
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.animate(
+        [{ backgroundColor: '#a7f3d0' }, { backgroundColor: 'transparent' }],
+        { duration: 1400, easing: 'ease-out' },
+      );
+    });
+  };
 
   const formatTime = (date: Date): string => {
     return date.toLocaleTimeString('tr-TR', {
@@ -70,8 +102,30 @@ export function ChatMessage({ message }: ChatMessageProps) {
             <p className="whitespace-pre-wrap break-words text-[0.9375rem] leading-relaxed">{message.content}</p>
           ) : (
             <div className="chat-markdown">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {message.content}
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ children, className, ...props }) {
+                    const raw = Array.isArray(children) ? children.join('') : String(children ?? '');
+                    const m = raw.match(CITE_TOKEN_RE);
+                    if (m) {
+                      const n = parseInt(m[1], 10);
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => focusCitation(n)}
+                          className="inline-flex items-center justify-center min-w-[20px] h-[18px] px-1 mx-0.5 text-[10px] font-mono rounded bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0] hover:bg-[#047857] hover:text-white transition-colors align-middle"
+                          aria-label={`Kaynak ${n}`}
+                        >
+                          {n}
+                        </button>
+                      );
+                    }
+                    return <code className={className} {...props}>{children}</code>;
+                  },
+                }}
+              >
+                {injectCitationMarkers(message.content)}
               </ReactMarkdown>
             </div>
           )}
@@ -109,27 +163,47 @@ export function ChatMessage({ message }: ChatMessageProps) {
         {/* Citations panel */}
         {showCitations && message.citations && message.citations.length > 0 && (
           <div className="w-full px-3 py-2.5 bg-[#f8faf9] rounded-lg border border-[#e2e8e5] space-y-1.5">
-            {message.citations.map((citation, i) => (
-              <div key={i} className="flex items-center gap-2 text-[12px]">
-                <div className="w-5 h-5 rounded bg-[#ecfdf5] flex items-center justify-center shrink-0">
-                  <FileText className="h-3 w-3 text-[#047857]" />
-                </div>
-                <span className="truncate text-[#1a2e28] font-medium">
-                  {citation.source}
-                  {citation.section_number && (
-                    <span className="text-[#5f7068] font-normal"> · §{citation.section_number}</span>
-                  )}
-                  {citation.section_title && (
-                    <span className="text-[#5f7068] font-normal"> — {citation.section_title}</span>
-                  )}
-                </span>
-                {citation.relevance_score != null && (
-                  <span className="ml-auto text-[11px] text-[#9aada2] tabular-nums shrink-0">
-                    {(citation.relevance_score * 100).toFixed(0)}%
+            {message.citations.map((citation, i) => {
+              const idx = citation.index ?? i + 1;
+              return (
+                <div
+                  key={idx}
+                  ref={(el) => { citationRefs.current[idx] = el; }}
+                  className="flex items-start gap-2 text-[12px] rounded px-1 py-0.5"
+                >
+                  <span
+                    className="w-5 h-[18px] mt-0.5 rounded font-mono text-[10px] bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0] flex items-center justify-center shrink-0"
+                    aria-hidden="true"
+                  >
+                    {idx}
                   </span>
-                )}
-              </div>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1 truncate">
+                      <FileText className="h-3 w-3 text-[#047857] shrink-0" />
+                      <span className="truncate text-[#1a2e28] font-medium">
+                        {citation.source}
+                        {citation.section_number && (
+                          <span className="text-[#5f7068] font-normal"> · §{citation.section_number}</span>
+                        )}
+                        {citation.section_title && (
+                          <span className="text-[#5f7068] font-normal"> — {citation.section_title}</span>
+                        )}
+                      </span>
+                      {citation.relevance_score != null && (
+                        <span className="ml-auto text-[11px] text-[#9aada2] tabular-nums shrink-0">
+                          {(citation.relevance_score * 100).toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
+                    {citation.content && (
+                      <p className="mt-1 text-[11px] text-[#5f7068] leading-relaxed line-clamp-2">
+                        {citation.content}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 

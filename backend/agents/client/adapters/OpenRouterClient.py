@@ -107,6 +107,9 @@ class OpenRouterClient(BaseLLMClient):
         )
         resp = self._post(payload)
         data = resp.json()
+        content = data["choices"][0]["message"].get("content") or ""
+        if not content:
+            print(f"⚠ Warning: No content in OpenRouter response. Full response: {data}")
         return data["choices"][0]["message"].get("content") or ""
 
     def chat_stream(
