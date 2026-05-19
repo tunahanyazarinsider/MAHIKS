@@ -149,10 +149,14 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
             m.id === agentMsgId
               ? {
                   ...m,
-                  citations: citations.map(c => ({
+                  citations: citations.map((c: any, i: number) => ({
+                    index: c.index ?? i + 1,
                     source: c.source,
-                    content: c.type || '',
-                    relevance_score: c.similarity
+                    section_number: c.section_number,
+                    section_title: c.section_title,
+                    content: c.content ?? '',
+                    relevance_score: c.relevance_score ?? c.similarity,
+                    document_type: c.document_type,
                   }))
                 }
               : m

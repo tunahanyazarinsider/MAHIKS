@@ -27,6 +27,16 @@ from datetime import datetime
 
 
 def main():
+    TEXT = """
+    4)Kişiler,  aynı  il  içindeki resmi  sağlık  hizmeti  sunucularında  tedavinin  sağlanabileceği 
+    radyoterapi merkezi bulunmaması halinde radyoterapi tedavisi için aynı il içindeki özel sağlık 
+    hizmeti sunucularına sevk edilebilir. 
+    5)     Sağlık  Bakanlığı  dışındaki  resmi  sağlık  hizmeti  sunucularına  kronik  hemodiyaliz 
+    tedavisi programı için yapılacak sevkler, aynı yerleşim yerinde varsa bünyesinde hemodiyaliz 
+    merkezi bulunan Sağlık Bakanlığı sağlık hizmeti sunucularınca yoksa müracaat edilen sağlık 
+    hizmeti sunucusunca yapılacaktır. Sağlık Bakanlığı dışındaki resmi sağlık hizmeti sunucularına 
+    yapılan hemodiyaliz amaçlı sevkler 3 ay süre ile geçerli olup sürenin bitiminde sevk belgesinin 
+    yenilenmesi gerekmektedir."""
     """Main execution function"""
     parser = argparse.ArgumentParser(
         description="Update MAHIKS-TR knowledge base from documents"
@@ -147,7 +157,7 @@ def main():
     # Check connectivity to LLM provider
     try:
         print("Testing LLM connectivity with kg_extractor...")
-        test_response = kg_extractor.process_document("Test document for connectivity check. This should be a simple sentence to verify that the LLM client is working correctly.")
+        test_response = kg_extractor.process_document(TEXT)
         print(f"✓ LLM connectivity test successful: {test_response}...\n")
     except Exception as e:
         print(f"✗ LLM connectivity test failed: {e}")
@@ -232,6 +242,9 @@ def main():
 
             # Extract knowledge graph triplets
             print(f"  [4/4] Extracting knowledge graph...")
+            # Provide information on KG extraction
+            print(f"      Using method: {Config.KG_EXTRACTION_METHOD}")
+            print(f"      Model: {kg_extractor.model}")
             kg_stats = kg_extractor.process_document(text)
             triplets_count = kg_stats.get('triplets_extracted', 0)
 

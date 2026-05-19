@@ -8,7 +8,7 @@ JSON parsing, dedup, batch insert into Neo4j, stats) lives here.
 import json
 import os
 import time
-from abc import ABC, abstractmethod
+import re
 from typing import Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -119,6 +119,10 @@ class KGExtractor():
         for attempt in range(retries):
             try:
                 raw: str = self._generate_triplets_json(text)
+                raw = raw.strip()
+                if raw.startswith("```"):
+                    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+                    raw = re.sub(r"\s*```$", "", raw)
                 data = json.loads(raw)
                 print(f"      Extracted {len(data.get('triplets', []))} triplets from chunk (raw JSON length: {len(raw)})")
                 print(f"      Sample triplet (if any): {data.get('triplets', [])[0] if data.get('triplets') else 'N/A'}")

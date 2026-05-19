@@ -99,7 +99,19 @@ export const chatRequestStream = async (
   queryRequest: QueryRequest,
   onChunk: (chunk: string) => void,
   onMetadata?: (metadata: Record<string, unknown>) => void,
-  onCitations?: (citations: Array<{ source: string; section_number?: string; section_title?: string; type: string; similarity: number }>) => void,
+  onCitations?: (citations: Array<{
+    index?: number;
+    source: string;
+    section_number?: string;
+    section_title?: string;
+    content?: string;
+    document_type?: string;
+    relevance_score?: number;
+    // legacy fields, still tolerated:
+    type?: string;
+    similarity?: number;
+    ce_score?: number | null;
+  }>) => void,
   onDone?: (data: { response_time_ms: number; answer: string }) => void,
   onError?: (error: string) => void,
 ): Promise<void> => {
