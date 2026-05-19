@@ -75,6 +75,29 @@ export interface RagMetadata {
     model: string;
 }
 
+export interface ConfidenceInfo {
+    level: 'low' | 'normal';
+    max_ce: number | null;
+    mean_ce: number | null;
+    passed_chunks: number;
+    ce_floor: number;
+    min_chunks: number;
+}
+
+export type GraphFact =
+    | {
+          type: 'triplet';
+          source: string;
+          rel: string;
+          target: string;
+          labels?: string[];
+      }
+    | {
+          type: 'path';
+          nodes: string[];
+          rels: string[];
+      };
+
 export interface Message {
     id: string;
     content: string;
@@ -83,6 +106,10 @@ export interface Message {
     isLoading?: boolean;
     citations?: Citation[];
     ragMetadata?: RagMetadata;
+    feedback?: 'up' | 'down' | null;
+    backendId?: number;
+    confidence?: ConfidenceInfo;
+    graphFacts?: GraphFact[];
 }
 
 export interface Conversation {

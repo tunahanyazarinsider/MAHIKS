@@ -125,6 +125,31 @@ class MySQLHandler:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             """)
 
+            # Idempotent migration: add citations_json to messages if missing.
+            # Older deployments may have created `messages` without it.
+            try:
+                self.cursor.execute("ALTER TABLE messages ADD COLUMN citations_json JSON NULL")
+            except Error:
+                pass
+
+            # Create message_feedback table
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS message_feedback (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    message_id INT NOT NULL,
+                    user_id INT NOT NULL,
+                    rating ENUM('up', 'down') NOT NULL,
+                    reason VARCHAR(500),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    UNIQUE KEY uq_message_user (message_id, user_id),
+                    INDEX idx_rating (rating),
+                    INDEX idx_created_at (created_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """)
+
             self.connection.commit()
             print("✓ Database tables created successfully")
         except Error as e:
@@ -371,21 +396,24 @@ class MySQLHandler:
     # Message Methods
     # ============================================
 
-    def add_message(self, conversation_id: int, content: str, sender: str) -> int:
-        """Add a message to a conversation"""
+    def add_message(self, conversation_id: int, content: str, sender: str,
+                    citations: Optional[List[Dict]] = None) -> int:
+        """Add a message to a conversation. Citations are persisted as JSON so
+        the frontend can re-hydrate them after a reload."""
         try:
+            citations_json = json.dumps(citations) if citations else None
             query = """
-                INSERT INTO messages (conversation_id, content, sender)
-                VALUES (%s, %s, %s)
+                INSERT INTO messages (conversation_id, content, sender, citations_json)
+                VALUES (%s, %s, %s, %s)
             """
-            self.cursor.execute(query, (conversation_id, content, sender))
-            
+            self.cursor.execute(query, (conversation_id, content, sender, citations_json))
+
             # Update conversation's updated_at
             self.cursor.execute(
                 "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = %s",
                 (conversation_id,)
             )
-            
+
             self.connection.commit()
             return self.cursor.lastrowid
         except Error as e:
@@ -434,6 +462,72 @@ class MySQLHandler:
         except Error as e:
             print(f"✗ Error getting recent messages: {e}")
             return []
+
+    # ============================================
+    # Feedback Methods
+    # ============================================
+
+    def upsert_feedback(self, message_id: int, user_id: int,
+                        rating: str, reason: Optional[str] = None) -> int:
+        """
+        Insert or update a user's feedback on a message. One row per
+        (message_id, user_id) — submitting again replaces the previous rating.
+
+        Args:
+            message_id: Message being rated
+            user_id: User submitting the rating
+            rating: 'up' or 'down'
+            reason: Optional free-text explanation (≤500 chars)
+
+        Returns:
+            Feedback row ID
+        """
+        try:
+            query = """
+                INSERT INTO message_feedback (message_id, user_id, rating, reason)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                    rating = VALUES(rating),
+                    reason = VALUES(reason),
+                    updated_at = CURRENT_TIMESTAMP
+            """
+            self.cursor.execute(query, (message_id, user_id, rating, reason))
+            self.connection.commit()
+            row_id = self.cursor.lastrowid
+            if row_id == 0:
+                # ON DUPLICATE KEY UPDATE returns 0 for lastrowid; fetch the
+                # existing row's id so the caller always gets a usable handle.
+                self.cursor.execute(
+                    "SELECT id FROM message_feedback WHERE message_id=%s AND user_id=%s",
+                    (message_id, user_id),
+                )
+                row = self.cursor.fetchone()
+                row_id = row["id"] if row else 0
+            return row_id
+        except Error as e:
+            print(f"✗ Error upserting feedback: {e}")
+            raise
+
+    def get_feedback_for_messages(self, message_ids: List[int],
+                                  user_id: int) -> Dict[int, str]:
+        """
+        Return {message_id: 'up'|'down'} for the messages the given user has rated.
+        Messages without a rating are absent from the result.
+        """
+        if not message_ids:
+            return {}
+        try:
+            placeholders = ",".join(["%s"] * len(message_ids))
+            query = f"""
+                SELECT message_id, rating
+                FROM message_feedback
+                WHERE user_id = %s AND message_id IN ({placeholders})
+            """
+            self.cursor.execute(query, (user_id, *message_ids))
+            return {row["message_id"]: row["rating"] for row in self.cursor.fetchall()}
+        except Error as e:
+            print(f"✗ Error fetching feedback: {e}")
+            return {}
 
     def close(self):
         """Close database connection"""

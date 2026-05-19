@@ -112,8 +112,23 @@ export const chatRequestStream = async (
     similarity?: number;
     ce_score?: number | null;
   }>) => void,
-  onDone?: (data: { response_time_ms: number; answer: string }) => void,
+  onDone?: (data: {
+    response_time_ms: number;
+    answer: string;
+    graph_facts?: Array<
+      | { type: 'triplet'; source: string; rel: string; target: string; labels?: string[] }
+      | { type: 'path'; nodes: string[]; rels: string[] }
+    >;
+  }) => void,
   onError?: (error: string) => void,
+  onConfidence?: (data: {
+    level: 'low' | 'normal';
+    max_ce: number | null;
+    mean_ce: number | null;
+    passed_chunks: number;
+    ce_floor: number;
+    min_chunks: number;
+  }) => void,
 ): Promise<void> => {
   const token = localStorage.getItem("token");
 
@@ -162,6 +177,9 @@ export const chatRequestStream = async (
             break;
           case "citations":
             onCitations?.(event.data);
+            break;
+          case "confidence":
+            onConfidence?.(event.data);
             break;
           case "done":
             onDone?.(event.data);

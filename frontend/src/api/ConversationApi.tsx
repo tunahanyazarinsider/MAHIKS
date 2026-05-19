@@ -55,6 +55,16 @@ export interface MessageResponse {
   content: string;
   sender: "user" | "agent";
   created_at: string;
+  feedback?: "up" | "down" | null;
+  citations?: Array<{
+    index?: number;
+    source: string;
+    section_number?: string;
+    section_title?: string;
+    content?: string;
+    document_type?: string;
+    relevance_score?: number;
+  }> | null;
 }
 
 export interface ConversationWithMessages {
@@ -96,11 +106,13 @@ export const deleteConversation = async (conversationId: number): Promise<void> 
 export const addMessage = async (
   conversationId: number,
   content: string,
-  sender: "user" | "agent"
+  sender: "user" | "agent",
+  citations?: MessageResponse["citations"],
 ): Promise<number> => {
   const response = await conversationApi.post(`/${conversationId}/messages`, {
     content,
     sender,
+    citations: citations ?? undefined,
   });
   return response.data.data.message_id;
 };
@@ -108,6 +120,18 @@ export const addMessage = async (
 export const getMessages = async (conversationId: number): Promise<MessageResponse[]> => {
   const response = await conversationApi.get(`/${conversationId}/messages`);
   return response.data.data;
+};
+
+export const submitFeedback = async (
+  conversationId: number,
+  messageId: number,
+  rating: "up" | "down",
+  reason?: string,
+): Promise<void> => {
+  await conversationApi.post(
+    `/${conversationId}/messages/${messageId}/feedback`,
+    { rating, reason },
+  );
 };
 
 export default conversationApi;

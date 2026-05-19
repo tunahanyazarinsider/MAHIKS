@@ -19,6 +19,8 @@ class RetrievalAgent:
     # Minimum reranker score to include in context.
     # mmarco-mMiniLMv2 emits negative scores for Turkish; default loosened to -10.
     CE_SCORE_THRESHOLD = float(os.getenv("CE_SCORE_THRESHOLD", "-10.0"))
+    # Cap on graph facts returned by graph_search — keeps prompt and KG-path UI tight.
+    MAX_GRAPH_FACTS = int(os.getenv("MAX_GRAPH_FACTS", "5"))
 
     def __init__(self, vector_handler, neo4j_handler, mysql_handler):
         # Qdrant hybrid handler: dense + sparse_bm25 with server-side RRF fusion.
@@ -91,6 +93,16 @@ class RetrievalAgent:
         return chunks
 
     def graph_search(self, query: str) -> List[Dict]:
+        """
+        Return structured facts the frontend can render as pill chains.
+
+        Two shapes:
+          • {'type': 'triplet', 'source', 'rel', 'target', 'labels'}
+          • {'type': 'path',    'nodes': [...], 'rels': [...]}
+
+        Triplets are deduplicated and the whole list is capped so the LLM
+        prompt and the UI both stay readable.
+        """
         print(f"    Graph search for query entities...")
         entities = self.extract_query_entities(query)
         if not entities:
@@ -98,31 +110,42 @@ class RetrievalAgent:
             return []
 
         print(f"      Entities: {entities}")
-        all_facts = []
+        triplets: List[Dict] = []
+        seen_triplets = set()  # (source, rel, target) lowercase dedup keys
+        paths: List[Dict] = []
 
         for entity in entities:
             related = self.neo4j.query_related_entities(entity, max_depth=2, limit=10)
             for rel in related:
-                all_facts.append({
-                    'source_entity': entity,
-                    'target_entity': rel['entity'],
-                    'relationship': rel['relationship'],
-                    'labels': rel.get('labels', [])
+                key = (entity.lower(), rel['relationship'], (rel['entity'] or '').lower())
+                if key in seen_triplets:
+                    continue
+                seen_triplets.add(key)
+                triplets.append({
+                    'type': 'triplet',
+                    'source': entity,
+                    'rel': rel['relationship'],
+                    'target': rel['entity'],
+                    'labels': rel.get('labels', []),
                 })
 
             if len(entities) > 1:
                 for other_entity in entities:
                     if other_entity != entity:
-                        path = self.neo4j.find_path(entity, other_entity, max_length=3)
-                        if path:
-                            all_facts.append({
+                        p = self.neo4j.find_path(entity, other_entity, max_length=3)
+                        if p and p.get('nodes'):
+                            paths.append({
                                 'type': 'path',
-                                'from': entity,
-                                'to': other_entity,
-                                'path': path
+                                'nodes': p['nodes'],
+                                'rels': p.get('relationships', []),
                             })
 
-        print(f"      ✓ Found {len(all_facts)} graph facts")
+        # Paths first (multi-hop reasoning is more interesting to show),
+        # then triplets. Capped overall — keeps the prompt tight and the
+        # KG-path UI from sprawling.
+        all_facts = (paths + triplets)[:self.MAX_GRAPH_FACTS]
+        print(f"      ✓ Found {len(triplets)} triplets, {len(paths)} paths "
+              f"→ returning {len(all_facts)}")
         return all_facts
 
     def _split_into_sub_chunks(self, text: str, source_name: str,
@@ -250,15 +273,26 @@ class RetrievalAgent:
         # 5. Graph search
         graph_results = self.graph_search(query)
 
+        # Confidence summary — used by the orchestrator to decide whether
+        # to hedge the LLM's answer when retrieval support is weak.
+        ce_scores = [sc.get('ce_score') for sc in final_results if sc.get('ce_score') is not None]
+        confidence = {
+            'max_ce': max(ce_scores) if ce_scores else None,
+            'mean_ce': (sum(ce_scores) / len(ce_scores)) if ce_scores else None,
+            'passed_chunks': len(final_results),
+        }
+
         result = {
             'query': query,
             'vector_context': final_results,
             'graph_facts': graph_results,
-            'total_sources': len(final_results) + len(graph_results)
+            'total_sources': len(final_results) + len(graph_results),
+            'confidence': confidence,
         }
 
         print(f"  ✓ Retrieval complete: {len(final_results)} sub-chunks, "
-              f"{len(graph_results)} graph facts\n")
+              f"{len(graph_results)} graph facts "
+              f"(max_ce={confidence['max_ce']})\n")
 
         return result
 

@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { User, HeartPulse, FileText, ChevronDown, ChevronUp, Search, Zap, Clock } from 'lucide-react';
+import { User, HeartPulse, FileText, ChevronDown, ChevronUp, Search, Zap, Clock, ThumbsUp, ThumbsDown, AlertTriangle } from 'lucide-react';
 import { Message } from '../models';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { KgPathBadge } from './KgPathBadge';
 
 interface ChatMessageProps {
   message: Message;
+  onFeedback?: (rating: 'up' | 'down', reason?: string) => Promise<void>;
 }
 
 const CITE_TOKEN_RE = /__CITE_(\d+)__/;
@@ -16,11 +18,47 @@ function injectCitationMarkers(text: string): string {
   return text.replace(/\[(\d+)\]/g, '`__CITE_$1__`');
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, onFeedback }: ChatMessageProps) {
   const isUser = message.sender === 'user';
   const [showCitations, setShowCitations] = useState(false);
   const [showRagDetails, setShowRagDetails] = useState(false);
+  const [showReasonForm, setShowReasonForm] = useState(false);
+  const [reasonText, setReasonText] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const citationRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  const feedback = message.feedback ?? null;
+  // Feedback can only be POSTed once the agent message has a backend row.
+  // Until then, thumbs are visible but disabled so the affordance stays present.
+  const canSubmitFeedback = !!message.backendId;
+
+  const handleThumbUp = async () => {
+    if (!onFeedback || !canSubmitFeedback || submittingFeedback) return;
+    setSubmittingFeedback(true);
+    try {
+      await onFeedback('up');
+      setShowReasonForm(false);
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
+
+  const handleThumbDownClick = () => {
+    if (!onFeedback || !canSubmitFeedback || submittingFeedback) return;
+    setShowReasonForm(true);
+  };
+
+  const handleSubmitReason = async (skipReason = false) => {
+    if (!onFeedback || submittingFeedback) return;
+    setSubmittingFeedback(true);
+    try {
+      await onFeedback('down', skipReason ? undefined : reasonText.trim() || undefined);
+      setShowReasonForm(false);
+      setReasonText('');
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
 
   const hasInlineCitations = useMemo(
     () => !isUser && /\[(\d+)\]/.test(message.content || ''),
@@ -85,6 +123,17 @@ export function ChatMessage({ message }: ChatMessageProps) {
 
       {/* Message Content */}
       <div className={`flex flex-col gap-1 max-w-[75%] ${isUser ? 'items-end' : 'items-start'}`}>
+        {/* Low-confidence banner — rendered above the bubble so the user
+            sees the caveat before reading the answer. */}
+        {!isUser && message.confidence?.level === 'low' && (
+          <div className="flex items-start gap-2 px-3 py-2 rounded-lg border border-amber-200 bg-amber-50 text-[12px] text-amber-900 max-w-full">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+            <div className="leading-snug">
+              <span className="font-medium">Düşük kaynak güveni.</span>{' '}
+              Bu yanıtı SGK ALO 170 veya resmi SUT belgesinden doğrulayın.
+            </div>
+          </div>
+        )}
         <div
           className={`rounded-2xl px-4 py-2.5 ${
             isUser
@@ -132,8 +181,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
         </div>
 
         {/* Action buttons row */}
-        {!isUser && !message.isLoading && (message.citations?.length || message.ragMetadata) && (
-          <div className="flex items-center gap-3">
+        {!isUser && !message.isLoading && (message.citations?.length || message.ragMetadata || onFeedback) && (
+          <div className="flex items-center gap-3 flex-wrap">
             {/* Citations toggle */}
             {message.citations && message.citations.length > 0 && (
               <button
@@ -157,6 +206,79 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 {showRagDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               </button>
             )}
+
+            {/* Feedback thumbs */}
+            {onFeedback && (
+              <div className="inline-flex items-center gap-1 ml-auto">
+                <button
+                  onClick={handleThumbUp}
+                  disabled={!canSubmitFeedback || submittingFeedback}
+                  aria-label="Bu yanıtı beğen"
+                  aria-pressed={feedback === 'up'}
+                  className={`p-1 rounded transition-colors disabled:opacity-50 ${
+                    feedback === 'up'
+                      ? 'text-[#047857] bg-[#ecfdf5]'
+                      : 'text-[#9aada2] hover:text-[#047857] hover:bg-[#f1f5f3]'
+                  }`}
+                >
+                  <ThumbsUp className="h-3.5 w-3.5" fill={feedback === 'up' ? 'currentColor' : 'none'} />
+                </button>
+                <button
+                  onClick={handleThumbDownClick}
+                  disabled={!canSubmitFeedback || submittingFeedback}
+                  aria-label="Bu yanıtı beğenme"
+                  aria-pressed={feedback === 'down'}
+                  className={`p-1 rounded transition-colors disabled:opacity-50 ${
+                    feedback === 'down'
+                      ? 'text-red-600 bg-red-50'
+                      : 'text-[#9aada2] hover:text-red-600 hover:bg-red-50'
+                  }`}
+                >
+                  <ThumbsDown className="h-3.5 w-3.5" fill={feedback === 'down' ? 'currentColor' : 'none'} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Down-vote reason form */}
+        {showReasonForm && onFeedback && (
+          <div className="w-full px-3 py-2.5 bg-red-50/50 rounded-lg border border-red-100 space-y-2">
+            <label className="text-[11px] text-[#5f7068] block">
+              Neden beğenmediniz? (isteğe bağlı)
+            </label>
+            <textarea
+              value={reasonText}
+              onChange={(e) => setReasonText(e.target.value)}
+              maxLength={500}
+              rows={2}
+              placeholder="Örn. kaynak eksik, yanlış bilgi…"
+              className="w-full px-2 py-1.5 text-[12px] rounded border border-[#e2e8e5] focus:border-red-300 focus:ring-1 focus:ring-red-100 outline-none resize-none bg-white"
+              disabled={submittingFeedback}
+            />
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={() => { setShowReasonForm(false); setReasonText(''); }}
+                disabled={submittingFeedback}
+                className="text-[11px] text-[#5f7068] hover:text-[#1a2e28] px-2 py-1 transition-colors disabled:opacity-50"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={() => handleSubmitReason(true)}
+                disabled={submittingFeedback}
+                className="text-[11px] text-[#5f7068] hover:text-red-700 px-2 py-1 transition-colors disabled:opacity-50"
+              >
+                Sebep yazmadan gönder
+              </button>
+              <button
+                onClick={() => handleSubmitReason(false)}
+                disabled={submittingFeedback}
+                className="text-[11px] font-medium text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded transition-colors disabled:opacity-50"
+              >
+                Gönder
+              </button>
+            </div>
           </div>
         )}
 
@@ -248,6 +370,20 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 </div>
               ))}
             </div>
+
+            {/* Knowledge-graph facts the answer was conditioned on */}
+            {message.graphFacts && message.graphFacts.length > 0 && (
+              <div className="border-t border-[#e2e8e5] bg-[#f8faf9] px-3 py-2.5">
+                <div className="text-[10px] uppercase tracking-wider text-[#9aada2] mb-1.5">
+                  Bilgi grafiği bağlantıları
+                </div>
+                <div className="space-y-1">
+                  {message.graphFacts.map((fact, i) => (
+                    <KgPathBadge key={i} fact={fact} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

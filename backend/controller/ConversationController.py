@@ -2,6 +2,8 @@
 Conversation Controller for MAHIKS-TR
 Handles chat conversation and message endpoints
 """
+import json
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -10,6 +12,27 @@ from datetime import datetime
 from backend.core.security import get_current_user
 from backend.database.mysql_handler import MySQLHandler
 from backend.core.api_response import success_response, error_response
+
+
+def _parse_citations(raw):
+    """MySQL JSON columns can come back as either a dict/list or a string,
+    depending on the connector. Normalize to a list (or None)."""
+    if raw is None:
+        return None
+    if isinstance(raw, (list, dict)):
+        return raw if isinstance(raw, list) else [raw]
+    if isinstance(raw, (bytes, bytearray)):
+        try:
+            raw = raw.decode("utf-8")
+        except Exception:
+            return None
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, list) else None
+        except Exception:
+            return None
+    return None
 
 # Will be injected from main.py
 mysql_handler: MySQLHandler = None
@@ -36,6 +59,12 @@ class UpdateConversationRequest(BaseModel):
 class AddMessageRequest(BaseModel):
     content: str = Field(..., min_length=1)
     sender: str = Field(..., pattern="^(user|agent)$")
+    citations: Optional[List[dict]] = None
+
+
+class FeedbackRequest(BaseModel):
+    rating: str = Field(..., pattern="^(up|down)$")
+    reason: Optional[str] = Field(None, max_length=500)
 
 
 class MessageResponse(BaseModel):
@@ -138,12 +167,16 @@ async def get_conversation(
     """Get a specific conversation with its messages"""
     try:
         conversation = mysql_handler.get_conversation_by_id(conversation_id, current_user["id"])
-        
+
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
-        
+
         messages = mysql_handler.get_messages_by_conversation(conversation_id)
-        
+        feedback_map = mysql_handler.get_feedback_for_messages(
+            [m["id"] for m in messages if m["sender"] == "agent"],
+            current_user["id"],
+        )
+
         # Format messages
         formatted_messages = []
         for msg in messages:
@@ -152,7 +185,9 @@ async def get_conversation(
                 "conversation_id": msg["conversation_id"],
                 "content": msg["content"],
                 "sender": msg["sender"],
-                "created_at": msg["created_at"].isoformat() + 'Z' if msg["created_at"] else None
+                "created_at": msg["created_at"].isoformat() + 'Z' if msg["created_at"] else None,
+                "feedback": feedback_map.get(msg["id"]),
+                "citations": _parse_citations(msg.get("citations_json")),
             })
         
         return success_response(data={
@@ -232,7 +267,8 @@ async def add_message(
         message_id = mysql_handler.add_message(
             conversation_id=conversation_id,
             content=request.content,
-            sender=request.sender
+            sender=request.sender,
+            citations=request.citations,
         )
         
         return success_response(
@@ -255,12 +291,16 @@ async def get_messages(
     try:
         # Verify conversation belongs to user
         conversation = mysql_handler.get_conversation_by_id(conversation_id, current_user["id"])
-        
+
         if not conversation:
             raise HTTPException(status_code=404, detail="Conversation not found")
-        
+
         messages = mysql_handler.get_messages_by_conversation(conversation_id)
-        
+        feedback_map = mysql_handler.get_feedback_for_messages(
+            [m["id"] for m in messages if m["sender"] == "agent"],
+            current_user["id"],
+        )
+
         # Format messages
         formatted = []
         for msg in messages:
@@ -269,10 +309,53 @@ async def get_messages(
                 "conversation_id": msg["conversation_id"],
                 "content": msg["content"],
                 "sender": msg["sender"],
-                "created_at": msg["created_at"].isoformat() + 'Z' if msg["created_at"] else None
+                "created_at": msg["created_at"].isoformat() + 'Z' if msg["created_at"] else None,
+                "feedback": feedback_map.get(msg["id"]),
+                "citations": _parse_citations(msg.get("citations_json")),
             })
-        
+
         return success_response(data=formatted)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@conversation_router.post("/{conversation_id}/messages/{message_id}/feedback")
+async def submit_feedback(
+    conversation_id: int,
+    message_id: int,
+    request: FeedbackRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Record a 👍/👎 rating (with optional reason) on an agent message."""
+    try:
+        # Verify conversation belongs to user — keeps feedback scoped per owner.
+        conversation = mysql_handler.get_conversation_by_id(conversation_id, current_user["id"])
+        if not conversation:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        # Verify message belongs to this conversation (defense-in-depth).
+        msg = next(
+            (m for m in mysql_handler.get_messages_by_conversation(conversation_id)
+             if m["id"] == message_id),
+            None,
+        )
+        if msg is None:
+            raise HTTPException(status_code=404, detail="Message not found")
+        if msg["sender"] != "agent":
+            raise HTTPException(status_code=400, detail="Only agent messages can be rated")
+
+        feedback_id = mysql_handler.upsert_feedback(
+            message_id=message_id,
+            user_id=current_user["id"],
+            rating=request.rating,
+            reason=request.reason,
+        )
+        return success_response(
+            data={"id": feedback_id, "rating": request.rating},
+            message="Feedback recorded",
+        )
     except HTTPException:
         raise
     except Exception as e:
