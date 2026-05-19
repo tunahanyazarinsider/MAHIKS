@@ -62,16 +62,31 @@ class GenerationAgent:
         """
         if not facts:
             return "İlişkili bilgi bulunamadı."
-        
+
         parts = []
         for fact in facts[:max_facts]:
-            if fact.get('type') == 'path':
-                parts.append(f"• {fact['from']} ile {fact['to']} arasında bağlantı bulundu")
-            else:
-                s = fact.get('source_entity', '')
-                t = fact.get('target_entity', '')
-                r = fact.get('relationship', '')
+            ftype = fact.get('type')
+            if ftype == 'path':
+                nodes = fact.get('nodes', [])
+                rels = fact.get('rels', [])
+                chain = []
+                for i, node in enumerate(nodes):
+                    chain.append(str(node))
+                    if i < len(rels):
+                        chain.append(f"[{rels[i]}]")
+                parts.append("• " + " → ".join(chain))
+            elif ftype == 'triplet':
+                s = fact.get('source', '')
+                t = fact.get('target', '')
+                r = fact.get('rel', '')
                 parts.append(f"• {s} → [{r}] → {t}")
+            else:
+                # Legacy / unknown shape — best-effort.
+                s = fact.get('source_entity') or fact.get('source', '')
+                t = fact.get('target_entity') or fact.get('target', '')
+                r = fact.get('relationship') or fact.get('rel', '')
+                if s and t:
+                    parts.append(f"• {s} → [{r}] → {t}")
         return "\n".join(parts)
 
     def _build_history_messages(self, messages: List[Dict]) -> List[Dict]:

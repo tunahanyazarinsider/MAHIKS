@@ -15,10 +15,11 @@ import {
   updateConversationTitle,
   deleteConversation as deleteConversationApi,
   addMessage,
+  submitFeedback,
   ConversationResponse,
   MessageResponse
 } from '../api/ConversationApi';
-import { Message, Conversation, createQueryRequest } from '../models';
+import { Message, Conversation, ConfidenceInfo, RagMetadata, createQueryRequest } from '../models';
 
 interface ChatScreenProps {
   userEmail: string;
@@ -84,9 +85,22 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
       streamingStartedRef.current = false;
       const formattedMessages: Message[] = conv.messages.map((msg: MessageResponse) => ({
         id: msg.id.toString(),
+        backendId: msg.id,
         content: msg.content,
         sender: msg.sender,
-        timestamp: new Date(msg.created_at)
+        timestamp: new Date(msg.created_at),
+        feedback: msg.feedback ?? null,
+        citations: msg.citations
+          ? msg.citations.map((c, i) => ({
+              index: c.index ?? i + 1,
+              source: c.source,
+              section_number: c.section_number,
+              section_title: c.section_title,
+              content: c.content ?? '',
+              relevance_score: c.relevance_score,
+              document_type: c.document_type as ('pdf' | 'html' | 'txt' | undefined),
+            }))
+          : undefined,
       }));
       setMessages(formattedMessages);
     } catch (error) {
@@ -111,6 +125,12 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
     const agentMsgId = `agent-${Date.now()}`;
     streamingStartedRef.current = false;
+    // SSE events (metadata, confidence, citations) can arrive before the
+    // first chunk creates the agent message. We capture them in closure
+    // variables and attach them when the message is actually inserted.
+    let streamedCitations: Message['citations'] | undefined;
+    let streamedMetadata: RagMetadata | undefined;
+    let streamedConfidence: ConfidenceInfo | undefined;
 
     try {
       await addMessage(currentConversationId, messageContent, 'user');
@@ -128,7 +148,9 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
               id: agentMsgId,
               content: chunk,
               sender: 'agent',
-              timestamp: new Date()
+              timestamp: new Date(),
+              ragMetadata: streamedMetadata,
+              confidence: streamedConfidence,
             }]);
           } else {
             setMessages(prev => prev.map(m =>
@@ -136,35 +158,51 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
             ));
           }
         },
-        // onMetadata — attach RAG details to agent message
+        // onMetadata — capture and (if the message already exists) attach.
         (metadata) => {
+          streamedMetadata = metadata as RagMetadata;
           setMessages(prev => prev.map(m =>
             m.id === agentMsgId
-              ? { ...m, ragMetadata: metadata as any }
+              ? { ...m, ragMetadata: streamedMetadata }
               : m
           ));
         },
         (citations) => {
+          streamedCitations = citations.map((c: any, i: number) => ({
+            index: c.index ?? i + 1,
+            source: c.source,
+            section_number: c.section_number,
+            section_title: c.section_title,
+            content: c.content ?? '',
+            relevance_score: c.relevance_score ?? c.similarity,
+            document_type: c.document_type,
+          }));
           setMessages(prev => prev.map(m =>
             m.id === agentMsgId
-              ? {
-                  ...m,
-                  citations: citations.map((c: any, i: number) => ({
-                    index: c.index ?? i + 1,
-                    source: c.source,
-                    section_number: c.section_number,
-                    section_title: c.section_title,
-                    content: c.content ?? '',
-                    relevance_score: c.relevance_score ?? c.similarity,
-                    document_type: c.document_type,
-                  }))
-                }
+              ? { ...m, citations: streamedCitations }
               : m
           ));
         },
         async (data) => {
+          // Attach graph facts (sent on the `done` event by the orchestrator)
+          // so the RAG-details panel can render the KG pill chains.
+          const graphFacts = data.graph_facts as Message['graphFacts'];
+          if (graphFacts && graphFacts.length) {
+            setMessages(prev => prev.map(m =>
+              m.id === agentMsgId ? { ...m, graphFacts } : m,
+            ));
+          }
           if (data.answer) {
-            await addMessage(currentConversationId, data.answer, 'agent');
+            const savedId = await addMessage(
+              currentConversationId,
+              data.answer,
+              'agent',
+              streamedCitations,
+            );
+            // Attach the backend id so feedback submission can target the row.
+            setMessages(prev => prev.map(m =>
+              m.id === agentMsgId ? { ...m, backendId: savedId } : m
+            ));
           }
           const currentConv = conversations.find(c => c.id === currentConversationId);
           if (currentConv && currentConv.title === 'Yeni Sohbet') {
@@ -192,7 +230,14 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
               m.id === agentMsgId ? { ...m, content: errorContent } : m
             ));
           }
-        }
+        },
+        // onConfidence — show the amber "low confidence" banner before tokens arrive.
+        (data) => {
+          streamedConfidence = data;
+          setMessages(prev => prev.map(m =>
+            m.id === agentMsgId ? { ...m, confidence: data } : m
+          ));
+        },
       );
 
     } catch (error) {
@@ -219,6 +264,28 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleFeedback = async (
+    message: Message,
+    rating: 'up' | 'down',
+    reason?: string,
+  ) => {
+    if (!currentConversationId || !message.backendId) return;
+    const previous = message.feedback ?? null;
+    // Optimistic update so the UI feels instant.
+    setMessages(prev => prev.map(m =>
+      m.id === message.id ? { ...m, feedback: rating } : m,
+    ));
+    try {
+      await submitFeedback(currentConversationId, message.backendId, rating, reason);
+    } catch (err) {
+      console.error('Failed to submit feedback:', err);
+      // Revert on failure.
+      setMessages(prev => prev.map(m =>
+        m.id === message.id ? { ...m, feedback: previous } : m,
+      ));
     }
   };
 
@@ -409,7 +476,15 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
             ) : (
               <div className="space-y-5">
                 {messages.map(message => (
-                  <ChatMessage key={message.id} message={message} />
+                  <ChatMessage
+                    key={message.id}
+                    message={message}
+                    onFeedback={
+                      message.sender === 'agent' && !message.isLoading
+                        ? (rating, reason) => handleFeedback(message, rating, reason)
+                        : undefined
+                    }
+                  />
                 ))}
                 {isTyping && !streamingStartedRef.current && (
                   <ChatMessage

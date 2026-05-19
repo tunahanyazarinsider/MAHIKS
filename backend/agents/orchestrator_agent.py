@@ -76,17 +76,24 @@ class QueryOrchestratorAgent:
             print("\n[Step 1/2] Retrieving relevant context...")
             context = self.retrieval_agent.hybrid_retrieve(enhanced_query)
 
+            # Confidence gate — decide whether to hedge the LLM.
+            is_low_confidence, confidence_payload = self._evaluate_confidence(context)
+            effective_query = self._apply_hedge(user_query, is_low_confidence)
+            if is_low_confidence:
+                print(f"  ⚠ Low confidence (max_ce={confidence_payload['max_ce']}, "
+                      f"passed={confidence_payload['passed_chunks']}) — hedging answer")
+
             # Step 2: Generate answer using LLM
             print("\n[Step 2/2] Generating answer...")
             if include_citations:
                 result = self.generation_agent.generate_with_citations(
-                    user_query, context, conversation_history=conversation_history
+                    effective_query, context, conversation_history=conversation_history
                 )
                 answer = result['answer']
                 citations = result['citations']
             else:
                 answer = self.generation_agent.generate_answer(
-                    user_query, context, conversation_history=conversation_history
+                    effective_query, context, conversation_history=conversation_history
                 )
                 citations = []
 
@@ -108,13 +115,14 @@ class QueryOrchestratorAgent:
                         }
                         for chunk in context.get('vector_context', [])[:10]
                     ],
-                    'graph_facts': len(context.get('graph_facts', []))
+                    'graph_facts': context.get('graph_facts', []),
                 },
                 'metadata': {
                     'response_time_ms': response_time_ms,
                     'chunks_retrieved': len(context.get('vector_context', [])),
                     'facts_retrieved': len(context.get('graph_facts', [])),
-                    'model': self.generation_agent.model
+                    'model': self.generation_agent.model,
+                    'confidence': confidence_payload,
                 }
             }
 
@@ -200,9 +208,17 @@ class QueryOrchestratorAgent:
                 }
             }
 
+            # Confidence event — emitted right after metadata so the UI can
+            # show the amber "low confidence" banner before any token streams.
+            is_low_confidence, confidence_payload = self._evaluate_confidence(context)
+            effective_query = self._apply_hedge(user_query, is_low_confidence)
+            yield {"type": "confidence", "data": confidence_payload}
+            if is_low_confidence:
+                print(f"  ⚠ Low confidence — hedging streamed answer")
+
             # Step 2: Build messages and stream generation
             messages = self.generation_agent.build_messages(
-                user_query, context, conversation_history
+                effective_query, context, conversation_history
             )
 
             full_answer = ""
@@ -238,6 +254,10 @@ class QueryOrchestratorAgent:
                 "data": {
                     "response_time_ms": response_time_ms,
                     "answer": full_answer,
+                    # Structured KG facts the answer was conditioned on; the
+                    # frontend renders these as pill chains in the RAG-details
+                    # panel.
+                    "graph_facts": context.get('graph_facts', []),
                 }
             }
 
@@ -251,6 +271,52 @@ class QueryOrchestratorAgent:
                     "response_time_ms": error_time_ms
                 }
             }
+
+    def _evaluate_confidence(self, context: Dict) -> (bool, Dict):
+        """
+        Read the confidence summary from retrieval and decide whether the
+        answer should be hedged.
+
+        A query is "low confidence" when either:
+          - the best surviving sub-chunk's CE score is below the configured
+            floor (Config.LOW_CONFIDENCE_CE_MIN), OR
+          - fewer chunks survived the threshold than required
+            (Config.LOW_CONFIDENCE_MIN_CHUNKS).
+
+        Returns (is_low, payload_for_sse).
+        """
+        conf = context.get('confidence') or {}
+        max_ce = conf.get('max_ce')
+        passed = conf.get('passed_chunks', 0)
+
+        is_low = (
+            max_ce is None
+            or max_ce < Config.LOW_CONFIDENCE_CE_MIN
+            or passed < Config.LOW_CONFIDENCE_MIN_CHUNKS
+        )
+
+        payload = {
+            'level': 'low' if is_low else 'normal',
+            'max_ce': max_ce,
+            'mean_ce': conf.get('mean_ce'),
+            'passed_chunks': passed,
+            'ce_floor': Config.LOW_CONFIDENCE_CE_MIN,
+            'min_chunks': Config.LOW_CONFIDENCE_MIN_CHUNKS,
+        }
+        return is_low, payload
+
+    def _apply_hedge(self, user_query: str, is_low: bool) -> str:
+        """Prepend a hedge instruction to the user message when retrieval is
+        weak. The model already follows the "yeterli bilgim yok" rule from the
+        system prompt; this nudges it harder for off-topic / cold queries."""
+        if not is_low:
+            return user_query
+        hedge = (
+            "[NOT: Belge desteği zayıf. Eğer cevap kaynaklarda yoksa "
+            "kesin bilgi vermek yerine doğrulanması gerektiğini söyle ve "
+            "SGK ALO 170'ten teyit edilmesini öner.]\n"
+        )
+        return hedge + user_query
 
     def _build_enhanced_query(self, user_query: str,
                               conversation_history: List[Dict]) -> str:

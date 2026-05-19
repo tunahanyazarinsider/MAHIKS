@@ -115,6 +115,13 @@ class Config:
     VECTOR_TOP_K = int(os.getenv("VECTOR_TOP_K", "5"))
     GRAPH_MAX_DEPTH = int(os.getenv("GRAPH_MAX_DEPTH", "2"))
 
+    # ── Confidence Gate ───────────────────────────────────────────────────────
+    # If the best surviving sub-chunk's CE score is below MIN, OR fewer than
+    # MIN_CHUNKS chunks pass the threshold, the orchestrator marks the answer
+    # as "low confidence" and instructs the LLM to hedge.
+    LOW_CONFIDENCE_CE_MIN = float(os.getenv("LOW_CONFIDENCE_CE_MIN", "0.0"))
+    LOW_CONFIDENCE_MIN_CHUNKS = int(os.getenv("LOW_CONFIDENCE_MIN_CHUNKS", "2"))
+
     # ── Conversation & Generation ─────────────────────────────────────────────
 
     CONVERSATION_HISTORY_LIMIT = int(os.getenv("CONVERSATION_HISTORY_LIMIT", "6"))
