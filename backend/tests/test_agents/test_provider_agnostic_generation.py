@@ -22,15 +22,25 @@ def vector_chunks():
 
 class TestSystemPromptCitationContract:
     @pytest.mark.unit
-    def test_prompt_requires_numbered_inline_citations(self, agent, vector_chunks):
+    def test_prompt_demonstrates_concrete_citation_numbers(self, agent, vector_chunks):
+        """The prompt must show literal example numbers — small models
+        otherwise copy the placeholder symbol (e.g. produce "[N]") verbatim."""
         messages = agent.build_messages(
             "soru?",
             {"vector_context": vector_chunks, "graph_facts": []},
         )
         system_content = messages[0]["content"]
         assert messages[0]["role"] == "system"
-        assert "[N]" in system_content, "system prompt must instruct the model to emit [N] citations"
+        # Concrete numbers, not abstract placeholder.
+        assert "[1]" in system_content
+        assert "[2]" in system_content
+        # Worked example must be present.
+        assert "DOĞRU ÖRNEK" in system_content
+        assert "YANLIŞ ÖRNEK" in system_content
+        # Header for the numbered source list.
         assert "Numaralı Kaynaklar" in system_content
+        # Explicit ban on placeholder symbols (the model should be told NOT to write "N").
+        assert "ASLA" in system_content
 
     @pytest.mark.unit
     def test_chunks_are_numbered_in_prompt(self, agent, vector_chunks):

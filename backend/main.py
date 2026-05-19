@@ -12,6 +12,7 @@ from pathlib import Path
 from backend.agents.client.BaseLLMClient import BaseLLMClient
 from backend.agents.client.factory.LLMClientFactory import LLMClientFactory
 from backend.controller.ConversationController import conversation_router, set_mysql_handler as set_conversation_mysql_handler
+from backend.controller.EvalController import eval_router
 
 from backend.config import Config
 from backend.models.schemas import (
@@ -184,6 +185,7 @@ app.add_middleware(
 # Include user router
 app.include_router(user_router)
 app.include_router(conversation_router)
+app.include_router(eval_router)
 
 # Register exception handlers
 register_exception_handlers(app)

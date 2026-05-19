@@ -1,5 +1,5 @@
 import { Button } from './ui/button';
-import { MessageSquarePlus, MessageSquare, Trash2, Pencil, BrainCircuit } from 'lucide-react';
+import { MessageSquarePlus, MessageSquare, Trash2, Pencil, BrainCircuit, FlaskConical } from 'lucide-react';
 import { Conversation } from '../models';
 
 interface ChatHistoryProps {
@@ -10,6 +10,7 @@ interface ChatHistoryProps {
   onDeleteConversation: (id: string) => void;
   onRenameConversation: (id: string) => void;
   onShowRagInfo?: () => void;
+  onShowEvalDashboard?: () => void;
 }
 
 export function ChatHistory({
@@ -19,7 +20,8 @@ export function ChatHistory({
   onNewConversation,
   onDeleteConversation,
   onRenameConversation,
-  onShowRagInfo
+  onShowRagInfo,
+  onShowEvalDashboard,
 }: ChatHistoryProps) {
 
   const formatDate = (date: Date): string => {
@@ -149,21 +151,37 @@ export function ChatHistory({
         )}
       </div>
 
-      {/* RAG Info Button */}
-      {onShowRagInfo && (
-        <div className="p-3 border-t border-[#e2e8e5] shrink-0">
-          <button
-            onClick={onShowRagInfo}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#f1f5f3] hover:bg-[#ecfdf5] border border-[#e2e8e5] hover:border-[#a7f3d0] transition-all group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#ecfdf5] group-hover:bg-[#d1fae5] flex items-center justify-center shrink-0 transition-colors">
-              <BrainCircuit className="w-4 h-4 text-[#047857]" />
-            </div>
-            <div className="text-left">
-              <p className="text-[12px] font-semibold text-[#1a2e28]">RAG Pipeline</p>
-              <p className="text-[10px] text-[#9aada2]">Sistem nasıl çalışır?</p>
-            </div>
-          </button>
+      {/* Sidebar tool buttons */}
+      {(onShowRagInfo || onShowEvalDashboard) && (
+        <div className="p-3 border-t border-[#e2e8e5] shrink-0 space-y-2">
+          {onShowRagInfo && (
+            <button
+              onClick={onShowRagInfo}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#f1f5f3] hover:bg-[#ecfdf5] border border-[#e2e8e5] hover:border-[#a7f3d0] transition-all group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-[#ecfdf5] group-hover:bg-[#d1fae5] flex items-center justify-center shrink-0 transition-colors">
+                <BrainCircuit className="w-4 h-4 text-[#047857]" />
+              </div>
+              <div className="text-left">
+                <p className="text-[12px] font-semibold text-[#1a2e28]">RAG Pipeline</p>
+                <p className="text-[10px] text-[#9aada2]">Sistem nasıl çalışır?</p>
+              </div>
+            </button>
+          )}
+          {onShowEvalDashboard && (
+            <button
+              onClick={onShowEvalDashboard}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#f1f5f3] hover:bg-[#ecfdf5] border border-[#e2e8e5] hover:border-[#a7f3d0] transition-all group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-[#ecfdf5] group-hover:bg-[#d1fae5] flex items-center justify-center shrink-0 transition-colors">
+                <FlaskConical className="w-4 h-4 text-[#047857]" />
+              </div>
+              <div className="text-left">
+                <p className="text-[12px] font-semibold text-[#1a2e28]">Değerlendirme</p>
+                <p className="text-[10px] text-[#9aada2]">Eval metrikleri ve eğilim</p>
+              </div>
+            </button>
+          )}
         </div>
       )}
     </div>
