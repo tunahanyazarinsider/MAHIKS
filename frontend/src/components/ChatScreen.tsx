@@ -4,6 +4,7 @@ import { Input } from './ui/input';
 import { ChatMessage } from './ChatMessage';
 import { ChatHistory } from './ChatHistory';
 import { RagInfoScreen } from './RagInfoScreen';
+import { EvalDashboard } from './EvalDashboard';
 import { RenameDialog } from './RenameDialog';
 import { DeleteDialog } from './DeleteDialog';
 import { Send, LogOut, HeartPulse, Loader2, ArrowUp } from 'lucide-react';
@@ -47,6 +48,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
   const [renamingConversationId, setRenamingConversationId] = useState<number | null>(null);
   const [deletingConversationId, setDeletingConversationId] = useState<number | null>(null);
   const [showRagInfo, setShowRagInfo] = useState(false);
+  const [showEvalDashboard, setShowEvalDashboard] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamingStartedRef = useRef(false);
 
@@ -292,6 +294,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
   const handleNewConversation = async () => {
     try {
       setShowRagInfo(false);
+      setShowEvalDashboard(false);
       const newConvId = await createConversation();
       const updatedConvs = await getConversations();
       setConversations(updatedConvs);
@@ -303,6 +306,7 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
 
   const handleSelectConversation = async (id: string) => {
     setShowRagInfo(false);
+    setShowEvalDashboard(false);
     await loadConversation(parseInt(id));
   };
 
@@ -392,7 +396,8 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
           onRenameConversation={handleRenameConversation}
-          onShowRagInfo={() => setShowRagInfo(true)}
+          onShowRagInfo={() => { setShowRagInfo(true); setShowEvalDashboard(false); }}
+          onShowEvalDashboard={() => { setShowEvalDashboard(true); setShowRagInfo(false); }}
         />
       </div>
 
@@ -409,7 +414,9 @@ export function ChatScreen({ userEmail, userName, onLogout, onOpenProfile }: Cha
       />
 
       {/* Main Content Area */}
-      {showRagInfo ? (
+      {showEvalDashboard ? (
+        <EvalDashboard onBack={() => setShowEvalDashboard(false)} />
+      ) : showRagInfo ? (
         <RagInfoScreen onBack={() => setShowRagInfo(false)} />
       ) : (
       <div className="flex-1 flex flex-col overflow-hidden">
