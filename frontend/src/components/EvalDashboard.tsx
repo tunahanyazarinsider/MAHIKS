@@ -53,7 +53,7 @@ function setsEqual(a: Set<string>, b: Set<string>): boolean {
 
 // Quick shape check for an uploaded JSON — the evaluator script always
 // produces these keys, so a missing one means it isn't a real eval report.
-function looksLikeEvalReport(obj: any): obj is FullReport {
+export function looksLikeEvalReport(obj: any): obj is FullReport {
   return !!(
     obj &&
     typeof obj === 'object' &&

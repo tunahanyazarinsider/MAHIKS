@@ -484,6 +484,8 @@ def main():
                         help="Run generation + judge only — skip /api/rag/debug IR metrics")
     parser.add_argument("--limit", type=int, default=None,
                         help="Evaluate only the first N questions")
+    parser.add_argument("--strict", action="store_true",
+                        help="Compare summary against THRESHOLDS and exit non-zero on any regression")
     args = parser.parse_args()
 
     # Auto-load .env so the script picks up OPENROUTER_API_KEY etc. when run locally
@@ -797,6 +799,71 @@ def main():
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(f"\n✓ Report saved to: {output_path}\n")
+
+    # ── Strict mode: regression gate ──────────────────────────────────────────
+    if args.strict:
+        passed = check_thresholds(report)
+        if not passed:
+            sys.exit(1)
+
+
+# Thresholds anchored to data/eval_api_report_20260510_171446.json with a
+# small margin. Lowered context_precision below the historical 4.0 plan
+# target because the actual baseline is 3.67. Tune after 2–3 more runs.
+THRESHOLDS: dict = {
+    "retrieval.stage2_full_pipeline.hit@5": ("min", 0.95),
+    "retrieval.stage2_full_pipeline.mrr":   ("min", 0.85),
+    "generation.avg_faithfulness":          ("min", 4.20),
+    "generation.avg_context_precision":     ("min", 3.40),
+    "retrieval.latency.p95_ms":             ("max", 12000),
+}
+
+
+def _resolve(report: dict, path: str):
+    """Walk a dotted path through report['summary']; returns None if any
+    segment is missing. Splits on '.' but keeps things like 'hit@5' intact."""
+    cur = report.get("summary", {})
+    for seg in path.split("."):
+        if not isinstance(cur, dict) or seg not in cur:
+            return None
+        cur = cur[seg]
+    return cur
+
+
+def check_thresholds(report: dict) -> bool:
+    """Print a pass/fail table for THRESHOLDS. Returns True iff all pass."""
+    print("=" * 74)
+    print("STRICT MODE — regression gate")
+    print("=" * 74)
+    header = f"  {'Metric':<48}  {'Cmp':>4}  {'Threshold':>10}  {'Actual':>10}  Result"
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+
+    all_passed = True
+    for path, (cmp, threshold) in THRESHOLDS.items():
+        actual = _resolve(report, path)
+        if actual is None:
+            ok = False
+            actual_str = "missing"
+        elif cmp == "min":
+            ok = actual >= threshold
+            actual_str = f"{actual:.4f}" if isinstance(actual, float) else f"{actual}"
+        elif cmp == "max":
+            ok = actual <= threshold
+            actual_str = f"{actual:.1f}" if isinstance(actual, float) else f"{actual}"
+        else:
+            ok = False
+            actual_str = "?"
+        if not ok:
+            all_passed = False
+        verdict = "PASS" if ok else "FAIL"
+        threshold_str = f"{threshold:.4f}" if isinstance(threshold, float) else f"{threshold}"
+        print(f"  {path:<48}  {cmp:>4}  {threshold_str:>10}  {actual_str:>10}  {verdict}")
+
+    print("=" * 74)
+    print(f"  Overall: {'PASS' if all_passed else 'FAIL'}")
+    print("=" * 74 + "\n")
+    return all_passed
 
 
 if __name__ == "__main__":
