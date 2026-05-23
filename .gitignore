@@ -87,7 +87,6 @@ dmypy.json
 # Tunahan specific ignores - Melih, Faruk eklemelerinizi buraya yapabilirsiniz.
 # tunahan
 bitirme_rag/
-docs/
 # melih
 
 # faruk

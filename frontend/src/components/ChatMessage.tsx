@@ -105,6 +105,9 @@ export function ChatMessage({ message, onFeedback }: ChatMessageProps) {
       className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
       role="article"
       aria-label={isUser ? 'Sizin mesajınız' : 'Asistan yanıtı'}
+      data-testid={isUser ? 'user-message' : 'agent-message'}
+      data-message-id={message.backendId ?? ''}
+      data-loading={message.isLoading ? 'true' : 'false'}
     >
       {/* Avatar */}
       <div

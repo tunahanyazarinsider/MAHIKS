@@ -1,0 +1,95 @@
+name: Eval (strict regression gate)
+
+# Manual trigger only — running this on every PR would burn LLM credits.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Number of questions to evaluate (lower = faster, cheaper)'
+        required: false
+        default: '30'
+      judge_provider:
+        description: 'LLM provider for the judge'
+        required: false
+        default: 'openrouter'
+        type: choice
+        options:
+          - openrouter
+          - gemini
+          - openai
+
+jobs:
+  eval:
+    name: Evaluate API with --strict
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compose up (full stack)
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MYSQL_PASSWORD: ci_mysql_password
+          NEO4J_PASSWORD: ci_neo4j_password
+          JWT_SECRET: ci_jwt_secret_change_me
+          LLM_PROVIDER: ${{ github.event.inputs.judge_provider }}
+        run: |
+          # Write a minimal .env so docker-compose picks up secrets.
+          cat > .env <<EOF
+          MYSQL_PASSWORD=${MYSQL_PASSWORD}
+          NEO4J_PASSWORD=${NEO4J_PASSWORD}
+          JWT_SECRET=${JWT_SECRET}
+          LLM_PROVIDER=${LLM_PROVIDER}
+          OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+          GEMINI_API_KEY=${GEMINI_API_KEY}
+          CACHE_ENABLED=true
+          EOF
+          docker compose up -d --build
+
+      - name: Wait for backend health
+        run: |
+          for i in {1..60}; do
+            if curl -sf http://localhost:8000/health > /dev/null; then
+              echo "Backend is healthy."
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/60)"
+            sleep 5
+          done
+          echo "Backend did not become healthy in 5 minutes."
+          docker compose logs backend
+          exit 1
+
+      - name: Vectorize corpus
+        run: docker compose exec -T backend python -m scripts.vectorize_only
+
+      - name: Run evaluate_api.py with --strict
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          docker compose exec -T \
+            -e OPENROUTER_API_KEY=${OPENROUTER_API_KEY} \
+            -e GEMINI_API_KEY=${GEMINI_API_KEY} \
+            backend python -m scripts.evaluate_api \
+            --strict \
+            --limit ${{ github.event.inputs.limit }} \
+            --judge-provider ${{ github.event.inputs.judge_provider }}
+
+      - name: Upload eval report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: data/eval_api_report_*.json
+          retention-days: 30
+
+      - name: Compose logs on failure
+        if: failure()
+        run: docker compose logs
